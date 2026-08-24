@@ -16,14 +16,14 @@ class AuthController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $credentials = $request->validate(['email' => ['required', 'email'], 'password' => ['required']]);
+        $credentials = $request->validate(['username' => ['required', 'string'], 'password' => ['required']]);
         if (Auth::attempt([...$credentials, 'status' => 'active'], $request->boolean('remember'))) {
             $request->session()->regenerate();
 
             return redirect()->intended(route('dashboard'));
         }
 
-return back()->withErrors(['email' => 'The credentials are invalid or this account is inactive.'])->onlyInput('email');
+        return back()->withErrors(['username' => 'The credentials are invalid or this account is inactive.'])->onlyInput('username');
     }
 
     public function destroy(Request $request): RedirectResponse

@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::updateOrCreate(['email' => env('ADMIN_EMAIL', 'admin@example.com')], ['name' => env('ADMIN_NAME', 'Super Admin'), 'password' => env('ADMIN_PASSWORD', 'password'), 'role' => 'super_admin', 'status' => 'active']);
+        $admin = User::updateOrCreate(['username' => env('ADMIN_USERNAME', 'admin')], ['name' => env('ADMIN_NAME', 'Super Admin'), 'email' => env('ADMIN_EMAIL', 'admin@example.com'), 'password' => env('ADMIN_PASSWORD', 'password'), 'role' => 'super_admin', 'status' => 'active']);
         $brands = collect(['Samsung' => 'Electronics', 'Apple' => 'Technology', 'Nike' => 'Sports', 'Coca Cola' => 'Beverages'])->mapWithKeys(fn ($description, $name) => [$name => Brand::firstOrCreate(['name' => $name], ['description' => $description, 'status' => 'active', 'created_by' => $admin->id])]);
         $categories = collect(['Electronics', 'Clothing', 'Beverages', 'General'])->mapWithKeys(fn ($name) => [$name => Category::firstOrCreate(['name' => $name], ['description' => "$name items", 'status' => 'active', 'created_by' => $admin->id])]);
         $items = [['Samsung LED TV', 'SAM-TV-001', 'Samsung', 'Electronics', 10, 'PCS', 50000, 60000, 'ABC Traders'], ['iPhone Case', 'APL-CASE-001', 'Apple', 'General', 50, 'PCS', 500, 850, 'Tech Supply'], ['Running Shoes', 'NIKE-SHOE-001', 'Nike', 'Clothing', 25, 'BOX', 3500, 5000, 'Sports Hub'], ['Coke 500ml', 'COKE-500-001', 'Coca Cola', 'Beverages', 100, 'PACK', 1200, 1500, 'Beverage Distributor']];

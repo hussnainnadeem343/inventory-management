@@ -33,7 +33,8 @@ class InventoryItem extends Model
         return $query
             ->when($filters['search'] ?? null, fn (Builder $q, string $search) => $q->where(fn (Builder $q) => $q->where('item_name', 'like', "%{$search}%")->orWhere('sku', 'like', "%{$search}%")))
             ->when($filters['brand_id'] ?? null, fn (Builder $q, $brandId) => $q->where('brand_id', $brandId))
-            ->when($filters['category_id'] ?? null, fn (Builder $q, $categoryId) => $q->where('category_id', $categoryId));
+            ->when($filters['category_id'] ?? null, fn (Builder $q, $categoryId) => $q->where('category_id', $categoryId))
+            ->when($filters['date'] ?? null, fn (Builder $q, $date) => $q->whereDate('created_at', $date));
     }
 
     public function brand(): BelongsTo

@@ -3,10 +3,11 @@
 @section('content')
 <x-errors />
 <div class="card p-3 mb-3"><form method="get" class="row g-2 align-items-end">
-<div class="col-lg-4"><label class="form-label">Search</label><input class="form-control" name="search" value="{{$filters['search']}}" placeholder="Search item name or SKU"></div>
+<div class="col-lg-3"><label class="form-label">Search</label><input class="form-control" name="search" value="{{$filters['search']}}" placeholder="Search item name or SKU"></div>
 <div class="col-sm-6 col-lg-2"><label class="form-label">Brand</label><select class="form-select" name="brand_id"><option value="">All Brands</option>@foreach($brands as $brand)<option value="{{$brand->id}}" @selected($filters['brand_id']==$brand->id)>{{$brand->name}}</option>@endforeach</select></div>
 <div class="col-sm-6 col-lg-2"><label class="form-label">Category</label><select class="form-select" name="category_id"><option value="">All Categories</option>@foreach($categories as $category)<option value="{{$category->id}}" @selected($filters['category_id']==$category->id)>{{$category->name}}</option>@endforeach</select></div>
-<div class="col-sm-6 col-lg-2"><label class="form-label">Per page</label><select class="form-select" name="per_page">@foreach([10,20,30,50,100] as $size)<option @selected($perPage===$size)>{{$size}}</option>@endforeach</select></div>
+<div class="col-sm-6 col-lg-2"><label class="form-label">Date</label><input class="form-control" type="date" name="date" value="{{$filters['date']}}"></div>
+<div class="col-sm-6 col-lg-1"><label class="form-label">Per page</label><select class="form-select" name="per_page">@foreach([10,20,30,50,100] as $size)<option @selected($perPage===$size)>{{$size}}</option>@endforeach</select></div>
 <div class="col-lg-2 d-flex gap-2"><button class="btn btn-primary">Search</button><a class="btn btn-outline-secondary" href="{{route('inventory.index')}}">Reset</a></div>
 </form></div>
 <div class="d-flex flex-wrap gap-2 justify-content-end mb-3"><a class="btn btn-outline-success" href="{{route('inventory.export',request()->except('page'))}}">Export Excel</a><a class="btn btn-primary" href="{{route('inventory.create')}}">+ Add Inventory</a></div>

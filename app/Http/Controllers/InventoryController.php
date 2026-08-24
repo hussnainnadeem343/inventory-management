@@ -100,6 +100,8 @@ class InventoryController extends Controller
 
     private function filters(Request $request): array
     {
-        return ['search' => trim((string) $request->query('search')), 'brand_id' => $request->query('brand_id'), 'category_id' => $request->query('category_id')];
+        $validated = $request->validate(['date' => ['nullable', 'date_format:Y-m-d']]);
+
+        return ['search' => trim((string) $request->query('search')), 'brand_id' => $request->query('brand_id'), 'category_id' => $request->query('category_id'), 'date' => $validated['date'] ?? null];
     }
 }

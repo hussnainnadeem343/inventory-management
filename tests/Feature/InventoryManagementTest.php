@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Exports\InventoryExport;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\InventoryItem;
@@ -26,8 +27,29 @@ class InventoryManagementTest extends TestCase
     public function test_inactive_user_cannot_login(): void
     {
         $user = User::factory()->create(['password' => 'password', 'status' => 'inactive']);
-        $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertSessionHasErrors('email');
+        $this->post('/login', ['username' => $user->username, 'password' => 'password'])->assertSessionHasErrors('username');
         $this->assertGuest();
+    }
+
+    public function test_active_user_logs_in_with_username_not_email(): void
+    {
+        $user = User::factory()->create(['password' => 'password', 'status' => 'active']);
+
+        $this->post('/login', ['username' => $user->username, 'password' => 'password'])->assertRedirect('/dashboard');
+        $this->assertAuthenticatedAs($user);
+        $this->post('/logout');
+        $this->post('/login', ['email' => $user->email, 'password' => 'password'])->assertSessionHasErrors('username');
+        $this->assertGuest();
+    }
+
+    public function test_admin_can_create_user_with_unique_username_and_no_email(): void
+    {
+        $admin = $this->admin();
+        $payload = ['name' => 'No Email User', 'username' => 'noemail', 'email' => '', 'password' => 'password123', 'password_confirmation' => 'password123', 'role' => 'user', 'status' => 'active'];
+
+        $this->actingAs($admin)->post('/users', $payload)->assertRedirect('/users');
+        $this->assertDatabaseHas('users', ['username' => 'noemail', 'email' => null]);
+        $this->actingAs($admin)->post('/users', [...$payload, 'name' => 'Duplicate'])->assertSessionHasErrors('username');
     }
 
     public function test_normal_user_cannot_access_user_management(): void
@@ -96,6 +118,21 @@ class InventoryManagementTest extends TestCase
         InventoryItem::create(['item_name' => 'Export Item', 'sku' => 'EXPORT-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 10, 'unit' => 'PCS', 'status' => 'active', 'created_by' => $user->id]);
 
         $this->actingAs($user)->get('/inventory/export?search=Export&brand_id='.$brand->id.'&category_id='.$category->id.'&page=99')->assertOk()->assertHeader('content-disposition');
+    }
+
+    public function test_inventory_date_filter_combines_with_existing_filters_and_export(): void
+    {
+        $user = $this->admin();
+        $brand = Brand::create(['name' => 'Coca Cola', 'status' => 'active', 'created_by' => $user->id]);
+        $category = Category::create(['name' => 'Beverages', 'status' => 'active', 'created_by' => $user->id]);
+        $matching = InventoryItem::create(['item_name' => 'Coke Match', 'sku' => 'DATE-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 10, 'unit' => 'PCS', 'status' => 'active', 'created_by' => $user->id]);
+        $otherDay = InventoryItem::create(['item_name' => 'Coke Other Day', 'sku' => 'DATE-2', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 10, 'unit' => 'PCS', 'status' => 'active', 'created_by' => $user->id]);
+        $matching->forceFill(['created_at' => '2026-08-24 23:59:00'])->save();
+        $otherDay->forceFill(['created_at' => '2026-08-23 23:59:00'])->save();
+        $filters = ['search' => 'Coke', 'brand_id' => $brand->id, 'category_id' => $category->id, 'date' => '2026-08-24'];
+
+        $this->actingAs($user)->get('/inventory?'.http_build_query($filters))->assertOk()->assertSee('Coke Match')->assertDontSee('Coke Other Day')->assertSee('value="2026-08-24"', false);
+        $this->assertSame(1, (new InventoryExport($filters, true))->query()->count());
     }
 
     public function test_referenced_brand_cannot_be_deleted(): void
