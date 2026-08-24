@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained()->restrictOnDelete();
             $table->decimal('quantity', 14, 2)->default(0);
             $table->string('unit', 20);
-            $table->decimal('purchase_price', 14, 2);
-            $table->decimal('selling_price', 14, 2);
+            $table->decimal('purchase_price', 14, 2)->nullable();
+            $table->decimal('selling_price', 14, 2)->nullable();
             $table->string('supplier')->nullable();
             $table->string('status')->default('active');
             $table->foreignId('created_by')->constrained('users')->restrictOnDelete();

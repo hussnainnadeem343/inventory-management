@@ -16,12 +16,14 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/logout', [AuthController::class, 'destroy'])->name('logout');
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
+    Route::get('/inventory/export', [InventoryController::class, 'export'])->name('inventory.export');
+    Route::post('/inventory/{inventory}/sell', [InventoryController::class, 'sell'])->name('inventory.sell');
     Route::resource('inventory', InventoryController::class)->except('show');
-    Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
-    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::resource('brands', BrandController::class)->except(['show', 'destroy']);
+    Route::resource('categories', CategoryController::class)->except(['show', 'destroy']);
     Route::middleware('super_admin')->group(function () {
-        Route::resource('brands', BrandController::class)->except(['index', 'show']);
-        Route::resource('categories', CategoryController::class)->except(['index', 'show']);
+        Route::delete('/brands/{brand}', [BrandController::class, 'destroy'])->name('brands.destroy');
+        Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
         Route::resource('users', UserController::class)->except('show');
     });
 });
