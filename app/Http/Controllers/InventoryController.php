@@ -60,6 +60,20 @@ class InventoryController extends Controller
         return back()->with('success', "{$quantity} {$inventory->item_name} items sold successfully. Remaining stock: ".number_format($remaining, 2));
     }
 
+    public function addStock(SellInventoryRequest $request, InventoryItem $inventory): RedirectResponse
+    {
+        $quantity = (int) $request->validated('sell_quantity');
+        $newInitialQuantity = DB::transaction(function () use ($inventory, $quantity, $request): float {
+            $item = InventoryItem::query()->lockForUpdate()->findOrFail($inventory->id);
+            $item->increment('quantity', $quantity);
+            InventoryTransaction::create(['inventory_item_id' => $item->id, 'transaction_type' => InventoryTransaction::TYPE_STOCK_IN, 'quantity' => $quantity, 'created_by' => $request->user()->id]);
+
+            return (float) $item->fresh()->quantity;
+        });
+
+        return back()->with('success', "{$quantity} {$inventory->item_name} items added successfully. Initial stock: ".number_format($newInitialQuantity, 2));
+    }
+
     public function export(Request $request): BinaryFileResponse
     {
         return Excel::download(new InventoryExport($this->filters($request), $request->user()->isSuperAdmin()), 'inventory-'.now()->format('Y-m-d-His').'.xlsx');

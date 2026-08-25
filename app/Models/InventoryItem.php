@@ -14,13 +14,24 @@ class InventoryItem extends Model
 
     public const UNITS = ['PCS', 'BOX', 'KG', 'GRAM', 'LITER', 'ML', 'PACK', 'DOZEN'];
 
-    protected $fillable = ['item_name', 'sku', 'brand_id', 'category_id', 'quantity', 'unit', 'purchase_price', 'selling_price', 'supplier', 'status', 'created_by'];
+    protected $fillable = ['item_name', 'sku', 'brand_id', 'category_id', 'quantity', 'pack_size', 'unit', 'purchase_price', 'selling_price', 'supplier', 'status', 'created_by'];
 
     protected $appends = ['remaining_quantity'];
 
     protected function casts(): array
     {
-        return ['quantity' => 'decimal:2', 'sold_quantity' => 'decimal:2', 'purchase_price' => 'decimal:2', 'selling_price' => 'decimal:2'];
+        return ['quantity' => 'decimal:2', 'sold_quantity' => 'decimal:2', 'pack_size' => 'decimal:3', 'purchase_price' => 'decimal:2', 'selling_price' => 'decimal:2'];
+    }
+
+    public function getPackLabelAttribute(): ?string
+    {
+        if ($this->pack_size === null && blank($this->unit)) {
+            return null;
+        }
+
+        $size = $this->pack_size === null ? '' : rtrim(rtrim(number_format((float) $this->pack_size, 3, '.', ''), '0'), '.');
+
+        return $size.$this->unit;
     }
 
     public function getRemainingQuantityAttribute(): float

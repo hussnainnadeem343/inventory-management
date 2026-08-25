@@ -9,8 +9,8 @@
                 <option value="">Select Category</option>@foreach($categories as $category)<option value="{{$category->id}}" @selected(old('category_id',$item->category_id)==$category->id)>{{$category->name}}</option>@endforeach
             </select></div>
         <div class="col-md-4"><label class="form-label">Initial Quantity *</label><input class="form-control" type="number" step="0.01" min="{{$item->exists?$item->sold_quantity:0}}" name="quantity" value="{{old('quantity',$item->quantity??0)}}" required><div class="form-text">@if($item->exists)Cannot be less than sold quantity ({{number_format($item->sold_quantity,2)}}).@else Original stocked quantity.@endif</div></div>
-        <div class="col-md-4"><label class="form-label">Unit</label><input class="form-control @error('unit') is-invalid @enderror" name="unit" value="{{old('unit',$item->unit)}}"></div>
-        <!-- <div class="col-md-4"><label class="form-label">Unit *</label><select class="form-select" name="unit" required>@foreach($units as $unit)<option @selected(old('unit',$item->unit)===$unit)>{{$unit}}</option>@endforeach</select></div> -->
+        <div class="col-md-2"><label class="form-label">Pack Size</label><input class="form-control @error('pack_size') is-invalid @enderror" type="number" step="0.001" min="0.001" name="pack_size" value="{{old('pack_size',$item->pack_size)}}" placeholder="400"></div>
+        <div class="col-md-2"><label class="form-label">Measure Unit</label><input class="form-control @error('unit') is-invalid @enderror" name="unit" value="{{old('unit',$item->unit)}}" placeholder="ml" maxlength="20"></div>
         <div class="col-md-4"><label class="form-label">Status *</label><select class="form-select" name="status">
                 <option value="active" @selected(old('status',$item->status??'active')==='active')>Active</option>
                 <option value="inactive" @selected(old('status',$item->status)==='inactive')>Inactive</option>

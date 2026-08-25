@@ -9,6 +9,8 @@ class InventoryTransaction extends Model
 {
     public const TYPE_SALE = 'SALE';
 
+    public const TYPE_STOCK_IN = 'STOCK_IN';
+
     protected $fillable = ['inventory_item_id', 'transaction_type', 'quantity', 'created_by'];
 
     protected function casts(): array

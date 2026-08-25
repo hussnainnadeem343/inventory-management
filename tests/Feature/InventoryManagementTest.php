@@ -68,6 +68,23 @@ class InventoryManagementTest extends TestCase
         $this->assertDatabaseHas('inventory_items', ['sku' => 'TV-1', 'created_by' => $user->id, 'purchase_price' => null, 'selling_price' => null]);
     }
 
+    public function test_optional_pack_size_and_measure_unit_are_saved_and_displayed_together(): void
+    {
+        $user = $this->admin();
+        $brand = Brand::create(['name' => 'Drink Brand', 'status' => 'active', 'created_by' => $user->id]);
+        $category = Category::create(['name' => 'Drinks', 'status' => 'active', 'created_by' => $user->id]);
+        $payload = ['item_name' => 'Juice', 'sku' => 'JUICE-400', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 10, 'pack_size' => 400, 'unit' => 'ml', 'purchase_price' => null, 'selling_price' => null, 'status' => 'active'];
+
+        $this->actingAs($user)->post('/inventory', $payload)->assertRedirect('/inventory');
+        $item = InventoryItem::where('sku', 'JUICE-400')->firstOrFail();
+        $this->assertSame('400ml', $item->pack_label);
+        $this->actingAs($user)->get('/inventory')->assertOk()->assertSee('400ml');
+        $this->assertContains('400ml', (new InventoryExport([], true))->map($item));
+
+        $this->actingAs($user)->put('/inventory/'.$item->id, [...$payload, 'pack_size' => null, 'unit' => null])->assertRedirect('/inventory');
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'pack_size' => null, 'unit' => null]);
+    }
+
     public function test_normal_user_cannot_submit_prices(): void
     {
         $user = User::factory()->create(['role' => 'user', 'status' => 'active']);
@@ -87,6 +104,20 @@ class InventoryManagementTest extends TestCase
         $this->actingAs($user)->post("/inventory/{$item->id}/sell", ['sell_quantity' => 30])->assertSessionHas('success');
         $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'quantity' => 50, 'sold_quantity' => 30]);
         $this->assertDatabaseHas('inventory_transactions', ['inventory_item_id' => $item->id, 'transaction_type' => 'SALE', 'quantity' => 30, 'created_by' => $user->id]);
+    }
+
+    public function test_add_stock_increases_initial_quantity_and_creates_history(): void
+    {
+        $user = $this->admin();
+        $brand = Brand::create(['name' => 'Stock Brand', 'status' => 'active', 'created_by' => $user->id]);
+        $category = Category::create(['name' => 'Stock Category', 'status' => 'active', 'created_by' => $user->id]);
+        $item = InventoryItem::create(['item_name' => 'Stock Item', 'sku' => 'STOCK-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 50, 'unit' => 'pcs', 'status' => 'active', 'created_by' => $user->id]);
+        $item->forceFill(['sold_quantity' => 30])->save();
+
+        $this->actingAs($user)->post("/inventory/{$item->id}/add-stock", ['sell_quantity' => 20])->assertSessionHas('success');
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'quantity' => 70, 'sold_quantity' => 30]);
+        $this->assertDatabaseHas('inventory_transactions', ['inventory_item_id' => $item->id, 'transaction_type' => 'STOCK_IN', 'quantity' => 20, 'created_by' => $user->id]);
+        $this->assertSame(40.0, $item->fresh()->remaining_quantity);
     }
 
     public function test_sale_cannot_exceed_remaining_stock(): void

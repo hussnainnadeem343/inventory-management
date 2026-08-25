@@ -18,6 +18,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::get('/inventory/export', [InventoryController::class, 'export'])->name('inventory.export');
     Route::post('/inventory/{inventory}/sell', [InventoryController::class, 'sell'])->name('inventory.sell');
+    Route::post('/inventory/{inventory}/add-stock', [InventoryController::class, 'addStock'])->name('inventory.add-stock');
     Route::resource('inventory', InventoryController::class)->except('show');
     Route::resource('brands', BrandController::class)->except(['show', 'destroy']);
     Route::resource('categories', CategoryController::class)->except(['show', 'destroy']);
