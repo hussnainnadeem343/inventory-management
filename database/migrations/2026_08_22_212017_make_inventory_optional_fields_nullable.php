@@ -10,13 +10,16 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::table('inventory_items', function (Blueprint $table) {
-        $table->string('sku')->nullable()->change();
-        $table->string('unit')->nullable()->change();
-        $table->decimal('selling_price', 12, 2)->nullable()->change();
-    });
-}
+    {
+        if (! Schema::hasTable('inventory_items')) {
+            return;
+        }
+        Schema::table('inventory_items', function (Blueprint $table) {
+            $table->string('sku')->nullable()->change();
+            $table->string('unit')->nullable()->change();
+            $table->decimal('selling_price', 12, 2)->nullable()->change();
+        });
+    }
 
     /**
      * Reverse the migrations.
