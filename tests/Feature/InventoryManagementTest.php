@@ -182,4 +182,30 @@ class InventoryManagementTest extends TestCase
         $this->actingAs($admin)->delete("/users/$admin->id")->assertSessionHas('error');
         $this->assertDatabaseHas('users', ['id' => $admin->id]);
     }
+
+    public function test_product_creation_starts_with_zero_stock_and_form_has_no_stock_fields(): void
+    {
+        $admin = $this->admin();
+        $brand = Brand::create(['name' => 'Product Brand', 'status' => 'active', 'created_by' => $admin->id]);
+        $category = Category::create(['name' => 'Product Category', 'status' => 'active', 'created_by' => $admin->id]);
+
+        $this->actingAs($admin)->get('/products/create')->assertOk()->assertSee('Save Product')->assertDontSee('Initial Quantity')->assertDontSee('Add Stock')->assertDontSee('Sell Quantity');
+        $this->actingAs($admin)->post('/products', ['item_name' => 'New Product', 'sku' => 'PRODUCT-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'pack_size' => 400, 'unit' => 'ml', 'purchase_price' => 100, 'selling_price' => 120, 'status' => 'active'])->assertRedirect('/products');
+        $this->assertDatabaseHas('inventory_items', ['sku' => 'PRODUCT-1', 'quantity' => 0, 'sold_quantity' => 0, 'created_by' => $admin->id]);
+    }
+
+    public function test_stock_management_flow_and_history_are_separate_from_product(): void
+    {
+        $admin = $this->admin();
+        $brand = Brand::create(['name' => 'Flow Brand', 'status' => 'active', 'created_by' => $admin->id]);
+        $category = Category::create(['name' => 'Flow Category', 'status' => 'active', 'created_by' => $admin->id]);
+        $product = InventoryItem::create(['item_name' => 'Coke', 'sku' => 'FLOW-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 0, 'sold_quantity' => 0, 'unit' => 'ml', 'status' => 'active', 'created_by' => $admin->id]);
+
+        $this->actingAs($admin)->post("/stock/{$product->id}/add", ['sell_quantity' => 50])->assertRedirect('/stock');
+        $this->actingAs($admin)->post("/stock/{$product->id}/sell", ['sell_quantity' => 30])->assertRedirect('/stock');
+        $this->assertDatabaseHas('inventory_items', ['id' => $product->id, 'quantity' => 50, 'sold_quantity' => 30]);
+        $this->actingAs($admin)->get("/stock/{$product->id}/history")->assertOk()->assertSee('STOCK IN')->assertSee('SALE');
+        $this->actingAs($admin)->post("/stock/{$product->id}/sell", ['sell_quantity' => 21])->assertSessionHasErrors('sell_quantity');
+        $this->assertDatabaseHas('inventory_items', ['id' => $product->id, 'quantity' => 50, 'sold_quantity' => 30]);
+    }
 }
