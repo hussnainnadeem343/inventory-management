@@ -14,13 +14,22 @@ class InventoryItem extends Model
 
     public const UNITS = ['PCS', 'BOX', 'KG', 'GRAM', 'LITER', 'ML', 'PACK', 'DOZEN'];
 
-    protected $fillable = ['item_name', 'sku', 'brand_id', 'category_id', 'quantity', 'pack_size', 'unit', 'purchase_price', 'selling_price', 'supplier', 'status', 'created_by'];
+    protected $fillable = ['item_name', 'sku', 'brand_id', 'category_id', 'quantity', 'yk_stock', 'mk_stock', 'pack_size', 'unit', 'purchase_price', 'selling_price', 'supplier', 'status', 'created_by'];
 
-    protected $appends = ['remaining_quantity'];
+    protected $appends = ['total_stock', 'remaining_quantity'];
 
     protected function casts(): array
     {
-        return ['quantity' => 'decimal:2', 'sold_quantity' => 'decimal:2', 'pack_size' => 'decimal:3', 'purchase_price' => 'decimal:2', 'selling_price' => 'decimal:2'];
+        return ['quantity' => 'decimal:2', 'yk_stock' => 'decimal:2', 'mk_stock' => 'decimal:2', 'sold_quantity' => 'decimal:2', 'pack_size' => 'decimal:3', 'purchase_price' => 'decimal:2', 'selling_price' => 'decimal:2'];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (InventoryItem $item): void {
+            if (! $item->isDirty('yk_stock') && ! $item->isDirty('mk_stock') && (float) $item->quantity > 0) {
+                $item->yk_stock = $item->quantity;
+            }
+        });
     }
 
     public function getPackLabelAttribute(): ?string
@@ -34,9 +43,14 @@ class InventoryItem extends Model
         return $size.$this->unit;
     }
 
+    public function getTotalStockAttribute(): float
+    {
+        return (float) $this->yk_stock + (float) $this->mk_stock;
+    }
+
     public function getRemainingQuantityAttribute(): float
     {
-        return max(0, (float) $this->quantity - (float) $this->sold_quantity);
+        return max(0, $this->total_stock);
     }
 
     public function scopeFiltered(Builder $query, array $filters): Builder

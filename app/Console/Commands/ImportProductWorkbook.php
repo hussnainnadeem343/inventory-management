@@ -106,6 +106,8 @@ class ImportProductWorkbook extends Command
                         'brand_id' => $brand->id,
                         'category_id' => $category->id,
                         'quantity' => 0,
+                        'yk_stock' => 0,
+                        'mk_stock' => 0,
                         'sold_quantity' => 0,
                         'pack_size' => $packSize,
                         'unit' => $unit,
@@ -132,6 +134,7 @@ class ImportProductWorkbook extends Command
                         }
 
                         $product->update(['quantity' => $quantity]);
+                        $product->update(['yk_stock' => $quantity, 'mk_stock' => 0]);
                         InventoryTransaction::create([
                             'inventory_item_id' => $product->id,
                             'transaction_type' => InventoryTransaction::TYPE_STOCK_IN,

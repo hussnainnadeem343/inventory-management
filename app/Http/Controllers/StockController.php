@@ -40,8 +40,10 @@ class StockController extends Controller
     public function add(SellInventoryRequest $request, InventoryItem $product): RedirectResponse
     {
         $quantity = (int) $request->validated('sell_quantity');
-        DB::transaction(function () use ($product, $quantity, $request): void {
+        $source = $request->validated('stock_source');
+        DB::transaction(function () use ($product, $quantity, $source, $request): void {
             $locked = InventoryItem::query()->lockForUpdate()->findOrFail($product->id);
+            $locked->increment($source, $quantity);
             $locked->increment('quantity', $quantity);
             InventoryTransaction::create(['inventory_item_id' => $locked->id, 'transaction_type' => InventoryTransaction::TYPE_STOCK_IN, 'quantity' => $quantity, 'created_by' => $request->user()->id]);
         });
@@ -52,11 +54,16 @@ class StockController extends Controller
     public function sell(SellInventoryRequest $request, InventoryItem $product): RedirectResponse
     {
         $quantity = (int) $request->validated('sell_quantity');
-        DB::transaction(function () use ($product, $quantity, $request): void {
+        $source = $request->validated('stock_source');
+        DB::transaction(function () use ($product, $quantity, $source, $request): void {
             $locked = InventoryItem::query()->lockForUpdate()->findOrFail($product->id);
-            if ($quantity > $locked->remaining_quantity) {
-                throw ValidationException::withMessages(['sell_quantity' => 'Insufficient stock. Only '.number_format($locked->remaining_quantity, 2).' items are available.']);
+            $available = (float) $locked->{$source};
+            if ($quantity > $available) {
+                $label = $source === 'yk_stock' ? 'YK Stock' : 'MK Stock';
+                throw ValidationException::withMessages(['sell_quantity' => 'Insufficient '.$label.'. Only '.number_format($available, 2).' items are available.']);
             }
+            $locked->decrement($source, $quantity);
+            $locked->decrement('quantity', $quantity);
             $locked->increment('sold_quantity', $quantity);
             InventoryTransaction::create(['inventory_item_id' => $locked->id, 'transaction_type' => InventoryTransaction::TYPE_SALE, 'quantity' => $quantity, 'created_by' => $request->user()->id]);
         });
