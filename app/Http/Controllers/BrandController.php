@@ -12,9 +12,22 @@ class BrandController extends Controller
 {
     public function index(Request $request): View
     {
+        $filters = [
+            'search' => trim((string) $request->query('search')),
+            'status' => $request->query('status'),
+        ];
         $perPage = in_array((int) $request->query('per_page', 10), [10, 20, 30, 50, 100], true) ? (int) $request->query('per_page', 10) : 10;
+        $brands = Brand::with('creator')
+            ->filtered($filters)
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
 
-        return view('brands.index', ['brands' => Brand::with('creator')->latest()->paginate($perPage)->withQueryString(), 'perPage' => $perPage]);
+        return view('brands.index', [
+            'brands' => $brands,
+            'filters' => $filters,
+            'perPage' => $perPage,
+        ]);
     }
 
     public function create(): View

@@ -19,7 +19,7 @@ class InventoryExport implements FromQuery, WithHeadings, WithMapping
 
     public function headings(): array
     {
-        $headings = ['ID', 'Product', 'SKU', 'Brand', 'Category', 'Stock In', 'Sold Quantity', 'Remaining Quantity', 'Pack Size'];
+        $headings = ['ID', 'Product', 'SKU', 'Brand', 'Category', 'Total Stock', 'YK Stock', 'MK Stock', 'Sold Quantity', 'Remaining Quantity', 'Pack Size'];
         if ($this->includePrices) {
             array_push($headings, 'Purchase Price', 'Selling Price');
         }
@@ -29,7 +29,7 @@ class InventoryExport implements FromQuery, WithHeadings, WithMapping
 
     public function map($item): array
     {
-        $row = [$item->id, $item->item_name, $item->sku, $item->brand->name, $item->category->name, $item->quantity, $item->sold_quantity, $item->remaining_quantity, $item->pack_label];
+        $row = [$item->id, $item->item_name, $item->sku, $item->brand->name, $item->category->name, $item->total_stock, $item->yk_stock, $item->mk_stock, $item->sold_quantity, $item->remaining_quantity, $item->pack_label];
         if ($this->includePrices) {
             array_push($row, $item->purchase_price, $item->selling_price);
         }

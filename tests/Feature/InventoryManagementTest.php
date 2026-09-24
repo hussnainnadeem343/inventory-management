@@ -101,8 +101,8 @@ class InventoryManagementTest extends TestCase
         $category = Category::create(['name' => 'Beverages', 'status' => 'active', 'created_by' => $user->id]);
         $item = InventoryItem::create(['item_name' => 'Coke', 'sku' => 'COKE-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 50, 'unit' => 'PCS', 'status' => 'active', 'created_by' => $user->id]);
 
-        $this->actingAs($user)->post("/inventory/{$item->id}/sell", ['sell_quantity' => 30])->assertSessionHas('success');
-        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'quantity' => 50, 'sold_quantity' => 30]);
+        $this->actingAs($user)->post("/inventory/{$item->id}/sell", ['sell_quantity' => 30, 'stock_source' => 'yk_stock'])->assertSessionHas('success');
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'quantity' => 20, 'yk_stock' => 20, 'mk_stock' => 0, 'sold_quantity' => 30]);
         $this->assertDatabaseHas('inventory_transactions', ['inventory_item_id' => $item->id, 'transaction_type' => 'SALE', 'quantity' => 30, 'created_by' => $user->id]);
     }
 
@@ -112,10 +112,10 @@ class InventoryManagementTest extends TestCase
         $brand = Brand::create(['name' => 'Stock Brand', 'status' => 'active', 'created_by' => $user->id]);
         $category = Category::create(['name' => 'Stock Category', 'status' => 'active', 'created_by' => $user->id]);
         $item = InventoryItem::create(['item_name' => 'Stock Item', 'sku' => 'STOCK-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 50, 'unit' => 'pcs', 'status' => 'active', 'created_by' => $user->id]);
-        $item->forceFill(['sold_quantity' => 30])->save();
+        $item->forceFill(['quantity' => 20, 'yk_stock' => 20, 'sold_quantity' => 30])->save();
 
-        $this->actingAs($user)->post("/inventory/{$item->id}/add-stock", ['sell_quantity' => 20])->assertSessionHas('success');
-        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'quantity' => 70, 'sold_quantity' => 30]);
+        $this->actingAs($user)->post("/inventory/{$item->id}/add-stock", ['sell_quantity' => 20, 'stock_source' => 'mk_stock'])->assertSessionHas('success');
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'quantity' => 40, 'yk_stock' => 20, 'mk_stock' => 20, 'sold_quantity' => 30]);
         $this->assertDatabaseHas('inventory_transactions', ['inventory_item_id' => $item->id, 'transaction_type' => 'STOCK_IN', 'quantity' => 20, 'created_by' => $user->id]);
         $this->assertSame(40.0, $item->fresh()->remaining_quantity);
     }
@@ -126,9 +126,9 @@ class InventoryManagementTest extends TestCase
         $brand = Brand::create(['name' => 'Brand', 'status' => 'active', 'created_by' => $user->id]);
         $category = Category::create(['name' => 'Category', 'status' => 'active', 'created_by' => $user->id]);
         $item = InventoryItem::create(['item_name' => 'Item', 'sku' => 'ITEM-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 10, 'unit' => 'PCS', 'status' => 'active', 'created_by' => $user->id]);
-        $item->forceFill(['sold_quantity' => 8])->save();
+        $item->forceFill(['quantity' => 2, 'yk_stock' => 2, 'sold_quantity' => 8])->save();
 
-        $this->actingAs($user)->post("/inventory/{$item->id}/sell", ['sell_quantity' => 3])->assertSessionHasErrors('sell_quantity');
+        $this->actingAs($user)->post("/inventory/{$item->id}/sell", ['sell_quantity' => 3, 'stock_source' => 'yk_stock'])->assertSessionHasErrors('sell_quantity');
         $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'sold_quantity' => 8]);
     }
 
@@ -201,11 +201,80 @@ class InventoryManagementTest extends TestCase
         $category = Category::create(['name' => 'Flow Category', 'status' => 'active', 'created_by' => $admin->id]);
         $product = InventoryItem::create(['item_name' => 'Coke', 'sku' => 'FLOW-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 0, 'sold_quantity' => 0, 'unit' => 'ml', 'status' => 'active', 'created_by' => $admin->id]);
 
-        $this->actingAs($admin)->post("/stock/{$product->id}/add", ['sell_quantity' => 50])->assertRedirect('/stock');
-        $this->actingAs($admin)->post("/stock/{$product->id}/sell", ['sell_quantity' => 30])->assertRedirect('/stock');
-        $this->assertDatabaseHas('inventory_items', ['id' => $product->id, 'quantity' => 50, 'sold_quantity' => 30]);
+        $this->actingAs($admin)->post("/stock/{$product->id}/add", ['sell_quantity' => 50, 'stock_source' => 'mk_stock'])->assertRedirect('/stock');
+        $this->actingAs($admin)->post("/stock/{$product->id}/sell", ['sell_quantity' => 30, 'stock_source' => 'mk_stock'])->assertRedirect('/stock');
+        $this->assertDatabaseHas('inventory_items', ['id' => $product->id, 'quantity' => 20, 'yk_stock' => 0, 'mk_stock' => 20, 'sold_quantity' => 30]);
         $this->actingAs($admin)->get("/stock/{$product->id}/history")->assertOk()->assertSee('STOCK IN')->assertSee('SALE');
-        $this->actingAs($admin)->post("/stock/{$product->id}/sell", ['sell_quantity' => 21])->assertSessionHasErrors('sell_quantity');
-        $this->assertDatabaseHas('inventory_items', ['id' => $product->id, 'quantity' => 50, 'sold_quantity' => 30]);
+        $this->actingAs($admin)->post("/stock/{$product->id}/sell", ['sell_quantity' => 21, 'stock_source' => 'mk_stock'])->assertSessionHasErrors('sell_quantity');
+        $this->assertDatabaseHas('inventory_items', ['id' => $product->id, 'quantity' => 20, 'mk_stock' => 20, 'sold_quantity' => 30]);
+    }
+
+    public function test_brand_search_and_status_filters_work(): void
+    {
+        $admin = $this->admin();
+        Brand::create(['name' => 'Apple', 'description' => 'iPhone maker', 'status' => 'active', 'created_by' => $admin->id]);
+        Brand::create(['name' => 'Apricot Tech', 'description' => 'Computers', 'status' => 'inactive', 'created_by' => $admin->id]);
+        Brand::create(['name' => 'Samsung', 'description' => 'Android maker', 'status' => 'active', 'created_by' => $admin->id]);
+
+        $this->actingAs($admin)->get('/brands')
+            ->assertOk()
+            ->assertSee('Apple')
+            ->assertSee('Apricot Tech')
+            ->assertSee('Samsung')
+            ->assertSee('name="search"', false)
+            ->assertSee('name="status"', false);
+
+        $this->actingAs($admin)->get('/brands?search=phone')
+            ->assertOk()
+            ->assertSee('Apple')
+            ->assertDontSee('Apricot Tech')
+            ->assertDontSee('Samsung');
+
+        $this->actingAs($admin)->get('/brands?search=maker&status=active')
+            ->assertOk()
+            ->assertSee('Apple')
+            ->assertSee('Samsung')
+            ->assertDontSee('Apricot Tech');
+
+        $this->actingAs($admin)->get('/brands?status=inactive')
+            ->assertOk()
+            ->assertSee('Apricot Tech')
+            ->assertDontSee('Apple')
+            ->assertDontSee('Samsung');
+    }
+
+    public function test_category_search_and_status_filters_work(): void
+    {
+        $admin = $this->admin();
+        Category::create(['name' => 'Smartphones', 'description' => 'Mobile handheld devices', 'status' => 'active', 'created_by' => $admin->id]);
+        Category::create(['name' => 'Accessories', 'description' => 'Mobile chargers and cables', 'status' => 'inactive', 'created_by' => $admin->id]);
+        Category::create(['name' => 'Laptops', 'description' => 'Portable computers', 'status' => 'active', 'created_by' => $admin->id]);
+
+        $this->actingAs($admin)->get('/categories')
+            ->assertOk()
+            ->assertSee('Smartphones')
+            ->assertSee('Accessories')
+            ->assertSee('Laptops')
+            ->assertSee('name="search"', false)
+            ->assertSee('name="status"', false);
+
+        $this->actingAs($admin)->get('/categories?search=chargers')
+            ->assertOk()
+            ->assertSee('Accessories')
+            ->assertDontSee('Smartphones')
+            ->assertDontSee('Laptops');
+
+        $this->actingAs($admin)->get('/categories?search=Mobile&status=active')
+            ->assertOk()
+            ->assertSee('Smartphones')
+            ->assertDontSee('Accessories')
+            ->assertDontSee('Laptops');
+
+        $this->actingAs($admin)->get('/categories?status=inactive')
+            ->assertOk()
+            ->assertSee('Accessories')
+            ->assertDontSee('Smartphones')
+            ->assertDontSee('Laptops');
     }
 }
+
