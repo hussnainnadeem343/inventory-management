@@ -12,9 +12,22 @@ class CategoryController extends Controller
 {
     public function index(Request $request): View
     {
+        $filters = [
+            'search' => trim((string) $request->query('search')),
+            'status' => $request->query('status'),
+        ];
         $perPage = in_array((int) $request->query('per_page', 10), [10, 20, 30, 50, 100], true) ? (int) $request->query('per_page', 10) : 10;
+        $categories = Category::with('creator')
+            ->filtered($filters)
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
 
-        return view('categories.index', ['categories' => Category::with('creator')->latest()->paginate($perPage)->withQueryString(), 'perPage' => $perPage]);
+        return view('categories.index', [
+            'categories' => $categories,
+            'filters' => $filters,
+            'perPage' => $perPage,
+        ]);
     }
 
     public function create(): View

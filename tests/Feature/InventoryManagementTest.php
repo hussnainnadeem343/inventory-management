@@ -208,4 +208,73 @@ class InventoryManagementTest extends TestCase
         $this->actingAs($admin)->post("/stock/{$product->id}/sell", ['sell_quantity' => 21, 'stock_source' => 'mk_stock'])->assertSessionHasErrors('sell_quantity');
         $this->assertDatabaseHas('inventory_items', ['id' => $product->id, 'quantity' => 20, 'mk_stock' => 20, 'sold_quantity' => 30]);
     }
+
+    public function test_brand_search_and_status_filters_work(): void
+    {
+        $admin = $this->admin();
+        Brand::create(['name' => 'Apple', 'description' => 'iPhone maker', 'status' => 'active', 'created_by' => $admin->id]);
+        Brand::create(['name' => 'Apricot Tech', 'description' => 'Computers', 'status' => 'inactive', 'created_by' => $admin->id]);
+        Brand::create(['name' => 'Samsung', 'description' => 'Android maker', 'status' => 'active', 'created_by' => $admin->id]);
+
+        $this->actingAs($admin)->get('/brands')
+            ->assertOk()
+            ->assertSee('Apple')
+            ->assertSee('Apricot Tech')
+            ->assertSee('Samsung')
+            ->assertSee('name="search"', false)
+            ->assertSee('name="status"', false);
+
+        $this->actingAs($admin)->get('/brands?search=phone')
+            ->assertOk()
+            ->assertSee('Apple')
+            ->assertDontSee('Apricot Tech')
+            ->assertDontSee('Samsung');
+
+        $this->actingAs($admin)->get('/brands?search=maker&status=active')
+            ->assertOk()
+            ->assertSee('Apple')
+            ->assertSee('Samsung')
+            ->assertDontSee('Apricot Tech');
+
+        $this->actingAs($admin)->get('/brands?status=inactive')
+            ->assertOk()
+            ->assertSee('Apricot Tech')
+            ->assertDontSee('Apple')
+            ->assertDontSee('Samsung');
+    }
+
+    public function test_category_search_and_status_filters_work(): void
+    {
+        $admin = $this->admin();
+        Category::create(['name' => 'Smartphones', 'description' => 'Mobile handheld devices', 'status' => 'active', 'created_by' => $admin->id]);
+        Category::create(['name' => 'Accessories', 'description' => 'Mobile chargers and cables', 'status' => 'inactive', 'created_by' => $admin->id]);
+        Category::create(['name' => 'Laptops', 'description' => 'Portable computers', 'status' => 'active', 'created_by' => $admin->id]);
+
+        $this->actingAs($admin)->get('/categories')
+            ->assertOk()
+            ->assertSee('Smartphones')
+            ->assertSee('Accessories')
+            ->assertSee('Laptops')
+            ->assertSee('name="search"', false)
+            ->assertSee('name="status"', false);
+
+        $this->actingAs($admin)->get('/categories?search=chargers')
+            ->assertOk()
+            ->assertSee('Accessories')
+            ->assertDontSee('Smartphones')
+            ->assertDontSee('Laptops');
+
+        $this->actingAs($admin)->get('/categories?search=Mobile&status=active')
+            ->assertOk()
+            ->assertSee('Smartphones')
+            ->assertDontSee('Accessories')
+            ->assertDontSee('Laptops');
+
+        $this->actingAs($admin)->get('/categories?status=inactive')
+            ->assertOk()
+            ->assertSee('Accessories')
+            ->assertDontSee('Smartphones')
+            ->assertDontSee('Laptops');
+    }
 }
+
