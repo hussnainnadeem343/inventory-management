@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,22 +15,45 @@ class InventoryItem extends Model
 
     public const UNITS = ['PCS', 'BOX', 'KG', 'GRAM', 'LITER', 'ML', 'PACK', 'DOZEN'];
 
-    protected $fillable = ['item_name', 'sku', 'brand_id', 'category_id', 'quantity', 'yk_stock', 'mk_stock', 'pack_size', 'unit', 'purchase_price', 'selling_price', 'supplier', 'status', 'created_by'];
+    protected $fillable = [
+        'shop_id',
+        'item_name',
+        'sku',
+        'brand_id',
+        'category_id',
+        'expiry_date',
+        'initial_quantity',
+        'quantity',
+        'sold_quantity',
+        'alert_quantity',
+        'pack_size',
+        'unit',
+        'purchase_price',
+        'selling_price',
+        'supplier',
+        'status',
+        'created_by',
+    ];
 
-    protected $appends = ['total_stock', 'remaining_quantity'];
+    protected $appends = [
+        'remaining_quantity',
+        'total_stock',
+        'is_low_stock',
+        'expiry_status',
+    ];
 
     protected function casts(): array
     {
-        return ['quantity' => 'decimal:2', 'yk_stock' => 'decimal:2', 'mk_stock' => 'decimal:2', 'sold_quantity' => 'decimal:2', 'pack_size' => 'decimal:3', 'purchase_price' => 'decimal:2', 'selling_price' => 'decimal:2'];
-    }
-
-    protected static function booted(): void
-    {
-        static::creating(function (InventoryItem $item): void {
-            if (! $item->isDirty('yk_stock') && ! $item->isDirty('mk_stock') && (float) $item->quantity > 0) {
-                $item->yk_stock = $item->quantity;
-            }
-        });
+        return [
+            'expiry_date' => 'date',
+            'initial_quantity' => 'decimal:2',
+            'quantity' => 'decimal:2',
+            'sold_quantity' => 'decimal:2',
+            'alert_quantity' => 'decimal:2',
+            'pack_size' => 'decimal:3',
+            'purchase_price' => 'decimal:2',
+            'selling_price' => 'decimal:2',
+        ];
     }
 
     public function getPackLabelAttribute(): ?string
@@ -45,12 +69,43 @@ class InventoryItem extends Model
 
     public function getTotalStockAttribute(): float
     {
-        return (float) $this->yk_stock + (float) $this->mk_stock;
+        return (float) $this->quantity;
     }
 
     public function getRemainingQuantityAttribute(): float
     {
-        return max(0, $this->total_stock);
+        return max(0, (float) $this->quantity);
+    }
+
+    public function getIsLowStockAttribute(): bool
+    {
+        $threshold = (float) ($this->alert_quantity ?? 5);
+
+        return (float) $this->quantity > 0 && (float) $this->quantity <= $threshold;
+    }
+
+    public function getExpiryStatusAttribute(): string
+    {
+        if (! $this->expiry_date) {
+            return 'none';
+        }
+
+        if ($this->expiry_date->isPast()) {
+            return 'expired';
+        }
+
+        if ($this->expiry_date->diffInDays(now()) <= 30) {
+            return 'expiring_soon';
+        }
+
+        return 'valid';
+    }
+
+    public function scopeForShop(Builder $query, ?int $shopId = null): Builder
+    {
+        $shopId = $shopId ?? auth()->user()?->shop_id;
+
+        return $shopId ? $query->where('shop_id', $shopId) : $query;
     }
 
     public function scopeFiltered(Builder $query, array $filters): Builder
@@ -60,6 +115,11 @@ class InventoryItem extends Model
             ->when($filters['brand_id'] ?? null, fn (Builder $q, $brandId) => $q->where('brand_id', $brandId))
             ->when($filters['category_id'] ?? null, fn (Builder $q, $categoryId) => $q->where('category_id', $categoryId))
             ->when($filters['date'] ?? null, fn (Builder $q, $date) => $q->whereDate('created_at', $date));
+    }
+
+    public function shop(): BelongsTo
+    {
+        return $this->belongsTo(Shop::class);
     }
 
     public function brand(): BelongsTo

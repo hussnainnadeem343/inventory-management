@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'super_admin' => EnsureSuperAdmin::class,
+            'shop_admin' => \App\Http\Middleware\EnsureShopAdmin::class,
             'active' => EnsureUserIsActive::class,
         ]);
     })

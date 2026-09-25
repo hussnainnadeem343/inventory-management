@@ -26,15 +26,25 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/stock/{product}/sell', [StockController::class, 'sellForm'])->name('stock.sell-form');
     Route::post('/stock/{product}/sell', [StockController::class, 'sell'])->name('stock.sell');
     Route::get('/stock/{product}/history', [StockController::class, 'history'])->name('stock.history');
+    Route::post('/stock/{product}/return', [StockController::class, 'customerReturn'])->name('stock.return');
+    Route::post('/stock/{product}/damage', [StockController::class, 'damageLoss'])->name('stock.damage');
+    Route::post('/stock/{product}/exchange', [StockController::class, 'exchange'])->name('stock.exchange');
     Route::get('/inventory/export', [InventoryController::class, 'export'])->name('inventory.export');
     Route::post('/inventory/{inventory}/sell', [InventoryController::class, 'sell'])->name('inventory.sell');
     Route::post('/inventory/{inventory}/add-stock', [InventoryController::class, 'addStock'])->name('inventory.add-stock');
     Route::resource('inventory', InventoryController::class)->except('show');
-    Route::resource('brands', BrandController::class)->except(['show', 'destroy']);
-    Route::resource('categories', CategoryController::class)->except(['show', 'destroy']);
-    Route::middleware('super_admin')->group(function () {
-        Route::delete('/brands/{brand}', [BrandController::class, 'destroy'])->name('brands.destroy');
-        Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+    Route::resource('brands', BrandController::class)->except('show');
+    Route::resource('categories', CategoryController::class)->except('show');
+
+    Route::get('/reports/sales', [\App\Http\Controllers\ReportController::class, 'sales'])->name('reports.sales');
+    Route::get('/reports/stock', [\App\Http\Controllers\ReportController::class, 'stockMovement'])->name('reports.stock');
+    Route::get('/reports/expiry', [\App\Http\Controllers\ReportController::class, 'expiry'])->name('reports.expiry');
+
+    Route::middleware('shop_admin')->group(function () {
         Route::resource('users', UserController::class)->except('show');
+    });
+
+    Route::middleware('super_admin')->group(function () {
+        Route::resource('shops', \App\Http\Controllers\ShopController::class)->except('show');
     });
 });

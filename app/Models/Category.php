@@ -12,7 +12,14 @@ class Category extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['name', 'description', 'status', 'created_by'];
+    protected $fillable = ['shop_id', 'name', 'description', 'status', 'created_by'];
+
+    public function scopeForShop(Builder $query, ?int $shopId = null): Builder
+    {
+        $shopId = $shopId ?? auth()->user()?->shop_id;
+
+        return $shopId ? $query->where('shop_id', $shopId) : $query;
+    }
 
     public function scopeFiltered(Builder $query, array $filters): Builder
     {
@@ -26,6 +33,11 @@ class Category extends Model
             ->when($filters['status'] ?? null, function (Builder $q, string $status) {
                 $q->where('status', $status);
             });
+    }
+
+    public function shop(): BelongsTo
+    {
+        return $this->belongsTo(Shop::class);
     }
 
     public function creator(): BelongsTo

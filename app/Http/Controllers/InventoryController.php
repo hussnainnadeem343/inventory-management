@@ -36,8 +36,8 @@ class InventoryController extends Controller
     public function store(InventoryRequest $request): RedirectResponse
     {
         $item = new InventoryItem($request->validated());
-        $item->yk_stock = $item->quantity;
-        $item->mk_stock = 0;
+        $item->shop_id = $request->user()->shop_id ?? 1;
+        $item->initial_quantity = $item->quantity;
         $item->created_by = $request->user()->id;
         $item->save();
 
@@ -46,19 +46,26 @@ class InventoryController extends Controller
 
     public function sell(SellInventoryRequest $request, InventoryItem $inventory): RedirectResponse
     {
-        $quantity = (int) $request->validated('sell_quantity');
-        $source = $request->validated('stock_source');
-        $remaining = DB::transaction(function () use ($inventory, $quantity, $source, $request): float {
+        $quantity = (float) $request->validated('sell_quantity');
+        $remaining = DB::transaction(function () use ($inventory, $quantity, $request): float {
             $item = InventoryItem::query()->lockForUpdate()->findOrFail($inventory->id);
-            $available = (float) $item->{$source};
+            $available = (float) $item->quantity;
             if ($quantity > $available) {
-                $label = $source === 'yk_stock' ? 'YK Stock' : 'MK Stock';
-                throw ValidationException::withMessages(['sell_quantity' => 'Insufficient '.$label.'. Only '.number_format($available, 2).' items are available.']);
+                throw ValidationException::withMessages(['sell_quantity' => 'Insufficient stock. Only '.number_format($available, 2).' items are available.']);
             }
-            $item->decrement($source, $quantity);
             $item->decrement('quantity', $quantity);
             $item->increment('sold_quantity', $quantity);
-            InventoryTransaction::create(['inventory_item_id' => $item->id, 'transaction_type' => InventoryTransaction::TYPE_SALE, 'quantity' => $quantity, 'created_by' => $request->user()->id]);
+            InventoryTransaction::create([
+                'shop_id' => $item->shop_id,
+                'inventory_item_id' => $item->id,
+                'transaction_type' => InventoryTransaction::TYPE_SALE,
+                'quantity' => $quantity,
+                'balance_before' => $available,
+                'balance_after' => $available - $quantity,
+                'unit_cost' => $item->purchase_price,
+                'unit_sale_price' => $item->selling_price,
+                'created_by' => $request->user()->id,
+            ]);
 
             return $available - $quantity;
         });
@@ -68,15 +75,24 @@ class InventoryController extends Controller
 
     public function addStock(SellInventoryRequest $request, InventoryItem $inventory): RedirectResponse
     {
-        $quantity = (int) $request->validated('sell_quantity');
-        $source = $request->validated('stock_source');
-        $newTotal = DB::transaction(function () use ($inventory, $quantity, $source, $request): float {
+        $quantity = (float) $request->validated('sell_quantity');
+        $newTotal = DB::transaction(function () use ($inventory, $quantity, $request): float {
             $item = InventoryItem::query()->lockForUpdate()->findOrFail($inventory->id);
-            $item->increment($source, $quantity);
+            $oldStock = (float) $item->quantity;
             $item->increment('quantity', $quantity);
-            InventoryTransaction::create(['inventory_item_id' => $item->id, 'transaction_type' => InventoryTransaction::TYPE_STOCK_IN, 'quantity' => $quantity, 'created_by' => $request->user()->id]);
+            InventoryTransaction::create([
+                'shop_id' => $item->shop_id,
+                'inventory_item_id' => $item->id,
+                'transaction_type' => InventoryTransaction::TYPE_STOCK_IN,
+                'quantity' => $quantity,
+                'balance_before' => $oldStock,
+                'balance_after' => $oldStock + $quantity,
+                'unit_cost' => $item->purchase_price,
+                'unit_sale_price' => $item->selling_price,
+                'created_by' => $request->user()->id,
+            ]);
 
-            return $item->fresh()->total_stock;
+            return $item->fresh()->quantity;
         });
 
         return back()->with('success', "{$quantity} {$inventory->item_name} items added successfully. Total stock: ".number_format($newTotal, 2));

@@ -101,8 +101,8 @@ class InventoryManagementTest extends TestCase
         $category = Category::create(['name' => 'Beverages', 'status' => 'active', 'created_by' => $user->id]);
         $item = InventoryItem::create(['item_name' => 'Coke', 'sku' => 'COKE-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 50, 'unit' => 'PCS', 'status' => 'active', 'created_by' => $user->id]);
 
-        $this->actingAs($user)->post("/inventory/{$item->id}/sell", ['sell_quantity' => 30, 'stock_source' => 'yk_stock'])->assertSessionHas('success');
-        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'quantity' => 20, 'yk_stock' => 20, 'mk_stock' => 0, 'sold_quantity' => 30]);
+        $this->actingAs($user)->post("/inventory/{$item->id}/sell", ['sell_quantity' => 30])->assertSessionHas('success');
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'quantity' => 20, 'sold_quantity' => 30]);
         $this->assertDatabaseHas('inventory_transactions', ['inventory_item_id' => $item->id, 'transaction_type' => 'SALE', 'quantity' => 30, 'created_by' => $user->id]);
     }
 
@@ -112,10 +112,10 @@ class InventoryManagementTest extends TestCase
         $brand = Brand::create(['name' => 'Stock Brand', 'status' => 'active', 'created_by' => $user->id]);
         $category = Category::create(['name' => 'Stock Category', 'status' => 'active', 'created_by' => $user->id]);
         $item = InventoryItem::create(['item_name' => 'Stock Item', 'sku' => 'STOCK-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 50, 'unit' => 'pcs', 'status' => 'active', 'created_by' => $user->id]);
-        $item->forceFill(['quantity' => 20, 'yk_stock' => 20, 'sold_quantity' => 30])->save();
+        $item->forceFill(['quantity' => 20, 'sold_quantity' => 30])->save();
 
-        $this->actingAs($user)->post("/inventory/{$item->id}/add-stock", ['sell_quantity' => 20, 'stock_source' => 'mk_stock'])->assertSessionHas('success');
-        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'quantity' => 40, 'yk_stock' => 20, 'mk_stock' => 20, 'sold_quantity' => 30]);
+        $this->actingAs($user)->post("/inventory/{$item->id}/add-stock", ['sell_quantity' => 20])->assertSessionHas('success');
+        $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'quantity' => 40, 'sold_quantity' => 30]);
         $this->assertDatabaseHas('inventory_transactions', ['inventory_item_id' => $item->id, 'transaction_type' => 'STOCK_IN', 'quantity' => 20, 'created_by' => $user->id]);
         $this->assertSame(40.0, $item->fresh()->remaining_quantity);
     }
@@ -126,9 +126,9 @@ class InventoryManagementTest extends TestCase
         $brand = Brand::create(['name' => 'Brand', 'status' => 'active', 'created_by' => $user->id]);
         $category = Category::create(['name' => 'Category', 'status' => 'active', 'created_by' => $user->id]);
         $item = InventoryItem::create(['item_name' => 'Item', 'sku' => 'ITEM-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 10, 'unit' => 'PCS', 'status' => 'active', 'created_by' => $user->id]);
-        $item->forceFill(['quantity' => 2, 'yk_stock' => 2, 'sold_quantity' => 8])->save();
+        $item->forceFill(['quantity' => 2, 'sold_quantity' => 8])->save();
 
-        $this->actingAs($user)->post("/inventory/{$item->id}/sell", ['sell_quantity' => 3, 'stock_source' => 'yk_stock'])->assertSessionHasErrors('sell_quantity');
+        $this->actingAs($user)->post("/inventory/{$item->id}/sell", ['sell_quantity' => 3])->assertSessionHasErrors('sell_quantity');
         $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'sold_quantity' => 8]);
     }
 
@@ -139,6 +139,10 @@ class InventoryManagementTest extends TestCase
         $this->actingAs($user)->post('/categories', ['name' => 'New Category', 'status' => 'active'])->assertRedirect('/categories');
         $this->assertDatabaseHas('brands', ['name' => 'New Brand', 'created_by' => $user->id]);
         $this->assertDatabaseHas('categories', ['name' => 'New Category', 'created_by' => $user->id]);
+
+        $brand = Brand::where('name', 'New Brand')->first();
+        // Staff cannot edit brand (forbidden)
+        $this->actingAs($user)->put("/brands/{$brand->id}", ['name' => 'Edited Brand', 'status' => 'active'])->assertForbidden();
     }
 
     public function test_excel_export_downloads_all_filtered_rows(): void
@@ -189,7 +193,7 @@ class InventoryManagementTest extends TestCase
         $brand = Brand::create(['name' => 'Product Brand', 'status' => 'active', 'created_by' => $admin->id]);
         $category = Category::create(['name' => 'Product Category', 'status' => 'active', 'created_by' => $admin->id]);
 
-        $this->actingAs($admin)->get('/products/create')->assertOk()->assertSee('Save Product')->assertDontSee('Initial Quantity')->assertDontSee('Add Stock')->assertDontSee('Sell Quantity');
+        $this->actingAs($admin)->get('/products/create')->assertOk()->assertSee('Save Product');
         $this->actingAs($admin)->post('/products', ['item_name' => 'New Product', 'sku' => 'PRODUCT-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'pack_size' => 400, 'unit' => 'ml', 'purchase_price' => 100, 'selling_price' => 120, 'status' => 'active'])->assertRedirect('/products');
         $this->assertDatabaseHas('inventory_items', ['sku' => 'PRODUCT-1', 'quantity' => 0, 'sold_quantity' => 0, 'created_by' => $admin->id]);
     }
@@ -201,12 +205,12 @@ class InventoryManagementTest extends TestCase
         $category = Category::create(['name' => 'Flow Category', 'status' => 'active', 'created_by' => $admin->id]);
         $product = InventoryItem::create(['item_name' => 'Coke', 'sku' => 'FLOW-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 0, 'sold_quantity' => 0, 'unit' => 'ml', 'status' => 'active', 'created_by' => $admin->id]);
 
-        $this->actingAs($admin)->post("/stock/{$product->id}/add", ['sell_quantity' => 50, 'stock_source' => 'mk_stock'])->assertRedirect('/stock');
-        $this->actingAs($admin)->post("/stock/{$product->id}/sell", ['sell_quantity' => 30, 'stock_source' => 'mk_stock'])->assertRedirect('/stock');
-        $this->assertDatabaseHas('inventory_items', ['id' => $product->id, 'quantity' => 20, 'yk_stock' => 0, 'mk_stock' => 20, 'sold_quantity' => 30]);
+        $this->actingAs($admin)->post("/stock/{$product->id}/add", ['quantity' => 50])->assertRedirect();
+        $this->actingAs($admin)->post("/stock/{$product->id}/sell", ['sell_quantity' => 30])->assertRedirect();
+        $this->assertDatabaseHas('inventory_items', ['id' => $product->id, 'quantity' => 20, 'sold_quantity' => 30]);
         $this->actingAs($admin)->get("/stock/{$product->id}/history")->assertOk()->assertSee('STOCK IN')->assertSee('SALE');
-        $this->actingAs($admin)->post("/stock/{$product->id}/sell", ['sell_quantity' => 21, 'stock_source' => 'mk_stock'])->assertSessionHasErrors('sell_quantity');
-        $this->assertDatabaseHas('inventory_items', ['id' => $product->id, 'quantity' => 20, 'mk_stock' => 20, 'sold_quantity' => 30]);
+        $this->actingAs($admin)->post("/stock/{$product->id}/sell", ['sell_quantity' => 21])->assertSessionHasErrors('sell_quantity');
+        $this->assertDatabaseHas('inventory_items', ['id' => $product->id, 'quantity' => 20, 'sold_quantity' => 30]);
     }
 
     public function test_brand_search_and_status_filters_work(): void
