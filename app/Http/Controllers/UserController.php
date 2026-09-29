@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UserRequest;
+use App\Models\Role;
 use App\Models\Shop;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -21,7 +22,7 @@ class UserController extends Controller
 
         $perPage = in_array((int) $request->query('per_page', 10), [10, 20, 30, 50, 100], true) ? (int) $request->query('per_page', 10) : 10;
 
-        $query = User::with('shop')
+        $query = User::with(['shop', 'customRole'])
             ->when($search, function ($q, $search) {
                 $q->where(function ($sub) use ($search) {
                     $sub->where('name', 'like', "%{$search}%")
@@ -58,10 +59,17 @@ class UserController extends Controller
     public function create(Request $request): View
     {
         $currentUser = $request->user();
+        $shopId = $currentUser->isSuperAdmin() ? session('dashboard_shop_id') : $currentUser->shop_id;
+        $customRoles = Role::query()
+            ->withCount('permissions')
+            ->when($shopId, fn ($q) => $q->where(fn ($sub) => $sub->where('shop_id', $shopId)->orWhereNull('shop_id')))
+            ->orderBy('name')
+            ->get();
 
         return view('users.form', [
             'user' => new User,
             'shops' => $currentUser->isSuperAdmin() ? Shop::where('status', 'active')->orderBy('name')->get() : collect(),
+            'customRoles' => $customRoles,
         ]);
     }
 
@@ -69,6 +77,8 @@ class UserController extends Controller
     {
         $currentUser = $request->user();
         $data = $request->validated();
+        unset($data['assigned_role']);
+        $data['role_id'] = $request->input('role_id', null);
 
         if ($currentUser->isShopAdmin()) {
             $data['shop_id'] = $currentUser->shop_id;
@@ -85,9 +95,17 @@ class UserController extends Controller
         $currentUser = $request->user();
         $this->authorizeUserManagement($currentUser, $user);
 
+        $shopId = $currentUser->isSuperAdmin() ? $user->shop_id : $currentUser->shop_id;
+        $customRoles = Role::query()
+            ->withCount('permissions')
+            ->when($shopId, fn ($q) => $q->where(fn ($sub) => $sub->where('shop_id', $shopId)->orWhereNull('shop_id')))
+            ->orderBy('name')
+            ->get();
+
         return view('users.form', [
             'user' => $user,
             'shops' => $currentUser->isSuperAdmin() ? Shop::orderBy('name')->get() : collect(),
+            'customRoles' => $customRoles,
         ]);
     }
 
@@ -97,6 +115,9 @@ class UserController extends Controller
         $this->authorizeUserManagement($currentUser, $user);
 
         $data = $request->validated();
+        unset($data['assigned_role']);
+        $data['role_id'] = $request->input('role_id', null);
+
         if (empty($data['password'])) {
             unset($data['password']);
         }

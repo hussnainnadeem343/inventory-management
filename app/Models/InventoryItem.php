@@ -141,4 +141,9 @@ class InventoryItem extends Model
     {
         return $this->hasMany(InventoryTransaction::class);
     }
+
+    public function batches(): HasMany
+    {
+        return $this->hasMany(ProductBatch::class);
+    }
 }

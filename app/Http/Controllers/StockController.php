@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
+use App\Models\ProductBatch;
 use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,7 +35,7 @@ class StockController extends Controller
 
         $perPage = in_array((int) $request->query('per_page', 10), [10, 20, 30, 50, 100], true) ? (int) $request->query('per_page', 10) : 10;
 
-        $query = InventoryItem::with(['brand:id,name', 'category:id,name', 'shop:id,name', 'creator:id,name'])
+        $query = InventoryItem::with(['brand:id,name', 'category:id,name', 'shop:id,name', 'creator:id,name', 'batches' => fn ($q) => $q->orderBy('id', 'asc')])
             ->filtered($filters);
 
         if ($shopId) {
@@ -86,16 +87,20 @@ class StockController extends Controller
         $validated = $request->validate([
             'quantity' => ['required', 'numeric', 'min:0.01'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
+            'selling_price' => ['nullable', 'numeric', 'min:0'],
+            'batch_no' => ['nullable', 'string', 'max:50'],
             'expiry_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:255'],
         ]);
 
         $qty = (float) $validated['quantity'];
         $newCost = isset($validated['purchase_price']) && $validated['purchase_price'] !== '' ? (float) $validated['purchase_price'] : null;
+        $newSellPrice = isset($validated['selling_price']) && $validated['selling_price'] !== '' ? (float) $validated['selling_price'] : null;
+        $customBatchNo = ! empty($validated['batch_no']) ? trim((string) $validated['batch_no']) : null;
         $expiryDate = $validated['expiry_date'] ?? null;
         $notes = $validated['notes'] ?? null;
 
-        DB::transaction(function () use ($product, $qty, $newCost, $expiryDate, $notes, $request): void {
+        DB::transaction(function () use ($product, $qty, $newCost, $newSellPrice, $customBatchNo, $expiryDate, $notes, $request): void {
             $locked = InventoryItem::query()->lockForUpdate()->findOrFail($product->id);
             $oldStock = (float) $locked->quantity;
             $oldCost = (float) ($locked->purchase_price ?? 0);
@@ -110,6 +115,11 @@ class StockController extends Controller
                 }
             }
 
+            // Update master product selling price if a new selling price is entered
+            if ($newSellPrice !== null && $newSellPrice > 0) {
+                $locked->selling_price = $newSellPrice;
+            }
+
             if ($expiryDate) {
                 $locked->expiry_date = $expiryDate;
             }
@@ -117,17 +127,39 @@ class StockController extends Controller
             $locked->quantity += $qty;
             $locked->save();
 
+            // Determine Batch Number
+            if ($customBatchNo) {
+                $batchNo = $customBatchNo;
+            } else {
+                $batchCount = ProductBatch::where('inventory_item_id', $locked->id)->count() + 1;
+                $batchNo = 'BATCH-' . str_pad((string) $batchCount, 3, '0', STR_PAD_LEFT);
+            }
+
+            $batch = ProductBatch::create([
+                'shop_id' => $locked->shop_id ?: ($request->user()?->shop_id ?: null),
+                'inventory_item_id' => $locked->id,
+                'batch_no' => $batchNo,
+                'purchase_price' => $newCost ?? $locked->purchase_price ?? 0,
+                'selling_price' => $newSellPrice ?? $locked->selling_price ?? 0,
+                'initial_quantity' => $qty,
+                'quantity' => $qty,
+                'expiry_date' => $expiryDate ?? $locked->expiry_date,
+                'status' => 'active',
+                'created_by' => $request->user()->id,
+            ]);
+
             InventoryTransaction::create([
                 'shop_id' => $locked->shop_id,
                 'inventory_item_id' => $locked->id,
+                'product_batch_id' => $batch->id,
                 'transaction_type' => InventoryTransaction::TYPE_STOCK_IN,
                 'quantity' => $qty,
                 'balance_before' => $oldStock,
                 'balance_after' => $locked->quantity,
                 'unit_cost' => $newCost ?? $locked->purchase_price,
-                'unit_sale_price' => $locked->selling_price,
+                'unit_sale_price' => $newSellPrice ?? $locked->selling_price,
                 'expiry_date' => $expiryDate ?? $locked->expiry_date,
-                'notes' => $notes ?: 'Restock',
+                'notes' => $notes ?: "Restocked (+{$qty}) via {$batchNo}",
                 'created_by' => $request->user()->id,
             ]);
         });
@@ -164,16 +196,52 @@ class StockController extends Controller
             $locked->sold_quantity += $qty;
             $locked->save();
 
+            // Auto-FIFO batch deduction
+            $batchQuery = ProductBatch::where('inventory_item_id', $locked->id)
+                ->active()
+                ->fifo()
+                ->lockForUpdate();
+
+            if ($locked->shop_id) {
+                $batchQuery->where('shop_id', $locked->shop_id);
+            }
+
+            $batches = $batchQuery->get();
+
+            $remaining = $qty;
+            $primaryBatchId = null;
+            $totalCost = 0;
+
+            foreach ($batches as $batch) {
+                if ($remaining <= 0) break;
+                if ($primaryBatchId === null) $primaryBatchId = $batch->id;
+
+                $deduct = min((float) $batch->quantity, $remaining);
+                $batch->quantity -= $deduct;
+                if ($batch->quantity <= 0) {
+                    $batch->status = 'depleted';
+                }
+                $batch->save();
+                $totalCost += ($deduct * (float) $batch->purchase_price);
+                $remaining -= $deduct;
+            }
+
+            if ($remaining > 0) {
+                $totalCost += ($remaining * (float) ($locked->purchase_price ?? 0));
+            }
+
+            $effectiveUnitCost = $qty > 0 ? round($totalCost / $qty, 2) : (float) ($locked->purchase_price ?? 0);
             $unitSalePrice = $salePriceOverride ?? (float) ($locked->selling_price ?? 0);
 
             InventoryTransaction::create([
                 'shop_id' => $locked->shop_id,
                 'inventory_item_id' => $locked->id,
+                'product_batch_id' => $primaryBatchId,
                 'transaction_type' => InventoryTransaction::TYPE_SALE,
                 'quantity' => $qty,
                 'balance_before' => $oldStock,
                 'balance_after' => $locked->quantity,
-                'unit_cost' => $locked->purchase_price,
+                'unit_cost' => $effectiveUnitCost,
                 'unit_sale_price' => $unitSalePrice,
                 'notes' => $notes ?: 'Counter Sale',
                 'created_by' => $request->user()->id,

@@ -67,9 +67,18 @@
         <span class="badge text-bg-warning px-2 py-1">Low Stock (Alert)</span>
         <span class="badge text-bg-danger px-2 py-1">Out of Stock</span>
     </div>
-    <a class="btn btn-outline-success" href="{{ route('stock.export', request()->except('page')) }}">
-        <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
-    </a>
+    <div class="d-flex gap-2">
+        @if(auth()->user()->hasPermission('pos.access'))
+            <a class="btn btn-success" href="{{ route('pos') }}">
+                <i class="bi bi-cart3 me-1"></i>+ Multi-Item Sale (POS)
+            </a>
+        @endif
+        @if(auth()->user()->hasPermission('stock.export'))
+            <a class="btn btn-outline-success" href="{{ route('stock.export', request()->except('page')) }}">
+                <i class="bi bi-file-earmark-excel me-1"></i>Export Excel
+            </a>
+        @endif
+    </div>
 </div>
 
 <div class="card">
@@ -130,6 +139,21 @@
                             @else
                                 <span class="badge text-bg-success px-2 py-1">{{ number_format($remaining, 2) }}</span>
                             @endif
+
+                            @php
+                                $batchesCount = $product->batches->count();
+                                $activeBatchesCount = $product->batches->where('quantity', '>', 0)->count();
+                            @endphp
+                            <div>
+                                <button type="button" class="btn btn-sm btn-outline-info text-nowrap btn-batches-action mt-1 py-0 px-2" 
+                                        style="font-size: 0.72rem;"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#batchesModal"
+                                        data-product-name="{{ $product->item_name }}"
+                                        data-batches='@json($product->batches)'>
+                                    <i class="bi bi-layers me-1"></i>{{ $batchesCount }} {{ Str::plural('Batch', $batchesCount) }} ({{ $activeBatchesCount }} active)
+                                </button>
+                            </div>
                         </td>
                         <td>
                             <div class="small">
@@ -140,72 +164,101 @@
                             </div>
                         </td>
                         <td>
+                            @php
+                                $canAddStock = auth()->user()->hasPermission('stock.add');
+                                $canSellStock = auth()->user()->hasPermission('stock.sell');
+                                $canReturnStock = auth()->user()->hasPermission('stock.return');
+                                $canDamageStock = auth()->user()->hasPermission('stock.damage');
+                                $canExchangeStock = auth()->user()->hasPermission('stock.exchange');
+                                $hasMoreActions = $canReturnStock || $canDamageStock || $canExchangeStock;
+                            @endphp
                             <div class="d-flex flex-wrap gap-1 align-items-center">
-                                <button class="btn btn-sm btn-outline-success text-nowrap btn-stock-action" 
-                                        type="button" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#addStockModal"
-                                        data-product-id="{{ $product->id }}"
-                                        data-product-name="{{ $product->item_name }}"
-                                        data-current-cost="{{ $product->purchase_price }}"
-                                        data-current-expiry="{{ $product->expiry_date?->format('Y-m-d') }}">
-                                    <i class="bi bi-plus-lg me-1"></i>+ Add Stock
-                                </button>
-                                
-                                <button class="btn btn-sm btn-primary text-nowrap btn-sell-action" 
-                                        type="button" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#sellModal"
-                                        data-product-id="{{ $product->id }}"
-                                        data-product-name="{{ $product->item_name }}"
-                                        data-selling-price="{{ $product->selling_price }}"
-                                        data-available="{{ $remaining }}"
-                                        @disabled($remaining <= 0)>
-                                    <i class="bi bi-dash-lg me-1"></i>- Sell
-                                </button>
-
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        More
+                                @if($canAddStock)
+                                    <button class="btn btn-sm btn-outline-success text-nowrap btn-stock-action" 
+                                            type="button" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#addStockModal"
+                                            data-product-id="{{ $product->id }}"
+                                            data-product-name="{{ $product->item_name }}"
+                                            data-current-cost="{{ $product->purchase_price }}"
+                                            data-current-selling-price="{{ $product->selling_price }}"
+                                            data-current-expiry="{{ $product->expiry_date?->format('Y-m-d') }}">
+                                        <i class="bi bi-plus-lg me-1"></i>+ Add Stock
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li>
-                                            <a class="dropdown-item btn-return-action" href="#" 
-                                               data-bs-toggle="modal" 
-                                               data-bs-target="#returnModal"
-                                               data-product-id="{{ $product->id }}"
-                                               data-product-name="{{ $product->item_name }}"
-                                               data-selling-price="{{ $product->selling_price }}">
-                                                <i class="bi bi-arrow-return-left text-info me-2"></i>Customer Return (Wapsi)
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item btn-damage-action" href="#" 
-                                               data-bs-toggle="modal" 
-                                               data-bs-target="#damageModal"
-                                               data-product-id="{{ $product->id }}"
-                                               data-product-name="{{ $product->item_name }}"
-                                               data-available="{{ $remaining }}">
-                                                <i class="bi bi-trash text-danger me-2"></i>Damage / Write-Off
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item btn-exchange-action" href="#" 
-                                               data-bs-toggle="modal" 
-                                               data-bs-target="#exchangeModal"
-                                               data-product-id="{{ $product->id }}"
-                                               data-product-name="{{ $product->item_name }}">
-                                                <i class="bi bi-arrow-left-right text-warning me-2"></i>Product Exchange
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
+                                @endif
+                                
+                                @if($canSellStock)
+                                    <button class="btn btn-sm btn-primary text-nowrap btn-sell-action" 
+                                            type="button" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#sellModal"
+                                            data-product-id="{{ $product->id }}"
+                                            data-product-name="{{ $product->item_name }}"
+                                            data-selling-price="{{ $product->selling_price }}"
+                                            data-available="{{ $remaining }}"
+                                            @disabled($remaining <= 0)>
+                                        <i class="bi bi-dash-lg me-1"></i>- Sell
+                                    </button>
+                                @endif
+
+                                @if($hasMoreActions)
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            More
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            @if($canReturnStock)
+                                                <li>
+                                                    <a class="dropdown-item btn-return-action" href="#" 
+                                                       data-bs-toggle="modal" 
+                                                       data-bs-target="#returnModal"
+                                                       data-product-id="{{ $product->id }}"
+                                                       data-product-name="{{ $product->item_name }}"
+                                                       data-selling-price="{{ $product->selling_price }}">
+                                                        <i class="bi bi-arrow-return-left text-info me-2"></i>Customer Return (Wapsi)
+                                                    </a>
+                                                </li>
+                                            @endif
+                                            @if($canDamageStock)
+                                                <li>
+                                                    <a class="dropdown-item btn-damage-action" href="#" 
+                                                       data-bs-toggle="modal" 
+                                                       data-bs-target="#damageModal"
+                                                       data-product-id="{{ $product->id }}"
+                                                       data-product-name="{{ $product->item_name }}"
+                                                       data-available="{{ $remaining }}">
+                                                        <i class="bi bi-trash text-danger me-2"></i>Damage / Write-Off
+                                                    </a>
+                                                </li>
+                                            @endif
+                                            @if($canExchangeStock)
+                                                <li>
+                                                    <a class="dropdown-item btn-exchange-action" href="#" 
+                                                       data-bs-toggle="modal" 
+                                                       data-bs-target="#exchangeModal"
+                                                       data-product-id="{{ $product->id }}"
+                                                       data-product-name="{{ $product->item_name }}">
+                                                        <i class="bi bi-arrow-left-right text-warning me-2"></i>Product Exchange
+                                                    </a>
+                                                </li>
+                                            @endif
+                                        </ul>
+                                    </div>
+                                @endif
+
+                                @if(! $canAddStock && ! $canSellStock && ! $hasMoreActions)
+                                    <span class="text-muted small">View Only</span>
+                                @endif
                             </div>
                         </td>
                         <td>
-                            <a class="btn btn-sm btn-outline-secondary text-nowrap" href="{{ route('stock.history', $product) }}">
-                                <i class="bi bi-journal-text me-1"></i>Logs
-                            </a>
+                            @if(auth()->user()->hasPermission('stock.history'))
+                                <a class="btn btn-sm btn-outline-secondary text-nowrap" href="{{ route('stock.history', $product) }}">
+                                    <i class="bi bi-journal-text me-1"></i>Logs
+                                </a>
+                            @else
+                                <span class="text-muted small">-</span>
+                            @endif
                         </td>
                     </tr>
                 @empty
@@ -222,7 +275,7 @@
 
 <!-- 1. Modal: Add Stock -->
 <div class="modal fade" id="addStockModal" tabindex="-1" aria-labelledby="addStockModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <form method="post" id="addStockForm" class="modal-content">
             @csrf
             <div class="modal-header">
@@ -230,22 +283,31 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body row g-3">
-                <div class="col-12">
+                <div class="col-md-6">
                     <label class="form-label">Quantity to Add <span class="text-danger">*</span></label>
                     <input class="form-control" type="number" step="0.01" min="0.01" name="quantity" required placeholder="e.g. 10">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Selling Price (Rs.)</label>
+                    <input class="form-control" type="number" step="0.01" min="0" name="selling_price" id="addStockSellPrice" placeholder="New Selling Price">
+                    <div class="form-text">Updated retail selling rate for this batch.</div>
                 </div>
                 @if(auth()->user()->isSuperAdmin() || auth()->user()->isShopAdmin())
                     <div class="col-md-6">
                         <label class="form-label">Purchase Price / Cost (Rs.)</label>
                         <input class="form-control" type="number" step="0.01" min="0" name="purchase_price" id="addStockCost" placeholder="Optional price override">
-                        <div class="form-text">If changed, updates average cost.</div>
+                        <div class="form-text">If changed, updates batch cost & average cost.</div>
                     </div>
                 @endif
                 <div class="col-md-{{ auth()->user()->isSuperAdmin() || auth()->user()->isShopAdmin() ? '6' : '12' }}">
+                    <label class="form-label">Batch / Lot Number (Optional)</label>
+                    <input class="form-control" type="text" name="batch_no" id="addStockBatchNo" placeholder="Leave blank to auto-generate (e.g. BATCH-001)">
+                </div>
+                <div class="col-md-6">
                     <label class="form-label">Expiry Date</label>
                     <input class="form-control" type="date" name="expiry_date" id="addStockExpiry">
                 </div>
-                <div class="col-12">
+                <div class="col-md-6">
                     <label class="form-label">Reference / Supplier Note</label>
                     <input class="form-control" name="notes" placeholder="e.g. Invoice #1024, New shipment">
                 </div>
@@ -402,6 +464,44 @@
     </div>
 </div>
 
+<!-- 6. Modal: Product Batches Viewer -->
+<div class="modal fade" id="batchesModal" tabindex="-1" aria-labelledby="batchesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="batchesModalLabel">
+                    <i class="bi bi-layers text-info me-2"></i>Product Batches: <span id="batchesModalProductName" class="text-primary fw-bold"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Batch / Lot #</th>
+                                <th>Selling Price</th>
+                                @if(auth()->user()->isSuperAdmin() || auth()->user()->isShopAdmin())
+                                    <th>Purchase Cost</th>
+                                @endif
+                                <th>Remaining / Initial</th>
+                                <th>Expiry Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="batchesModalTableBody">
+                            <!-- Injected by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 document.querySelectorAll('.btn-stock-action').forEach(btn => {
@@ -411,8 +511,64 @@ document.querySelectorAll('.btn-stock-action').forEach(btn => {
         document.getElementById('addStockForm').action = "{{ url('stock') }}/" + id + "/add";
         const costInput = document.getElementById('addStockCost');
         if (costInput) costInput.value = btn.dataset.currentCost || '';
+        const sellInput = document.getElementById('addStockSellPrice');
+        if (sellInput) sellInput.value = btn.dataset.currentSellingPrice || '';
+        const batchInput = document.getElementById('addStockBatchNo');
+        if (batchInput) batchInput.value = '';
         const expInput = document.getElementById('addStockExpiry');
         if (expInput) expInput.value = btn.dataset.currentExpiry || '';
+    });
+});
+
+document.querySelectorAll('.btn-batches-action').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const productName = btn.dataset.productName;
+        document.getElementById('batchesModalProductName').innerText = productName;
+        const batches = JSON.parse(btn.dataset.batches || '[]');
+        const tbody = document.getElementById('batchesModalTableBody');
+        tbody.innerHTML = '';
+
+        const isCostVisible = {{ (auth()->user()->isSuperAdmin() || auth()->user()->isShopAdmin()) ? 'true' : 'false' }};
+        const colCount = isCostVisible ? 6 : 5;
+
+        if (!batches || batches.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${colCount}" class="text-center py-4 text-muted"><i class="bi bi-info-circle me-1"></i>No batches recorded for this item yet.</td></tr>`;
+            return;
+        }
+
+        batches.forEach(b => {
+            const qty = parseFloat(b.quantity || 0);
+            const initialQty = parseFloat(b.initial_quantity || 0);
+            const sellPrice = parseFloat(b.selling_price || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            const costPrice = parseFloat(b.purchase_price || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            
+            let statusBadge = '';
+            if (b.status === 'depleted' || qty <= 0) {
+                statusBadge = '<span class="badge bg-secondary">Depleted</span>';
+            } else if (b.status === 'expired') {
+                statusBadge = '<span class="badge bg-danger">Expired</span>';
+            } else {
+                statusBadge = '<span class="badge bg-success">Active</span>';
+            }
+
+            const expiry = b.expiry_date ? b.expiry_date.substring(0, 10) : '<span class="text-muted">-</span>';
+            const costCol = isCostVisible ? `<td>Rs. ${costPrice}</td>` : '';
+
+            const row = `
+                <tr>
+                    <td class="fw-semibold text-primary"><i class="bi bi-box-seam me-1"></i>${b.batch_no || 'N/A'}</td>
+                    <td class="fw-semibold">Rs. ${sellPrice}</td>
+                    ${costCol}
+                    <td>
+                        <span class="fw-bold ${qty > 0 ? 'text-success' : 'text-muted'}">${qty.toFixed(2)}</span>
+                        <span class="text-muted small"> / ${initialQty.toFixed(2)}</span>
+                    </td>
+                    <td>${expiry}</td>
+                    <td>${statusBadge}</td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML('beforeend', row);
+        });
     });
 });
 

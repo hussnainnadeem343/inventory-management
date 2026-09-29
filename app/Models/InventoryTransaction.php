@@ -22,7 +22,9 @@ class InventoryTransaction extends Model
 
     protected $fillable = [
         'shop_id',
+        'sale_id',
         'inventory_item_id',
+        'product_batch_id',
         'transaction_type',
         'quantity',
         'balance_before',
@@ -66,5 +68,15 @@ class InventoryTransaction extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function sale(): BelongsTo
+    {
+        return $this->belongsTo(Sale::class);
+    }
+
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(ProductBatch::class, 'product_batch_id');
     }
 }

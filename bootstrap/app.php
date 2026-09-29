@@ -18,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'super_admin' => EnsureSuperAdmin::class,
             'shop_admin' => \App\Http\Middleware\EnsureShopAdmin::class,
             'active' => EnsureUserIsActive::class,
+            'permission' => \App\Http\Middleware\CheckPermission::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

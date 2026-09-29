@@ -46,6 +46,11 @@ class Shop extends Model
         return $this->hasMany(InventoryTransaction::class);
     }
 
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';

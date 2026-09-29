@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
+use App\Models\ProductBatch;
 use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -72,7 +73,7 @@ class ProductController extends Controller
     public function create(Request $request): View
     {
         $user = $request->user();
-        abort_unless($user->isSuperAdmin() || $user->isShopAdmin(), 403, 'Only Shop Admins can add new products.');
+        abort_unless($user->hasPermission('products.create'), 403, 'Unauthorized. You do not have permission to add new products.');
 
         return $this->form(new InventoryItem, $user);
     }
@@ -80,7 +81,7 @@ class ProductController extends Controller
     public function store(ProductRequest $request): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->isSuperAdmin() || $user->isShopAdmin(), 403);
+        abort_unless($user->hasPermission('products.create'), 403, 'Unauthorized. You do not have permission to add new products.');
 
         $validated = $request->validated();
         $shopId = $user->shop_id ?? ($validated['shop_id'] ?? 1);
@@ -97,9 +98,23 @@ class ProductController extends Controller
             $product->save();
 
             if ($initialQty > 0) {
+                $batch = ProductBatch::create([
+                    'shop_id' => $shopId,
+                    'inventory_item_id' => $product->id,
+                    'batch_no' => 'BATCH-001',
+                    'purchase_price' => $product->purchase_price ?? 0,
+                    'selling_price' => $product->selling_price ?? 0,
+                    'initial_quantity' => $initialQty,
+                    'quantity' => $initialQty,
+                    'expiry_date' => $product->expiry_date,
+                    'status' => 'active',
+                    'created_by' => $user->id,
+                ]);
+
                 InventoryTransaction::create([
                     'shop_id' => $shopId,
                     'inventory_item_id' => $product->id,
+                    'product_batch_id' => $batch->id,
                     'transaction_type' => InventoryTransaction::TYPE_STOCK_IN,
                     'quantity' => $initialQty,
                     'balance_before' => 0,
@@ -140,7 +155,7 @@ class ProductController extends Controller
     public function destroy(Request $request, InventoryItem $product): RedirectResponse
     {
         $user = $request->user();
-        $this->authorizeProductAccess($user, $product);
+        $this->authorizeProductAccess($user, $product, 'products.delete');
 
         if ($product->transactions()->exists()) {
             return back()->with('error', 'This product has transaction history and cannot be deleted. Set it inactive instead.');
@@ -177,10 +192,10 @@ class ProductController extends Controller
         ]);
     }
 
-    private function authorizeProductAccess($user, InventoryItem $product): void
+    private function authorizeProductAccess($user, InventoryItem $product, string $permission = 'products.edit'): void
     {
-        $isAllowed = $user->isSuperAdmin() || ($user->isShopAdmin() && $user->shop_id === $product->shop_id);
+        $isAllowed = ($user->isSuperAdmin() || $user->shop_id === $product->shop_id) && $user->hasPermission($permission);
 
-        abort_unless($isAllowed, 403, 'Unauthorized. You cannot edit products from another shop.');
+        abort_unless($isAllowed, 403, 'Unauthorized. You do not have permission to manage this product.');
     }
 }

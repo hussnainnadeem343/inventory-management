@@ -30,6 +30,35 @@
                         @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
+                    @php
+                        $selectedRole = old('assigned_role');
+                        if ($selectedRole === null) {
+                            if ($user->exists) {
+                                if ($user->role_id) {
+                                    $selectedRole = 'role_' . $user->role_id;
+                                } elseif ($user->role === 'super_admin') {
+                                    $selectedRole = 'system:super_admin';
+                                } elseif ($user->role === 'shop_admin') {
+                                    $selectedRole = 'system:shop_admin';
+                                } else {
+                                    $selectedRole = 'system:staff';
+                                }
+                            } else {
+                                if (old('role_id')) {
+                                    $selectedRole = 'role_' . old('role_id');
+                                } elseif (old('role')) {
+                                    $selectedRole = match(old('role')) {
+                                        'super_admin' => 'system:super_admin',
+                                        'shop_admin' => 'system:shop_admin',
+                                        default => 'system:staff',
+                                    };
+                                } else {
+                                    $selectedRole = 'system:staff';
+                                }
+                            }
+                        }
+                    @endphp
+
                     @if(auth()->user()->isSuperAdmin())
                         <div class="col-md-6">
                             <label class="form-label">Assigned Shop</label>
@@ -44,33 +73,45 @@
                             @error('shop_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             <div class="form-text">Super Admins do not need an assigned shop.</div>
                         </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Role <span class="text-danger">*</span></label>
-                            <select class="form-select @error('role') is-invalid @enderror" name="role" required>
-                                <option value="super_admin" @selected(old('role', $user->role) === 'super_admin')>Super Admin (Platform Owner)</option>
-                                <option value="shop_admin" @selected(old('role', $user->role) === 'shop_admin')>Shop Admin (Store Owner / Manager)</option>
-                                <option value="staff" @selected(old('role', $user->role ?? 'staff') === 'staff' || old('role', $user->role) === 'user')>Staff / Cashier</option>
-                            </select>
-                            @error('role') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
                     @else
                         <div class="col-md-6">
                             <label class="form-label">Assigned Shop</label>
                             <input class="form-control bg-light text-secondary fw-semibold" value="{{ auth()->user()->shop->name ?? 'Your Shop' }} ({{ auth()->user()->shop->code ?? '' }})" readonly>
                             <div class="form-text">User will be assigned to your shop.</div>
                         </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Role <span class="text-danger">*</span></label>
-                            <select class="form-select @error('role') is-invalid @enderror" name="role" required>
-                                <option value="shop_admin" @selected(old('role', $user->role) === 'shop_admin')>Shop Admin (Store Owner / Manager)</option>
-                                <option value="staff" @selected(old('role', $user->role ?? 'staff') === 'staff' || old('role', $user->role) === 'user')>Staff / Cashier (Counter Sales)</option>
-                            </select>
-                            @error('role') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            <div class="form-text">Choose whether this user is a Shop Admin or Staff.</div>
-                        </div>
                     @endif
+
+                    <div class="col-md-6">
+                        <label class="form-label">Role <span class="text-danger">*</span></label>
+                        <select class="form-select @if($errors->has('assigned_role') || $errors->has('role') || $errors->has('role_id')) is-invalid @endif" name="assigned_role" required>
+                            @if(auth()->user()->isSuperAdmin())
+                                <optgroup label="System Roles">
+                                    <option value="system:super_admin" @selected($selectedRole === 'system:super_admin')>Super Admin (Platform Owner)</option>
+                                    <option value="system:shop_admin" @selected($selectedRole === 'system:shop_admin')>Shop Admin (Store Owner / Manager)</option>
+                                    <option value="system:staff" @selected($selectedRole === 'system:staff')>Staff / Cashier (Standard)</option>
+                                </optgroup>
+                            @else
+                                <optgroup label="System Roles">
+                                    <option value="system:shop_admin" @selected($selectedRole === 'system:shop_admin')>Shop Admin (Full Store Access)</option>
+                                    <option value="system:staff" @selected($selectedRole === 'system:staff')>Staff / Cashier (Standard)</option>
+                                </optgroup>
+                            @endif
+
+                            @if($customRoles->isNotEmpty())
+                                <optgroup label="Custom Roles (Shop Permissions)">
+                                    @foreach($customRoles as $cr)
+                                        <option value="role_{{ $cr->id }}" @selected($selectedRole === 'role_' . $cr->id)>
+                                            {{ $cr->name }} ({{ $cr->permissions_count ?? $cr->permissions->count() }} permissions)
+                                        </option>
+                                    @endforeach
+                                </optgroup>
+                            @endif
+                        </select>
+                        @error('assigned_role') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        @error('role') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        @error('role_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div class="form-text">Select either a standard system role or an existing custom role directly.</div>
+                    </div>
 
                     <div class="col-md-6">
                         <label class="form-label">Status <span class="text-danger">*</span></label>

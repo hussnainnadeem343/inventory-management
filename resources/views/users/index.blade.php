@@ -101,6 +101,13 @@
                             <span class="badge text-bg-{{ $roleBadge }}">
                                 {{ str($user->role)->replace('_', ' ')->title() }}
                             </span>
+                            @if($user->customRole)
+                                <div>
+                                    <span class="badge text-bg-info text-white mt-1" style="font-size: 11px;">
+                                        <i class="bi bi-shield-check me-1"></i>{{ $user->customRole->name }}
+                                    </span>
+                                </div>
+                            @endif
                         </td>
                         <td>
                             <span class="badge text-bg-{{ $user->status === 'active' ? 'success' : 'secondary' }}">

@@ -31,35 +31,42 @@
 
 <!-- Financial Summary Cards -->
 <div class="row g-3 mb-4">
-    <div class="col-sm-6 col-lg-3">
-        <div class="card p-3 border-start border-primary border-4 shadow-sm">
+    <div class="col-sm-6 col-xl">
+        <div class="card p-3 border-start border-primary border-4 shadow-sm h-100">
             <div class="text-muted small text-uppercase fw-semibold">Units Sold</div>
             <div class="h3 my-1 fw-bold text-dark">{{ number_format($totalUnitsSold, 2) }}</div>
             <div class="text-secondary small">Gross volume moved</div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="card p-3 border-start border-info border-4 shadow-sm">
+    <div class="col-sm-6 col-xl">
+        <div class="card p-3 border-start border-info border-4 shadow-sm h-100">
             <div class="text-muted small text-uppercase fw-semibold">Net Sales Revenue</div>
             <div class="h3 my-1 fw-bold text-info">Rs. {{ number_format($netRevenue, 2) }}</div>
             <div class="text-muted small">Gross: Rs. {{ number_format($grossRevenue, 2) }} | Refunds: Rs. {{ number_format($totalRefunds, 2) }}</div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="card p-3 border-start border-secondary border-4 shadow-sm">
+    <div class="col-sm-6 col-xl">
+        <div class="card p-3 border-start border-warning border-4 shadow-sm h-100">
+            <div class="text-muted small text-uppercase fw-semibold">Total Discounts Given</div>
+            <div class="h3 my-1 fw-bold text-warning">Rs. {{ number_format($totalDiscounts, 2) }}</div>
+            <div class="text-secondary small">Items: Rs. {{ number_format($itemDiscounts, 2) }} | Bill: Rs. {{ number_format($billDiscounts, 2) }}</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card p-3 border-start border-secondary border-4 shadow-sm h-100">
             <div class="text-muted small text-uppercase fw-semibold">Cost of Goods (COGS)</div>
             <div class="h3 my-1 fw-bold text-secondary">Rs. {{ number_format($cogs, 2) }}</div>
             <div class="text-secondary small">Inventory purchase cost</div>
         </div>
     </div>
-    <div class="col-sm-6 col-lg-3">
-        <div class="card p-3 border-start border-success border-4 shadow-sm">
+    <div class="col-sm-6 col-xl">
+        <div class="card p-3 border-start border-success border-4 shadow-sm h-100">
             <div class="text-muted small text-uppercase fw-semibold">Gross Profit</div>
             <div class="h3 my-1 fw-bold text-{{ $grossProfit >= 0 ? 'success' : 'danger' }}">
                 Rs. {{ number_format($grossProfit, 2) }}
             </div>
             <div class="small fw-semibold text-{{ $marginPercent >= 0 ? 'success' : 'danger' }}">
-                Margin: {{ number_format($marginPercent, 1) }}%
+                Net Margin: {{ number_format($marginPercent, 1) }}%
             </div>
         </div>
     </div>
@@ -79,18 +86,23 @@
                         <th>Shop</th>
                     @endif
                     <th>Units Sold</th>
-                    <th>Sales Revenue</th>
+                    <th>Gross Sales</th>
+                    <th>Discount Given</th>
+                    <th>Net Revenue</th>
                     <th>Cost (COGS)</th>
                     <th>Gross Profit</th>
-                    <th>Profit Margin</th>
+                    <th>Margin</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($productBreakdown as $row)
                     @php
-                        $rev = (float) $row->revenue;
-                        $profit = (float) $row->profit;
-                        $margin = $rev > 0 ? ($profit / $rev) * 100 : 0;
+                        $gross = (float) $row->revenue;
+                        $disc = (float) ($productDiscounts[$row->inventory_item_id] ?? 0);
+                        $net = max(0, $gross - $disc);
+                        $cost = (float) $row->cost;
+                        $profit = $net - $cost;
+                        $margin = $net > 0 ? ($profit / $net) * 100 : 0;
                     @endphp
                     <tr>
                         <td>
@@ -101,8 +113,12 @@
                             <td><span class="badge text-bg-light border">{{ $row->inventoryItem->shop->name ?? 'Default' }}</span></td>
                         @endif
                         <td class="fw-semibold">{{ number_format($row->units_sold, 2) }}</td>
-                        <td class="fw-bold text-dark">Rs. {{ number_format($rev, 2) }}</td>
-                        <td class="text-muted">Rs. {{ number_format($row->cost, 2) }}</td>
+                        <td class="text-muted">Rs. {{ number_format($gross, 2) }}</td>
+                        <td class="{{ $disc > 0 ? 'text-danger fw-semibold' : 'text-muted' }}">
+                            {{ $disc > 0 ? '- Rs. ' . number_format($disc, 2) : '-' }}
+                        </td>
+                        <td class="fw-bold text-dark">Rs. {{ number_format($net, 2) }}</td>
+                        <td class="text-muted">Rs. {{ number_format($cost, 2) }}</td>
                         <td class="fw-bold text-{{ $profit >= 0 ? 'success' : 'danger' }}">
                             Rs. {{ number_format($profit, 2) }}
                         </td>
@@ -114,7 +130,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ auth()->user()->isSuperAdmin() ? 7 : 6 }}" class="text-center py-4 text-muted">
+                        <td colspan="{{ auth()->user()->isSuperAdmin() ? 9 : 8 }}" class="text-center py-4 text-muted">
                             No sales records found for the selected period.
                         </td>
                     </tr>
