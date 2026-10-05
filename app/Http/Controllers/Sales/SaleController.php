@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Sales;
+
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\StoreSaleRequest;
 use App\Models\InventoryItem;
@@ -288,6 +290,13 @@ class SaleController extends Controller
 
             return $sale;
         });
+
+        // Auto post double-entry financial voucher for sale
+        try {
+            app(\App\Services\Finance\JournalEntryService::class)->recordSaleEntry($sale);
+        } catch (\Throwable) {
+            // Gracefully continue
+        }
 
         return redirect()->route('sales.show', $sale)->with('success', "Sale completed successfully! Invoice #{$sale->invoice_no} generated.");
     }

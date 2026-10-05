@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Inventory;
+
+use App\Http\Controllers\Controller;
 
 use App\Exports\InventoryExport;
 use App\Http\Requests\InventoryRequest;

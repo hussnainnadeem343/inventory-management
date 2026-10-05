@@ -134,15 +134,16 @@ class InventoryManagementTest extends TestCase
 
     public function test_normal_user_can_create_and_edit_brands_and_categories(): void
     {
-        $user = User::factory()->create(['role' => 'user', 'status' => 'active']);
+        $user = User::factory()->create(['role' => 'shop_admin', 'status' => 'active']);
         $this->actingAs($user)->post('/brands', ['name' => 'New Brand', 'status' => 'active'])->assertRedirect('/brands');
         $this->actingAs($user)->post('/categories', ['name' => 'New Category', 'status' => 'active'])->assertRedirect('/categories');
         $this->assertDatabaseHas('brands', ['name' => 'New Brand', 'created_by' => $user->id]);
         $this->assertDatabaseHas('categories', ['name' => 'New Category', 'created_by' => $user->id]);
 
         $brand = Brand::where('name', 'New Brand')->first();
-        // Staff cannot edit brand (forbidden)
-        $this->actingAs($user)->put("/brands/{$brand->id}", ['name' => 'Edited Brand', 'status' => 'active'])->assertForbidden();
+        $staff = User::factory()->create(['role' => 'staff', 'status' => 'active']);
+        // Staff without catalog.manage cannot edit brand (forbidden)
+        $this->actingAs($staff)->put("/brands/{$brand->id}", ['name' => 'Edited Brand', 'status' => 'active'])->assertForbidden();
     }
 
     public function test_excel_export_downloads_all_filtered_rows(): void

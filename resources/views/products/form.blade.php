@@ -73,33 +73,26 @@
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label">Variant / Pack Size</label>
-                        <input class="form-control @error('pack_size') is-invalid @enderror" type="number" step="0.001" min="0.001" name="pack_size" value="{{ old('pack_size', $product->pack_size) }}" placeholder="e.g. 50, 42, 500">
-                        @error('pack_size') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Measure Unit</label>
-                        <input class="form-control @error('unit') is-invalid @enderror" name="unit" value="{{ old('unit', $product->unit) }}" placeholder="e.g. ML, PCS, BOX, PACK">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label mb-0">Measure Unit <span class="text-danger">*</span></label>
+                            <a class="small text-decoration-none" href="{{ route('units.index') }}" target="_blank">+ New Unit</a>
+                        </div>
+                        <select class="form-select searchable-select @error('unit') is-invalid @enderror" name="unit" required>
+                            <option value="">Select Unit</option>
+                            @foreach($units as $u)
+                                @php $unitCode = is_string($u) ? $u : $u->code; $unitName = is_string($u) ? $u : $u->name; @endphp
+                                <option value="{{ $unitCode }}" @selected(old('unit', $product->unit) == $unitCode)>
+                                    {{ $unitName }} ({{ $unitCode }})
+                                </option>
+                            @endforeach
+                        </select>
                         @error('unit') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label">Expiry Date (Optional)</label>
-                        <input class="form-control @error('expiry_date') is-invalid @enderror" type="date" name="expiry_date" value="{{ old('expiry_date', $product->expiry_date?->format('Y-m-d')) }}">
-                        @error('expiry_date') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Purchase Price (Cost) <span class="text-secondary small">(Rs.)</span></label>
-                        <input class="form-control @error('purchase_price') is-invalid @enderror" type="number" step="0.01" min="0" name="purchase_price" value="{{ old('purchase_price', $product->purchase_price) }}" placeholder="0.00">
-                        @error('purchase_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Selling Price <span class="text-secondary small">(Rs.)</span></label>
-                        <input class="form-control @error('selling_price') is-invalid @enderror" type="number" step="0.01" min="0" name="selling_price" value="{{ old('selling_price', $product->selling_price) }}" placeholder="0.00">
-                        @error('selling_price') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <label class="form-label">Variant / Pack Size</label>
+                        <input class="form-control @error('pack_size') is-invalid @enderror" type="number" step="0.001" min="0.001" name="pack_size" value="{{ old('pack_size', $product->pack_size) }}" placeholder="e.g. 50, 42, 500">
+                        @error('pack_size') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
                     <div class="col-md-4">
@@ -109,14 +102,12 @@
                         <div class="form-text">Triggers yellow warning when stock reaches this limit.</div>
                     </div>
 
-                    @if(! $product->exists)
-                        <div class="col-md-6">
-                            <label class="form-label">Opening Stock Quantity</label>
-                            <input class="form-control @error('initial_quantity') is-invalid @enderror" type="number" step="1" min="0" name="initial_quantity" value="{{ old('initial_quantity', 0) }}">
-                            @error('initial_quantity') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            <div class="form-text">Stock to record immediately into inventory.</div>
+                    <div class="col-12">
+                        <div class="alert alert-light border d-flex align-items-center gap-2 mb-0 py-2 px-3 small text-secondary">
+                            <i class="bi bi-info-circle text-primary fs-5"></i>
+                            <span><strong>Procurement Workflow:</strong> Stock quantities, batch numbers, and purchase costs are managed dynamically via <strong>Purchase Orders & Goods Received Notes (GRN)</strong>.</span>
                         </div>
-                    @endif
+                    </div>
 
                     <div class="col-md-6">
                         <label class="form-label">Status <span class="text-danger">*</span></label>

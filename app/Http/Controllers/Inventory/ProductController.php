@@ -1,6 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Inventory;
+
+use App\Http\Controllers\Controller;
 
 use App\Http\Requests\ProductRequest;
 use App\Models\Brand;
@@ -188,7 +190,7 @@ class ProductController extends Controller
             'brands' => $brandQuery->orderBy('name')->get(),
             'categories' => $categoryQuery->orderBy('name')->get(),
             'shops' => $user->isSuperAdmin() ? Shop::where('status', 'active')->orderBy('name')->get() : collect(),
-            'units' => InventoryItem::UNITS,
+            'units' => \App\Models\Inventory\Unit::forShop($shopId)->active()->orderBy('name')->get(),
         ]);
     }
 
