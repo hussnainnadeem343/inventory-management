@@ -48,7 +48,7 @@ class StockController extends Controller
             InventoryTransaction::create(['inventory_item_id' => $locked->id, 'transaction_type' => InventoryTransaction::TYPE_STOCK_IN, 'quantity' => $quantity, 'created_by' => $request->user()->id]);
         });
 
-        return redirect()->route('stock.index')->with('success', "{$quantity} {$product->item_name} items added successfully.");
+        return redirect()->route('stock.index', $this->redirectFilters($request))->with('success', "{$quantity} {$product->item_name} items added successfully.");
     }
 
     public function sell(SellInventoryRequest $request, InventoryItem $product): RedirectResponse
@@ -68,7 +68,7 @@ class StockController extends Controller
             InventoryTransaction::create(['inventory_item_id' => $locked->id, 'transaction_type' => InventoryTransaction::TYPE_SALE, 'quantity' => $quantity, 'created_by' => $request->user()->id]);
         });
 
-        return redirect()->route('stock.index')->with('success', "{$quantity} {$product->item_name} items sold successfully.");
+        return redirect()->route('stock.index', $this->redirectFilters($request))->with('success', "{$quantity} {$product->item_name} items sold successfully.");
     }
 
     public function history(Request $request, InventoryItem $product): View
@@ -87,5 +87,20 @@ class StockController extends Controller
     private function filters(Request $request): array
     {
         return ['search' => trim((string) $request->query('search')), 'brand_id' => $request->query('brand_id'), 'category_id' => $request->query('category_id')];
+    }
+
+    private function redirectFilters(Request $request): array
+    {
+        $filters = $request->query();
+
+        foreach (['search', 'brand_id', 'category_id', 'per_page', 'page'] as $key) {
+            if (!isset($filters[$key]) && $request->filled($key)) {
+                $filters[$key] = $request->input($key);
+            }
+        }
+
+        unset($filters['_token']);
+
+        return array_filter($filters, fn ($value) => $value !== null && $value !== '' && $value !== []);
     }
 }

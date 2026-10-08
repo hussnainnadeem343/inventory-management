@@ -276,5 +276,74 @@ class InventoryManagementTest extends TestCase
             ->assertDontSee('Smartphones')
             ->assertDontSee('Laptops');
     }
+
+    public function test_stock_screen_actions_and_completion_retain_applied_filters(): void
+    {
+        $admin = $this->admin();
+        $brand = Brand::create(['name' => 'Filtered Brand', 'status' => 'active', 'created_by' => $admin->id]);
+        $category = Category::create(['name' => 'Filtered Category', 'status' => 'active', 'created_by' => $admin->id]);
+        $product = InventoryItem::create([
+            'item_name' => 'Special Widget',
+            'sku' => 'WIDGET-01',
+            'brand_id' => $brand->id,
+            'category_id' => $category->id,
+            'quantity' => 10,
+            'yk_stock' => 10,
+            'mk_stock' => 0,
+            'sold_quantity' => 0,
+            'unit' => 'pcs',
+            'status' => 'active',
+            'created_by' => $admin->id,
+        ]);
+
+        $filterParams = [
+            'search' => 'Special',
+            'brand_id' => (string) $brand->id,
+            'category_id' => (string) $category->id,
+            'per_page' => '20',
+        ];
+        $queryString = http_build_query($filterParams);
+
+        // 1. Stock screen retains filters in action links
+        $response = $this->actingAs($admin)->get("/stock?{$queryString}");
+        $response->assertOk();
+        $response->assertSee(route('stock.add-form', array_merge(['product' => $product], $filterParams)));
+        $response->assertSee(route('stock.sell-form', array_merge(['product' => $product], $filterParams)));
+
+        // 2. Add and Sell forms retain filters in form action, hidden inputs, and cancel link
+        $addFormResponse = $this->actingAs($admin)->get("/stock/{$product->id}/add?{$queryString}");
+        $addFormResponse->assertOk();
+        $addFormResponse->assertSee('value="Special"', false);
+        $addFormResponse->assertSee(route('stock.index', $filterParams));
+
+        $sellFormResponse = $this->actingAs($admin)->get("/stock/{$product->id}/sell?{$queryString}");
+        $sellFormResponse->assertOk();
+        $sellFormResponse->assertSee('value="Special"', false);
+        $sellFormResponse->assertSee(route('stock.index', $filterParams));
+
+        // 3. Completing Add Stock transaction redirects back to stock screen with filters retained
+        $addResponse = $this->actingAs($admin)->post("/stock/{$product->id}/add?{$queryString}", [
+            'sell_quantity' => 5,
+            'stock_source' => 'yk_stock',
+        ]);
+        $addResponse->assertRedirect("/stock?{$queryString}");
+        $addResponse->assertSessionHas('success');
+
+        // 4. Completing Sell Stock transaction redirects back to stock screen with filters retained
+        $sellResponse = $this->actingAs($admin)->post("/stock/{$product->id}/sell?{$queryString}", [
+            'sell_quantity' => 3,
+            'stock_source' => 'yk_stock',
+        ]);
+        $sellResponse->assertRedirect("/stock?{$queryString}");
+        $sellResponse->assertSessionHas('success');
+
+        // 5. If filters are submitted via form payload, they are also retained on redirect
+        $payloadResponse = $this->actingAs($admin)->post("/stock/{$product->id}/add", array_merge([
+            'sell_quantity' => 2,
+            'stock_source' => 'yk_stock',
+        ], $filterParams));
+        $payloadResponse->assertRedirect("/stock?{$queryString}");
+    }
 }
+
 
