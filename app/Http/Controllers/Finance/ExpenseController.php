@@ -47,11 +47,19 @@ class ExpenseController extends Controller
         $user = $request->user();
         $shopId = $user->isSuperAdmin() ? $request->query('shop_id', $user->shop_id) : $user->shop_id;
 
+        if ($shopId) {
+            Account::ensureStandardAccountsExistForShop($shopId);
+        }
+
         // Expense heads: head_id = 5 (Expenses)
         $expenseAccounts = Account::forShop($shopId)
             ->where('account_head_id', 5)
             ->orderBy('name')
             ->get();
+
+        if ($expenseAccounts->isEmpty()) {
+            $expenseAccounts = Account::where('account_head_id', 5)->get();
+        }
 
         // Payment accounts: Cash & Bank accounts (head_id = 1)
         $paymentAccounts = Account::forShop($shopId)
@@ -62,6 +70,10 @@ class ExpenseController extends Controller
 
         if ($paymentAccounts->isEmpty()) {
             $paymentAccounts = Account::forShop($shopId)->where('account_head_id', 1)->get();
+        }
+
+        if ($paymentAccounts->isEmpty()) {
+            $paymentAccounts = Account::where('account_head_id', 1)->whereIn('code', ['1001', '1002'])->get();
         }
 
         return view('finance.expenses.create', compact('expenseAccounts', 'paymentAccounts'));

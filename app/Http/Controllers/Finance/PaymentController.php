@@ -47,6 +47,10 @@ class PaymentController extends Controller
         $user = $request->user();
         $shopId = $user->isSuperAdmin() ? $request->query('shop_id', $user->shop_id) : $user->shop_id;
 
+        if ($shopId) {
+            Account::ensureStandardAccountsExistForShop($shopId);
+        }
+
         $suppliers = Supplier::forShop($shopId)->active()->orderBy('name')->get();
         $paymentAccounts = Account::forShop($shopId)
             ->where('account_head_id', 1)
@@ -56,6 +60,10 @@ class PaymentController extends Controller
 
         if ($paymentAccounts->isEmpty()) {
             $paymentAccounts = Account::forShop($shopId)->where('account_head_id', 1)->get();
+        }
+
+        if ($paymentAccounts->isEmpty()) {
+            $paymentAccounts = Account::where('account_head_id', 1)->whereIn('code', ['1001', '1002'])->get();
         }
 
         return view('finance.payments.create', compact('suppliers', 'paymentAccounts'));

@@ -17,6 +17,10 @@ class AccountController extends Controller
         $user = $request->user();
         $shopId = $user->isSuperAdmin() ? $request->query('shop_id') : $user->shop_id;
 
+        if ($shopId) {
+            Account::ensureStandardAccountsExistForShop($shopId);
+        }
+
         $heads = AccountHead::with(['accounts' => function ($q) use ($shopId) {
             $q->forShop($shopId)->orderBy('code');
         }])->get();

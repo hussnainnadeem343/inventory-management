@@ -39,7 +39,12 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Paid Through Account <span class="text-danger">*</span></label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fw-semibold mb-0">Paid Through Account <span class="text-danger">*</span></label>
+                                <a href="{{ route('finance.accounts.create') }}" target="_blank" class="small text-decoration-none text-primary">
+                                    <i class="bi bi-plus-circle me-1"></i>+ Add Account
+                                </a>
+                            </div>
                             <select class="form-select @error('payment_account_id') is-invalid @enderror" name="payment_account_id" required>
                                 <option value="">Select Cash or Bank Account</option>
                                 @foreach($paymentAccounts as $acc)

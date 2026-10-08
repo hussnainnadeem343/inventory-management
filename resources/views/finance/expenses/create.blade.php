@@ -17,7 +17,12 @@
                     @csrf
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Expense Account <span class="text-danger">*</span></label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fw-semibold mb-0">Expense Account <span class="text-danger">*</span></label>
+                                <a href="{{ route('finance.accounts.create') }}" target="_blank" class="small text-decoration-none text-primary">
+                                    <i class="bi bi-plus-circle me-1"></i>+ Add Account
+                                </a>
+                            </div>
                             <select class="form-select @error('expense_account_id') is-invalid @enderror" name="expense_account_id" required>
                                 <option value="">Select Expense Head</option>
                                 @foreach($expenseAccounts as $acc)
@@ -30,7 +35,12 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Paid From (Payment Account) <span class="text-danger">*</span></label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fw-semibold mb-0">Paid From (Payment Account) <span class="text-danger">*</span></label>
+                                <a href="{{ route('finance.accounts.create') }}" target="_blank" class="small text-decoration-none text-primary">
+                                    <i class="bi bi-plus-circle me-1"></i>+ Add Account
+                                </a>
+                            </div>
                             <select class="form-select @error('payment_account_id') is-invalid @enderror" name="payment_account_id" required>
                                 <option value="">Select Cash / Bank Account</option>
                                 @foreach($paymentAccounts as $acc)

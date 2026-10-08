@@ -37,6 +37,48 @@ class Account extends Model
         ];
     }
 
+    public static function ensureStandardAccountsExistForShop(?int $shopId): void
+    {
+        if (! $shopId) {
+            return;
+        }
+
+        $count = self::where('shop_id', $shopId)->count();
+        if ($count >= 10) {
+            return;
+        }
+
+        $standardAccounts = [
+            ['code' => '1001', 'name' => 'Cash in Hand', 'head_id' => 1, 'nature' => 'debit'],
+            ['code' => '1002', 'name' => 'Main Bank Account', 'head_id' => 1, 'nature' => 'debit'],
+            ['code' => '1050', 'name' => 'Inventory Asset', 'head_id' => 1, 'nature' => 'debit'],
+            ['code' => '1100', 'name' => 'Accounts Receivable', 'head_id' => 1, 'nature' => 'debit'],
+            ['code' => '2001', 'name' => 'Accounts Payable (Vendors)', 'head_id' => 2, 'nature' => 'credit'],
+            ['code' => '3001', 'name' => "Owner's Capital", 'head_id' => 3, 'nature' => 'credit'],
+            ['code' => '4001', 'name' => 'Sales Revenue', 'head_id' => 4, 'nature' => 'credit'],
+            ['code' => '5001', 'name' => 'Cost of Goods Sold (COGS)', 'head_id' => 5, 'nature' => 'debit'],
+            ['code' => '5010', 'name' => 'Salaries & Wages Expense', 'head_id' => 5, 'nature' => 'debit'],
+            ['code' => '5020', 'name' => 'Shop Rent Expense', 'head_id' => 5, 'nature' => 'debit'],
+            ['code' => '5030', 'name' => 'Utilities & Electricity', 'head_id' => 5, 'nature' => 'debit'],
+            ['code' => '5090', 'name' => 'General & Office Expense', 'head_id' => 5, 'nature' => 'debit'],
+        ];
+
+        foreach ($standardAccounts as $acc) {
+            self::firstOrCreate(
+                ['shop_id' => $shopId, 'code' => $acc['code']],
+                [
+                    'account_head_id' => $acc['head_id'],
+                    'name' => $acc['name'],
+                    'nature' => $acc['nature'],
+                    'opening_balance' => 0.00,
+                    'current_balance' => 0.00,
+                    'is_system' => true,
+                    'status' => 'active',
+                ]
+            );
+        }
+    }
+
     public function scopeForShop(Builder $query, ?int $shopId = null): Builder
     {
         $shopId = $shopId ?? auth()->user()?->shop_id;
