@@ -59,6 +59,19 @@ class InventoryItem extends Model
             ->when($filters['search'] ?? null, fn (Builder $q, string $search) => $q->where(fn (Builder $q) => $q->where('item_name', 'like', "%{$search}%")->orWhere('sku', 'like', "%{$search}%")))
             ->when($filters['brand_id'] ?? null, fn (Builder $q, $brandId) => $q->where('brand_id', $brandId))
             ->when($filters['category_id'] ?? null, fn (Builder $q, $categoryId) => $q->where('category_id', $categoryId))
+            ->when(filled($filters['pack_size'] ?? null), function (Builder $q) use ($filters) {
+                $raw = trim((string) $filters['pack_size']);
+                if (preg_match('/^([0-9]+(?:\.[0-9]+)?)\s*(.*)$/u', $raw, $matches)) {
+                    $size = (float) $matches[1];
+                    $unit = trim($matches[2]);
+                    $q->where('pack_size', $size);
+                    if ($unit !== '') {
+                        $q->where('unit', 'like', "%{$unit}%");
+                    }
+                } else {
+                    $q->where('unit', 'like', "%{$raw}%");
+                }
+            })
             ->when($filters['date'] ?? null, fn (Builder $q, $date) => $q->whereDate('created_at', $date));
     }
 

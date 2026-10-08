@@ -86,14 +86,19 @@ class StockController extends Controller
 
     private function filters(Request $request): array
     {
-        return ['search' => trim((string) $request->query('search')), 'brand_id' => $request->query('brand_id'), 'category_id' => $request->query('category_id')];
+        return [
+            'search' => trim((string) $request->query('search')),
+            'brand_id' => $request->query('brand_id'),
+            'category_id' => $request->query('category_id'),
+            'pack_size' => trim((string) $request->query('pack_size')),
+        ];
     }
 
     private function redirectFilters(Request $request): array
     {
         $filters = $request->query();
 
-        foreach (['search', 'brand_id', 'category_id', 'per_page', 'page'] as $key) {
+        foreach (['search', 'brand_id', 'category_id', 'pack_size', 'per_page', 'page'] as $key) {
             if (!isset($filters[$key]) && $request->filled($key)) {
                 $filters[$key] = $request->input($key);
             }

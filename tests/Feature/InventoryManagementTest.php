@@ -277,6 +277,78 @@ class InventoryManagementTest extends TestCase
             ->assertDontSee('Laptops');
     }
 
+    public function test_stock_screen_pack_size_filter_works(): void
+    {
+        $admin = $this->admin();
+        $brand = Brand::create(['name' => 'Beverage Brand', 'status' => 'active', 'created_by' => $admin->id]);
+        $category = Category::create(['name' => 'Soft Drinks', 'status' => 'active', 'created_by' => $admin->id]);
+
+        InventoryItem::create([
+            'item_name' => 'Juice 400',
+            'sku' => 'JUICE-400',
+            'brand_id' => $brand->id,
+            'category_id' => $category->id,
+            'quantity' => 10,
+            'yk_stock' => 10,
+            'pack_size' => 400,
+            'unit' => 'ml',
+            'status' => 'active',
+            'created_by' => $admin->id,
+        ]);
+
+        InventoryItem::create([
+            'item_name' => 'Juice 250',
+            'sku' => 'JUICE-250',
+            'brand_id' => $brand->id,
+            'category_id' => $category->id,
+            'quantity' => 10,
+            'yk_stock' => 10,
+            'pack_size' => 250,
+            'unit' => 'ml',
+            'status' => 'active',
+            'created_by' => $admin->id,
+        ]);
+
+        InventoryItem::create([
+            'item_name' => 'Chips 400',
+            'sku' => 'CHIPS-400',
+            'brand_id' => $brand->id,
+            'category_id' => $category->id,
+            'quantity' => 10,
+            'yk_stock' => 10,
+            'pack_size' => 400,
+            'unit' => 'g',
+            'status' => 'active',
+            'created_by' => $admin->id,
+        ]);
+
+        // Stock screen has pack size filter input
+        $this->actingAs($admin)->get('/stock')
+            ->assertOk()
+            ->assertSee('name="pack_size"', false);
+
+        // Filter numeric 400 (matches both 400ml and 400g)
+        $this->actingAs($admin)->get('/stock?pack_size=400')
+            ->assertOk()
+            ->assertSee('JUICE-400')
+            ->assertSee('CHIPS-400')
+            ->assertDontSee('JUICE-250');
+
+        // Filter 400ml (matches 400ml only)
+        $this->actingAs($admin)->get('/stock?pack_size=400ml')
+            ->assertOk()
+            ->assertSee('JUICE-400')
+            ->assertDontSee('CHIPS-400')
+            ->assertDontSee('JUICE-250');
+
+        // Filter 250 (matches 250ml)
+        $this->actingAs($admin)->get('/stock?pack_size=250')
+            ->assertOk()
+            ->assertSee('JUICE-250')
+            ->assertDontSee('JUICE-400')
+            ->assertDontSee('CHIPS-400');
+    }
+
     public function test_stock_screen_actions_and_completion_retain_applied_filters(): void
     {
         $admin = $this->admin();
@@ -291,6 +363,7 @@ class InventoryManagementTest extends TestCase
             'yk_stock' => 10,
             'mk_stock' => 0,
             'sold_quantity' => 0,
+            'pack_size' => 250,
             'unit' => 'pcs',
             'status' => 'active',
             'created_by' => $admin->id,
@@ -300,6 +373,7 @@ class InventoryManagementTest extends TestCase
             'search' => 'Special',
             'brand_id' => (string) $brand->id,
             'category_id' => (string) $category->id,
+            'pack_size' => '250',
             'per_page' => '20',
         ];
         $queryString = http_build_query($filterParams);
@@ -314,11 +388,13 @@ class InventoryManagementTest extends TestCase
         $addFormResponse = $this->actingAs($admin)->get("/stock/{$product->id}/add?{$queryString}");
         $addFormResponse->assertOk();
         $addFormResponse->assertSee('value="Special"', false);
+        $addFormResponse->assertSee('name="pack_size" value="250"', false);
         $addFormResponse->assertSee(route('stock.index', $filterParams));
 
         $sellFormResponse = $this->actingAs($admin)->get("/stock/{$product->id}/sell?{$queryString}");
         $sellFormResponse->assertOk();
         $sellFormResponse->assertSee('value="Special"', false);
+        $sellFormResponse->assertSee('name="pack_size" value="250"', false);
         $sellFormResponse->assertSee(route('stock.index', $filterParams));
 
         // 3. Completing Add Stock transaction redirects back to stock screen with filters retained
