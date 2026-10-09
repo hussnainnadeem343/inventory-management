@@ -33,7 +33,11 @@
         $canPurchases = $user->hasPermission('purchases.view');
         $canCreatePurchases = $user->hasPermission('purchases.create');
         $canGrn = $user->hasPermission('purchases.grn');
-        $hasPurchaseGroup = $user->isSuperAdmin() || $user->isShopAdmin() || $canPurchases || $canCreatePurchases || $canGrn;
+        $canPr = $user->hasPermission('purchases.requisitions');
+        $canIgp = $user->hasPermission('purchases.igp');
+        $canPi = $user->hasPermission('purchases.invoices');
+        $canReturn = $user->hasPermission('purchases.return');
+        $hasPurchaseGroup = $user->isSuperAdmin() || $user->isShopAdmin() || $canPurchases || $canCreatePurchases || $canGrn || $canPr || $canIgp || $canPi || $canReturn;
         $isPurchaseActive = request()->routeIs('purchases.*');
 
         // 4. Finance & Accounts
@@ -153,12 +157,36 @@
                     <a class="{{ request()->routeIs('purchases.suppliers.*') ? 'active' : '' }}" href="{{ route('purchases.suppliers.index') }}">
                         <i class="bi bi-person-lines-fill"></i><span>Suppliers</span>
                     </a>
-                    <a class="{{ request()->routeIs('purchases.orders.*') ? 'active' : '' }}" href="{{ route('purchases.orders.index') }}">
-                        <i class="bi bi-cart-check"></i><span>Purchase Orders</span>
-                    </a>
-                    <a class="{{ request()->routeIs('purchases.grn.*') ? 'active' : '' }}" href="{{ route('purchases.grn.index') }}">
-                        <i class="bi bi-box-arrow-in-down"></i><span>Stock Inward (GRN)</span>
-                    </a>
+                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canPr || $canPurchases)
+                        <a class="{{ request()->routeIs('purchases.requisitions.*') ? 'active' : '' }}" href="{{ route('purchases.requisitions.index') }}">
+                            <i class="bi bi-file-earmark-text"></i><span>Requisitions (PR)</span>
+                        </a>
+                    @endif
+                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canCreatePurchases || $canPurchases)
+                        <a class="{{ request()->routeIs('purchases.orders.*') ? 'active' : '' }}" href="{{ route('purchases.orders.index') }}">
+                            <i class="bi bi-cart-check"></i><span>Purchase Orders (PO)</span>
+                        </a>
+                    @endif
+                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canIgp || $canPurchases)
+                        <a class="{{ request()->routeIs('purchases.igp.*') ? 'active' : '' }}" href="{{ route('purchases.igp.index') }}">
+                            <i class="bi bi-door-open"></i><span>Gate Pass (IGP)</span>
+                        </a>
+                    @endif
+                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canGrn || $canPurchases)
+                        <a class="{{ request()->routeIs('purchases.grn.*') ? 'active' : '' }}" href="{{ route('purchases.grn.index') }}">
+                            <i class="bi bi-box-arrow-in-down"></i><span>Stock Inward (GRN)</span>
+                        </a>
+                    @endif
+                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canPi || $canPurchases)
+                        <a class="{{ request()->routeIs('purchases.invoices.*') ? 'active' : '' }}" href="{{ route('purchases.invoices.index') }}">
+                            <i class="bi bi-receipt"></i><span>Purchase Invoices (PI)</span>
+                        </a>
+                    @endif
+                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canReturn || $canPurchases)
+                        <a class="{{ request()->routeIs('purchases.returns.*') ? 'active' : '' }}" href="{{ route('purchases.returns.index') }}">
+                            <i class="bi bi-arrow-return-left"></i><span>Purchase Returns</span>
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

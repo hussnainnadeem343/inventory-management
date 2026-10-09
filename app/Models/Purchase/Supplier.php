@@ -63,8 +63,23 @@ class Supplier extends Model
         return $this->hasMany(PurchaseOrder::class);
     }
 
+    public function inwardGatePasses(): HasMany
+    {
+        return $this->hasMany(InwardGatePass::class);
+    }
+
     public function goodsReceivedNotes(): HasMany
     {
         return $this->hasMany(GoodsReceivedNote::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(PurchaseInvoice::class);
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(PurchaseReturn::class);
     }
 }

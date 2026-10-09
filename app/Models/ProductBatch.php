@@ -41,6 +41,11 @@ class ProductBatch extends Model
         return $query->where('status', 'active')->where('quantity', '>', 0);
     }
 
+    public function getBatchNumberAttribute(): ?string
+    {
+        return $this->batch_no;
+    }
+
     public function scopeFifo(Builder $query): Builder
     {
         return $query->orderByRaw('CASE WHEN expiry_date IS NOT NULL THEN expiry_date ELSE created_at END ASC')

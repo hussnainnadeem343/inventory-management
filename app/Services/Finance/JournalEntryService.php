@@ -221,4 +221,120 @@ class JournalEntryService
             $payment->created_by
         );
     }
+
+    /**
+     * Auto journal entry on Purchase Invoice (Vendor Bill):
+     * Dr. Inventory Asset / Purchases
+     * Dr. Landed Expenses (Freight, etc.)
+     * Cr. Accounts Payable (Vendors)
+     */
+    public function recordPurchaseInvoiceEntry(\App\Models\Purchase\PurchaseInvoice $invoice): ?JournalEntry
+    {
+        $shopId = $invoice->shop_id;
+        $invAcc = Account::where('shop_id', $shopId)->where('code', '1050')->first()
+            ?? Account::whereNull('shop_id')->where('code', '1050')->first()
+            ?? Account::where('code', '1050')->first();
+        $apAcc = Account::where('shop_id', $shopId)->where('code', '2001')->first()
+            ?? Account::whereNull('shop_id')->where('code', '2001')->first()
+            ?? Account::where('code', '2001')->first();
+
+        if (!$invAcc || !$apAcc) {
+            return null;
+        }
+
+        $lines = [];
+        $productTotal = (float) $invoice->subtotal - (float) $invoice->discount_amount + (float) $invoice->tax_amount;
+        if ($productTotal > 0) {
+            $lines[] = [
+                'account_id' => $invAcc->id,
+                'debit' => $productTotal,
+                'credit' => 0,
+                'narration' => 'Purchased goods inward valuation',
+            ];
+        }
+
+        // Add additional expenses (freight, offloading)
+        foreach ($invoice->expenses as $exp) {
+            $expAccId = $exp->account_id ?? $invAcc->id;
+            $expDebit = (float) $exp->debit > 0 ? (float) $exp->debit : (float) $exp->rate * (float) $exp->quantity;
+            if ($expDebit > 0) {
+                $lines[] = [
+                    'account_id' => $expAccId,
+                    'debit' => $expDebit,
+                    'credit' => 0,
+                    'narration' => ($exp->expense_type ?? 'Expense') . ': ' . ($exp->comments ?? ''),
+                ];
+            }
+        }
+
+        $totalPayable = (float) $invoice->grand_total;
+        if ($totalPayable > 0) {
+            $lines[] = [
+                'account_id' => $apAcc->id,
+                'debit' => 0,
+                'credit' => $totalPayable,
+                'narration' => "Accounts payable to {$invoice->supplier->name} for Bill #{$invoice->invoice_number}",
+            ];
+        }
+
+        if (empty($lines)) {
+            return null;
+        }
+
+        try {
+            return $this->recordEntry(
+                $shopId,
+                $invoice->invoice_date->format('Y-m-d'),
+                'purchase_invoice',
+                $invoice->id,
+                "Purchase Bill #{$invoice->invoice_number} from {$invoice->supplier->name}",
+                $lines,
+                $invoice->created_by
+            );
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * Auto journal entry on Purchase Return (Debit Note):
+     * Dr. Accounts Payable (2001) - Reducing vendor liability
+     * Cr. Inventory Asset (1050) - Reducing inventory valuation
+     */
+    public function recordPurchaseReturnEntry(\App\Models\Purchase\PurchaseReturn $return): ?JournalEntry
+    {
+        $shopId = $return->shop_id;
+        $invAcc = Account::where('shop_id', $shopId)->where('code', '1050')->first()
+            ?? Account::whereNull('shop_id')->where('code', '1050')->first()
+            ?? Account::where('code', '1050')->first();
+        $apAcc = Account::where('shop_id', $shopId)->where('code', '2001')->first()
+            ?? Account::whereNull('shop_id')->where('code', '2001')->first()
+            ?? Account::where('code', '2001')->first();
+
+        if (!$invAcc || !$apAcc) {
+            return null;
+        }
+
+        $amount = (float) $return->total_amount;
+        if ($amount <= 0) {
+            return null;
+        }
+
+        try {
+            return $this->recordEntry(
+                $shopId,
+                $return->return_date->format('Y-m-d'),
+                'purchase_return',
+                $return->id,
+                "Debit Note #{$return->return_number} to {$return->supplier->name}: {$return->reason}",
+                [
+                    ['account_id' => $apAcc->id, 'debit' => $amount, 'credit' => 0, 'narration' => 'Vendor debt reduced via Debit Note'],
+                    ['account_id' => $invAcc->id, 'debit' => 0, 'credit' => $amount, 'narration' => 'Inventory asset reduced for returned goods'],
+                ],
+                $return->created_by
+            );
+        } catch (\Throwable) {
+            return null;
+        }
+    }
 }

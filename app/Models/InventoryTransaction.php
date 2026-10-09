@@ -20,6 +20,10 @@ class InventoryTransaction extends Model
 
     public const TYPE_DAMAGE_LOSS = 'DAMAGE_LOSS';
 
+    public const TYPE_STOCK_OUT = 'STOCK_OUT';
+
+    public const TYPE_PURCHASE_RETURN = 'PURCHASE_RETURN';
+
     protected $fillable = [
         'shop_id',
         'sale_id',

@@ -11,30 +11,26 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class PurchaseOrder extends Model
+class PurchaseReturn extends Model
 {
     use HasFactory, SoftDeletes;
 
     public const STATUS_DRAFT = 'draft';
     public const STATUS_APPROVED = 'approved';
-    public const STATUS_PARTIALLY_RECEIVED = 'partially_received';
-    public const STATUS_RECEIVED = 'received';
-    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_COMPLETED = 'completed';
 
     protected $fillable = [
         'shop_id',
         'supplier_id',
-        'purchase_requisition_id',
-        'po_number',
-        'order_date',
-        'expected_delivery_date',
-        'payment_terms',
-        'delivery_station',
-        'status',
+        'goods_received_note_id',
+        'purchase_invoice_id',
+        'return_number',
+        'return_date',
         'subtotal',
-        'discount_amount',
         'tax_amount',
-        'grand_total',
+        'total_amount',
+        'status',
+        'reason',
         'notes',
         'created_by',
     ];
@@ -42,12 +38,10 @@ class PurchaseOrder extends Model
     protected function casts(): array
     {
         return [
-            'order_date' => 'date',
-            'expected_delivery_date' => 'date',
+            'return_date' => 'date',
             'subtotal' => 'decimal:2',
-            'discount_amount' => 'decimal:2',
             'tax_amount' => 'decimal:2',
-            'grand_total' => 'decimal:2',
+            'total_amount' => 'decimal:2',
         ];
     }
 
@@ -68,9 +62,14 @@ class PurchaseOrder extends Model
         return $this->belongsTo(Supplier::class);
     }
 
-    public function purchaseRequisition(): BelongsTo
+    public function goodsReceivedNote(): BelongsTo
     {
-        return $this->belongsTo(PurchaseRequisition::class);
+        return $this->belongsTo(GoodsReceivedNote::class);
+    }
+
+    public function purchaseInvoice(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseInvoice::class);
     }
 
     public function creator(): BelongsTo
@@ -80,21 +79,6 @@ class PurchaseOrder extends Model
 
     public function items(): HasMany
     {
-        return $this->hasMany(PurchaseOrderItem::class);
-    }
-
-    public function inwardGatePasses(): HasMany
-    {
-        return $this->hasMany(InwardGatePass::class);
-    }
-
-    public function goodsReceivedNotes(): HasMany
-    {
-        return $this->hasMany(GoodsReceivedNote::class);
-    }
-
-    public function invoices(): HasMany
-    {
-        return $this->hasMany(PurchaseInvoice::class);
+        return $this->hasMany(PurchaseReturnItem::class);
     }
 }

@@ -2,44 +2,38 @@
 
 namespace App\Models\Purchase;
 
-use App\Models\Inventory\Warehouse;
 use App\Models\InventoryItem;
 use App\Models\ProductBatch;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class GoodsReceivedItem extends Model
+class PurchaseReturnItem extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'goods_received_note_id',
+        'purchase_return_id',
         'inventory_item_id',
         'product_batch_id',
-        'warehouse_id',
-        'batch_number',
-        'expiry_date',
         'quantity',
-        'rejected_quantity',
         'unit_cost',
         'subtotal',
+        'reason',
     ];
 
     protected function casts(): array
     {
         return [
-            'expiry_date' => 'date',
             'quantity' => 'decimal:2',
-            'rejected_quantity' => 'decimal:2',
             'unit_cost' => 'decimal:2',
             'subtotal' => 'decimal:2',
         ];
     }
 
-    public function goodsReceivedNote(): BelongsTo
+    public function purchaseReturn(): BelongsTo
     {
-        return $this->belongsTo(GoodsReceivedNote::class);
+        return $this->belongsTo(PurchaseReturn::class);
     }
 
     public function inventoryItem(): BelongsTo
@@ -50,10 +44,5 @@ class GoodsReceivedItem extends Model
     public function batch(): BelongsTo
     {
         return $this->belongsTo(ProductBatch::class, 'product_batch_id');
-    }
-
-    public function warehouse(): BelongsTo
-    {
-        return $this->belongsTo(Warehouse::class);
     }
 }
