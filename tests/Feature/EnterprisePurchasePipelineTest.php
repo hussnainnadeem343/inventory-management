@@ -61,10 +61,17 @@ class EnterprisePurchasePipelineTest extends TestCase
         // Stage 1: Requisitions
         $this->actingAs($admin)->get('/purchases/requisitions')->assertOk();
         $this->actingAs($admin)->get('/purchases/requisitions/create')->assertOk();
+        $pr = PurchaseRequisition::create([
+            'shop_id' => $admin->shop_id,
+            'pr_number' => 'PR-202610-0001',
+            'requisition_date' => now()->format('Y-m-d'),
+            'department' => 'Hardware',
+            'status' => PurchaseRequisition::STATUS_APPROVED,
+        ]);
 
         // Stage 2: Purchase Orders
         $this->actingAs($admin)->get('/purchases/orders')->assertOk();
-        $this->actingAs($admin)->get('/purchases/orders/create')->assertOk();
+        $this->actingAs($admin)->get('/purchases/orders/create')->assertOk()->assertSee($pr->pr_number);
 
         // Stage 3: Inward Gate Pass
         $this->actingAs($admin)->get('/purchases/igp')->assertOk();
@@ -392,4 +399,137 @@ class EnterprisePurchasePipelineTest extends TestCase
         $this->assertNotNull($journal);
         $this->assertEquals(2400.00, (float) $journal->total_debit);
     }
+
+    public function test_enhanced_procurement_pipeline_features_and_fixes(): void
+    {
+        $admin = $this->shopAdmin();
+        $supplier = Supplier::create([
+            'shop_id' => $admin->shop_id,
+            'name' => 'Rehan Wood Supplies',
+            'status' => 'active',
+            'current_balance' => 0,
+            'created_by' => $admin->id,
+        ]);
+        $item = $this->createItem($admin, 'Teak Wood Plank', 'TWP-01', 500, 10);
+
+        // Point 1: Create PO linked to approved PR, or Direct (Point 2)
+        // Testing Direct PO with tax percent and line discount & tax (Point 3)
+        $poResponse = $this->actingAs($admin)->post('/purchases/orders', [
+            'supplier_id' => $supplier->id,
+            'order_date' => now()->format('Y-m-d'),
+            'delivery_date' => now()->addDays(5)->format('Y-m-d'),
+            'station' => 'Factory Godown 1',
+            'tax_percent' => 10,
+            'payment_terms' => 'Net 30',
+            'items' => [
+                [
+                    'inventory_item_id' => $item->id,
+                    'quantity' => 10,
+                    'unit_cost' => 500,
+                    'discount_amount' => 100, // Point 12: discount defined on PO
+                    'tax_percent' => 10,      // Point 13: tax % defined on PO
+                ],
+            ],
+        ]);
+        $poResponse->assertRedirect();
+        $po = PurchaseOrder::where('supplier_id', $supplier->id)->latest('id')->first();
+        $this->assertNotNull($po);
+        $this->assertEquals(10, (float) $po->tax_percent);
+        $poItem = $po->items->first();
+        $this->assertEquals(100.00, (float) $poItem->discount_amount);
+        $this->assertEquals(10.00, (float) $poItem->tax_percent);
+
+        // Approve PO
+        $po->update(['status' => PurchaseOrder::STATUS_APPROVED]);
+
+        // Point 7: IGP with rejected quantity
+        $igpResponse = $this->actingAs($admin)->post('/purchases/igp', [
+            'purchase_order_id' => $po->id,
+            'supplier_id' => $supplier->id,
+            'igp_date' => now()->format('Y-m-d'),
+            'received_via' => 'By Road / Truck',
+            'vehicle_number' => 'LES-999',
+            'transporter_name' => 'Fast Cargo',
+            'driver_name' => 'Ali',
+            'items' => [
+                [
+                    'inventory_item_id' => $item->id,
+                    'declared_quantity' => 10,
+                    'rejected_quantity' => 2, // Point 7: rejected quantity
+                ],
+            ],
+        ]);
+        $igpResponse->assertRedirect();
+        $igp = InwardGatePass::latest('id')->first();
+        $this->assertNotNull($igp);
+        $igpItem = $igp->items->first();
+        $this->assertEquals(2.00, (float) $igpItem->rejected_quantity);
+        $this->assertEquals(8.00, (float) $igpItem->net_accepted_quantity);
+
+        // Point 10: GRN without requiring unit_cost (it auto-fills from PO)
+        $grnResponse = $this->actingAs($admin)->post('/purchases/grn', [
+            'supplier_id' => $supplier->id,
+            'purchase_order_id' => $po->id,
+            'inward_gate_pass_id' => $igp->id,
+            'received_date' => now()->format('Y-m-d'),
+            'station' => 'Factory Godown 1',
+            'items' => [
+                [
+                    'inventory_item_id' => $item->id,
+                    'purchase_order_item_id' => $poItem->id,
+                    'quantity' => 8,
+                    'rejected_quantity' => 0,
+                    // Note: unit_cost omitted here to verify Point 10!
+                ],
+            ],
+        ]);
+        $grnResponse->assertRedirect();
+        $grn = GoodsReceivedNote::latest('id')->first();
+        $this->assertNotNull($grn);
+        $grnItem = $grn->items->first();
+        $this->assertEquals(500.00, (float) $grnItem->unit_cost); // auto-fetched from PO!
+
+        // Point 14 & 15: Create Purchase Invoice directly from PO (or GRN) with blank optional expenses
+        $invResponse = $this->actingAs($admin)->post('/purchases/invoices', [
+            'supplier_id' => $supplier->id,
+            'purchase_order_id' => $po->id,
+            'goods_received_note_id' => $grn->id,
+            'invoice_date' => now()->format('Y-m-d'),
+            'invoice_type' => 'credit',
+            'currency' => 'PKR',
+            'station' => 'Factory Godown 1',
+            'items' => [
+                [
+                    'inventory_item_id' => $item->id,
+                    'goods_received_item_id' => $grnItem->id,
+                    'quantity' => 8,
+                    'unit_cost' => 500,
+                    'discount_amount' => 100, // auto fetched from PO
+                    'tax_percent' => 10,     // auto fetched from PO
+                ],
+            ],
+            // Sending empty default expense and commission rows to test Point 14 fix
+            'expenses' => [
+                ['account_id' => '', 'category' => 'inventory', 'quantity' => 1, 'rate' => 0, 'debit' => 0, 'credit' => 0],
+            ],
+            'commissions' => [
+                ['agent_name' => '', 'rate' => 0, 'amount' => 0],
+            ],
+        ]);
+        $invResponse->assertRedirect();
+        $invoice = PurchaseInvoice::latest('id')->first();
+        $this->assertNotNull($invoice);
+        $this->assertEquals($supplier->id, $invoice->supplier_id);
+
+        // Point 15: Invoice appears in invoices index
+        $indexResponse = $this->actingAs($admin)->get('/purchases/invoices');
+        $indexResponse->assertOk();
+        $indexResponse->assertSee($invoice->invoice_number);
+
+        // Point 17: Purchase return create view loads with invoice without crashing
+        $returnCreateResponse = $this->actingAs($admin)->get('/purchases/returns/create?purchase_invoice_id=' . $invoice->id);
+        $returnCreateResponse->assertOk();
+        $returnCreateResponse->assertSee($invoice->invoice_number);
+    }
 }
+

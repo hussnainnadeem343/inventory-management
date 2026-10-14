@@ -285,7 +285,7 @@ class MultiShopSystemTest extends TestCase
         $brandA = Brand::create(['shop_id' => $shopA->id, 'name' => 'Brand Alpha', 'status' => 'active', 'created_by' => $adminA->id]);
         $catA = Category::create(['shop_id' => $shopA->id, 'name' => 'Cat Alpha', 'status' => 'active', 'created_by' => $adminA->id]);
 
-        InventoryItem::create([
+        $itemA = InventoryItem::create([
             'shop_id' => $shopA->id,
             'item_name' => 'Alpha Specific Gadget',
             'sku' => 'ALP-SKU-99',
@@ -298,6 +298,16 @@ class MultiShopSystemTest extends TestCase
             'purchase_price' => 500,
             'selling_price' => 900,
             'status' => 'active',
+            'created_by' => $adminA->id,
+        ]);
+
+        \App\Models\InventoryTransaction::create([
+            'shop_id' => $shopA->id,
+            'inventory_item_id' => $itemA->id,
+            'transaction_type' => 'STOCK_IN',
+            'quantity' => 2,
+            'unit_cost' => 500,
+            'reference_type' => 'INITIAL_STOCK',
             'created_by' => $adminA->id,
         ]);
 

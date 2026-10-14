@@ -3,7 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login - ERP Inventory Management</title>
+    <title>Login - DenFin ERP</title>
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -196,18 +197,18 @@
 
     <!-- Header Branding -->
     <div class="brand-header">
-        <div class="brand-icon-box">
-            <i class="bi bi-boxes"></i>
+        <div class="brand-icon-box p-0 overflow-hidden" style="background: transparent; border: 1px solid rgba(255,255,255,0.18); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(37, 99, 235, 0.25);">
+            <img src="{{ asset('images/branding/denfin-icon.png') }}" alt="DenFin ERP" width="56" height="56" style="object-fit: cover; border-radius: 15px;">
         </div>
-        <h1 class="brand-title">Inventory & ERP System</h1>
-        <span class="brand-badge">Secure Management Portal</span>
+        <h1 class="brand-title">DenFin ERP</h1>
+        <span class="brand-badge">Everything Your Business Needs</span>
     </div>
 
     <!-- High-Contrast Card -->
     <section class="card auth-card" aria-labelledby="login-title">
         <div class="mb-4">
             <h2 class="h5 fw-bold text-dark mb-1" id="login-title">Sign In to Your Account</h2>
-            <p class="text-secondary small mb-0">Enter your credentials to access the ERP dashboard</p>
+            <p class="text-secondary small mb-0">Enter your credentials to access your DenFin ERP portal</p>
         </div>
 
         <form method="post" action="{{ route('login.store') }}">
@@ -285,7 +286,7 @@
 
     <!-- Footer Copyright on Dark Canvas -->
     <div class="auth-footer-text">
-        &copy; {{ date('Y') }} ERP Inventory Management System. All rights reserved.
+        &copy; {{ date('Y') }} <strong>DenFin ERP</strong> • Everything Your Business Needs
     </div>
 </main>
 

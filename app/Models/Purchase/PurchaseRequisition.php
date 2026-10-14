@@ -94,6 +94,11 @@ class PurchaseRequisition extends Model
         return $this->status === self::STATUS_APPROVED;
     }
 
+    public function getRequisitionNumberAttribute(): string
+    {
+        return $this->pr_number ?? '';
+    }
+
     public function getEstimatedTotalAttribute(): float
     {
         return (float) $this->items->sum(function ($item) {

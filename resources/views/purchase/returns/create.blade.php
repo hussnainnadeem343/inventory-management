@@ -155,11 +155,15 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="hidden" name="items[{{ $rowIdx }}][product_batch_id]" value="{{ $iItem->product_batch_id }}">
-                                    <input type="text" class="form-control form-control-sm bg-light" value="{{ $iItem->batch ? $iItem->batch->batch_number : 'N/A' }}" readonly>
+                                    @php
+                                        $batchId = $iItem->goodsReceivedItem?->product_batch_id;
+                                        $batchNumber = $iItem->goodsReceivedItem?->batch?->batch_number ?? 'Direct';
+                                    @endphp
+                                    <input type="hidden" name="items[{{ $rowIdx }}][product_batch_id]" value="{{ $batchId }}">
+                                    <input type="text" class="form-control form-control-sm bg-light" value="{{ $batchNumber }}" readonly>
                                 </td>
                                 <td>
-                                    <input type="number" step="0.01" min="0.01" max="{{ $iItem->billed_quantity }}" class="form-control form-control-sm text-end qty-input" name="items[{{ $rowIdx }}][quantity]" value="1" required>
+                                    <input type="number" step="0.01" min="0.01" max="{{ $iItem->quantity }}" class="form-control form-control-sm text-end qty-input" name="items[{{ $rowIdx }}][quantity]" value="1" required>
                                 </td>
                                 <td>
                                     <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end cost-input" name="items[{{ $rowIdx }}][unit_cost]" value="{{ $iItem->unit_cost }}" required>
@@ -245,8 +249,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 </form>
 
 {{-- Modal: Load from GRN --}}
@@ -321,7 +323,7 @@
                                     <td class="ps-3 fw-bold">{{ $inv->invoice_number }}</td>
                                     <td>{{ $inv->supplier->name }}</td>
                                     <td>{{ $inv->invoice_date->format('d M, Y') }}</td>
-                                    <td class="text-end">Rs. {{ number_format($inv->total_amount, 2) }}</td>
+                                    <td class="text-end">Rs. {{ number_format($inv->grand_total ?? $inv->total_amount ?? 0, 2) }}</td>
                                     <td class="text-end pe-3">
                                         <a href="{{ route('purchases.returns.create', ['purchase_invoice_id' => $inv->id]) }}" class="btn btn-sm btn-info text-white">
                                             Load Invoice Items
@@ -414,8 +416,29 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
-        if (qtyInput) qtyInput.addEventListener('input', updateCalculations);
-        if (costInput) costInput.addEventListener('input', updateCalculations);
+        function setupAutoClear(el) {
+            if (!el) return;
+            el.addEventListener('focus', function () {
+                if (this.value === '0.00' || this.value === '0' || this.value === '0.0') {
+                    this.value = '';
+                }
+            });
+            el.addEventListener('blur', function () {
+                if (this.value.trim() === '') {
+                    this.value = this.classList.contains('qty-input') ? '1' : '0.00';
+                    updateCalculations();
+                }
+            });
+        }
+
+        if (qtyInput) {
+            qtyInput.addEventListener('input', updateCalculations);
+            setupAutoClear(qtyInput);
+        }
+        if (costInput) {
+            costInput.addEventListener('input', updateCalculations);
+            setupAutoClear(costInput);
+        }
 
         if (removeBtn) {
             removeBtn.addEventListener('click', function () {

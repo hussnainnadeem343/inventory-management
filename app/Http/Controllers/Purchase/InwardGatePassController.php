@@ -90,6 +90,7 @@ class InwardGatePassController extends Controller
             'items.*.inventory_item_id' => ['required', 'exists:inventory_items,id'],
             'items.*.packages_count' => ['nullable', 'numeric', 'min:0'],
             'items.*.declared_quantity' => ['required', 'numeric', 'min:0.01'],
+            'items.*.rejected_quantity' => ['nullable', 'numeric', 'min:0'],
             'items.*.remarks' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -122,6 +123,7 @@ class InwardGatePassController extends Controller
                     'inventory_item_id' => $item['inventory_item_id'],
                     'packages_count' => (float) ($item['packages_count'] ?? 0),
                     'declared_quantity' => (float) $item['declared_quantity'],
+                    'rejected_quantity' => (float) ($item['rejected_quantity'] ?? 0),
                     'remarks' => $item['remarks'] ?? null,
                 ]);
             }

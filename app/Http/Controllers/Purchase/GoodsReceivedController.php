@@ -13,6 +13,7 @@ use App\Models\Purchase\GoodsReceivedItem;
 use App\Models\Purchase\GoodsReceivedNote;
 use App\Models\Purchase\InwardGatePass;
 use App\Models\Purchase\PurchaseOrder;
+use App\Models\Purchase\PurchaseOrderItem;
 use App\Models\Purchase\Supplier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -109,6 +110,14 @@ class GoodsReceivedController extends Controller
         $user = $request->user();
         $shopId = $user->isSuperAdmin() ? $request->input('shop_id', $user->shop_id) : $user->shop_id;
 
+        // Clean blank expenses if present
+        if ($request->has('expenses')) {
+            $filteredExpenses = array_values(array_filter((array) $request->input('expenses'), function ($exp) {
+                return (!empty($exp['debit']) && (float) $exp['debit'] > 0) || (!empty($exp['rate']) && (float) $exp['rate'] > 0);
+            }));
+            $request->merge(['expenses' => $filteredExpenses]);
+        }
+
         $validated = $request->validate([
             'purchase_order_id' => ['nullable', 'exists:purchase_orders,id'],
             'inward_gate_pass_id' => ['nullable', 'exists:inward_gate_passes,id'],
@@ -123,12 +132,12 @@ class GoodsReceivedController extends Controller
             'items.*.inventory_item_id' => ['required', 'exists:inventory_items,id'],
             'items.*.quantity' => ['required', 'numeric', 'min:0'],
             'items.*.rejected_quantity' => ['nullable', 'numeric', 'min:0'],
-            'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
+            'items.*.unit_cost' => ['nullable', 'numeric', 'min:0'],
             'items.*.batch_number' => ['nullable', 'string', 'max:100'],
             'items.*.expiry_date' => ['nullable', 'date'],
             'items.*.warehouse_id' => ['nullable', 'exists:warehouses,id'],
             'expenses' => ['nullable', 'array'],
-            'expenses.*.account_id' => ['nullable', 'exists:accounts,id'],
+            'expenses.*.account_id' => ['nullable'],
             'expenses.*.expense_type' => ['nullable', 'string', 'max:100'],
             'expenses.*.comments' => ['nullable', 'string', 'max:255'],
             'expenses.*.quantity' => ['nullable', 'numeric'],
@@ -143,10 +152,25 @@ class GoodsReceivedController extends Controller
             $grnNumber = $prefix . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
 
             $totalAmount = 0;
-            foreach ($validated['items'] as $item) {
+            foreach ($validated['items'] as &$item) {
                 $acceptedQty = (float) $item['quantity'];
-                $totalAmount += $acceptedQty * ((float) $item['unit_cost']);
+                $cost = (float) ($item['unit_cost'] ?? 0);
+                if ($cost <= 0 && !empty($validated['purchase_order_id'])) {
+                    $poItem = PurchaseOrderItem::where('purchase_order_id', $validated['purchase_order_id'])
+                        ->where('inventory_item_id', $item['inventory_item_id'])
+                        ->first();
+                    if ($poItem) {
+                        $cost = (float) $poItem->unit_cost;
+                    }
+                }
+                if ($cost <= 0) {
+                    $invItem = InventoryItem::find($item['inventory_item_id']);
+                    $cost = (float) ($invItem?->purchase_price ?? 0);
+                }
+                $item['unit_cost'] = $cost;
+                $totalAmount += $acceptedQty * $cost;
             }
+            unset($item);
 
             $landedExpensesTotal = 0;
             if (!empty($validated['expenses'])) {

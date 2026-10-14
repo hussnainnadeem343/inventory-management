@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Brand;
-use App\Models\Category;
-use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
+use App\Models\Purchase\GoodsReceivedNote;
+use App\Models\Purchase\PurchaseInvoice;
+use App\Models\Purchase\PurchaseOrder;
+use App\Models\Purchase\PurchaseRequisition;
+use App\Models\Sale;
 use App\Models\Shop;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -43,113 +45,86 @@ class DashboardController extends Controller
 
         $currentShop = $shopId ? Shop::find($shopId) : null;
 
-        $itemsQuery = InventoryItem::query();
-        $brandQuery = Brand::query();
-        $categoryQuery = Category::query();
-        $txnQuery = InventoryTransaction::query();
-
+        // 1. Sales Operational KPIs (Fast & Indexed)
+        $salesQuery = Sale::query();
         if ($shopId) {
-            $itemsQuery->where('inventory_items.shop_id', $shopId);
-            $brandQuery->where('brands.shop_id', $shopId);
-            $categoryQuery->where('categories.shop_id', $shopId);
-            $txnQuery->where('inventory_transactions.shop_id', $shopId);
+            $salesQuery->where('sales.shop_id', $shopId);
         }
 
-        $stock = (clone $itemsQuery)->selectRaw('
-            COUNT(*) as total_items,
-            COALESCE(SUM(initial_quantity), 0) as total_initial,
-            COALESCE(SUM(sold_quantity), 0) as total_sold,
-            COALESCE(SUM(quantity), 0) as total_remaining
-        ')->first();
+        $todayStart = now()->startOfDay();
+        $todayEnd = now()->endOfDay();
 
-        // Financial KPIs: Sales & Customer Returns for this shop
-        $salesRevenue = (float) (clone $txnQuery)
-            ->where('inventory_transactions.transaction_type', 'SALE')
-            ->selectRaw('COALESCE(SUM(quantity * COALESCE(unit_sale_price, 0)), 0) as total')
-            ->value('total');
+        $salesToday = (clone $salesQuery)
+            ->whereBetween('sales.created_at', [$todayStart, $todayEnd])
+            ->selectRaw('COUNT(*) as total_count, COALESCE(SUM(total_amount), 0) as total_revenue')
+            ->first();
+        $salesTodayRevenue = (float) ($salesToday->total_revenue ?? 0);
+        $salesTodayCount = (int) ($salesToday->total_count ?? 0);
 
-        $returnsRefund = (float) (clone $txnQuery)
-            ->where('inventory_transactions.transaction_type', 'CUSTOMER_RETURN')
-            ->selectRaw('COALESCE(SUM(quantity * COALESCE(unit_sale_price, 0)), 0) as total')
-            ->value('total');
+        $netSalesTotal = (float) (clone $salesQuery)->sum('total_amount');
+        $totalSalesCount = (int) (clone $salesQuery)->count();
 
-        $netRevenue = max(0, $salesRevenue - $returnsRefund);
-
-        // Low stock count (remaining <= alert_quantity or 5)
-        $lowStockCount = (clone $itemsQuery)
-            ->whereRaw('inventory_items.quantity <= COALESCE(inventory_items.alert_quantity, 5) AND inventory_items.quantity > 0')
+        // 2. Purchase & Procurement Operational KPIs
+        $prQuery = PurchaseRequisition::query();
+        if ($shopId) {
+            $prQuery->where('shop_id', $shopId);
+        }
+        $pendingPrCount = (clone $prQuery)
+            ->whereIn('status', [PurchaseRequisition::STATUS_PENDING, 'pending'])
             ->count();
 
-        $outOfStockCount = (clone $itemsQuery)
-            ->where('inventory_items.quantity', '<=', 0)
+        $poQuery = PurchaseOrder::query();
+        if ($shopId) {
+            $poQuery->where('shop_id', $shopId);
+        }
+        $pendingPoCount = (clone $poQuery)
+            ->whereIn('status', [PurchaseOrder::STATUS_DRAFT, PurchaseOrder::STATUS_APPROVED, PurchaseOrder::STATUS_PARTIALLY_RECEIVED])
             ->count();
 
-        // Expiring soon count (within 30 days or expired)
-        $expiringCount = (clone $itemsQuery)
-            ->whereNotNull('inventory_items.expiry_date')
-            ->where('inventory_items.expiry_date', '<=', now()->addDays(30))
+        $grnQuery = GoodsReceivedNote::query();
+        if ($shopId) {
+            $grnQuery->where('shop_id', $shopId);
+        }
+        $pendingGrnCount = (clone $grnQuery)
+            ->where('billing_status', '!=', GoodsReceivedNote::BILLING_BILLED)
             ->count();
 
-        $byCategory = (clone $itemsQuery)
-            ->join('categories', 'categories.id', '=', 'inventory_items.category_id')
-            ->selectRaw('categories.name as label, SUM(inventory_items.quantity) as total')
-            ->groupBy('categories.id', 'categories.name')
-            ->orderByDesc('total')
-            ->limit(6)
-            ->get();
+        $piQuery = PurchaseInvoice::query();
+        if ($shopId) {
+            $piQuery->where('shop_id', $shopId);
+        }
+        $unpaidInvoicesCount = (clone $piQuery)
+            ->whereIn('payment_status', [PurchaseInvoice::STATUS_UNPAID, PurchaseInvoice::STATUS_PARTIALLY_PAID])
+            ->count();
+        $unpaidInvoicesAmount = (float) (clone $piQuery)
+            ->whereIn('payment_status', [PurchaseInvoice::STATUS_UNPAID, PurchaseInvoice::STATUS_PARTIALLY_PAID])
+            ->sum('grand_total');
 
-        $byBrand = (clone $itemsQuery)
-            ->join('brands', 'brands.id', '=', 'inventory_items.brand_id')
-            ->selectRaw('brands.name as label, SUM(inventory_items.quantity) as total')
-            ->groupBy('brands.id', 'brands.name')
-            ->orderByDesc('total')
-            ->limit(6)
-            ->get();
-
+        // 3. Lean Recent Stock Activity (Strict limit 5)
+        $txnQuery = InventoryTransaction::query();
+        if ($shopId) {
+            $txnQuery->where('inventory_transactions.shop_id', $shopId);
+        }
         $recentActivity = (clone $txnQuery)
             ->with(['inventoryItem:id,item_name,sku', 'creator:id,name'])
             ->latest('inventory_transactions.created_at')
-            ->limit(7)
-            ->get();
-
-        $movement = (clone $txnQuery)
-            ->where('inventory_transactions.created_at', '>=', now()->subDays(13)->startOfDay())
-            ->selectRaw('
-                DATE(inventory_transactions.created_at) as movement_date,
-                SUM(CASE WHEN transaction_type = ? THEN quantity ELSE 0 END) as stock_in,
-                SUM(CASE WHEN transaction_type = ? THEN quantity ELSE 0 END) as sold
-            ', ['STOCK_IN', 'SALE'])
-            ->groupBy('movement_date')
-            ->orderBy('movement_date')
-            ->get();
-
-        // Urgent Low Stock watchlist (top 5 in this shop)
-        $lowStockItems = (clone $itemsQuery)
-            ->whereRaw('inventory_items.quantity <= COALESCE(inventory_items.alert_quantity, 5)')
-            ->with(['brand:id,name', 'category:id,name'])
-            ->orderBy('inventory_items.quantity')
             ->limit(5)
-            ->get();
+            ->get(['id', 'inventory_item_id', 'transaction_type', 'quantity', 'created_by', 'created_at']);
 
         return view('dashboard.index', [
             'shops' => $shops,
             'currentShop' => $currentShop,
             'selectedShopId' => $shopId,
-            'totalItems' => (int) $stock->total_items,
-            'totalInitial' => (float) $stock->total_initial,
-            'totalSold' => (float) $stock->total_sold,
-            'totalRemaining' => (float) $stock->total_remaining,
-            'netRevenue' => $netRevenue,
-            'lowStockCount' => $lowStockCount,
-            'outOfStockCount' => $outOfStockCount,
-            'expiringCount' => $expiringCount,
-            'totalBrands' => $brandQuery->count(),
-            'totalCategories' => $categoryQuery->count(),
-            'byCategory' => $byCategory,
-            'byBrand' => $byBrand,
+            'salesTodayRevenue' => $salesTodayRevenue,
+            'salesTodayCount' => $salesTodayCount,
+            'netSalesTotal' => $netSalesTotal,
+            'totalSalesCount' => $totalSalesCount,
+            'pendingPrCount' => $pendingPrCount,
+            'pendingPoCount' => $pendingPoCount,
+            'pendingGrnCount' => $pendingGrnCount,
+            'unpaidInvoicesCount' => $unpaidInvoicesCount,
+            'unpaidInvoicesAmount' => $unpaidInvoicesAmount,
             'recentActivity' => $recentActivity,
-            'movement' => $movement,
-            'lowStockItems' => $lowStockItems,
         ]);
     }
 }

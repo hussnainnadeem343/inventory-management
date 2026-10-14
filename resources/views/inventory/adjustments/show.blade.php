@@ -1,7 +1,31 @@
 @extends('layouts.app')
 @section('title', 'Adjustment ' . $adjustment->adjustment_number)
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
+{{-- Printable Official Stock Adjustment Header (Print Only) --}}
+<div class="d-none d-print-block mb-4 pb-3 border-bottom">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h2 class="h4 fw-bold mb-1 text-dark">{{ auth()->user()->shop ? auth()->user()->shop->name : 'DenFin ERP' }}</h2>
+            <div class="text-secondary small">
+                @if(auth()->user()->shop && auth()->user()->shop->address)
+                    <div><i class="bi bi-geo-alt me-1"></i>{{ auth()->user()->shop->address }}</div>
+                @endif
+                @if(auth()->user()->shop && auth()->user()->shop->phone)
+                    <div><i class="bi bi-telephone me-1"></i>Phone: {{ auth()->user()->shop->phone }}</div>
+                @endif
+                <div>Branch Code: <strong>{{ auth()->user()->shop ? auth()->user()->shop->code : 'MAIN' }}</strong></div>
+            </div>
+        </div>
+        <div class="text-end">
+            <span class="badge border border-dark px-3 py-1 fs-6 text-uppercase fw-bold mb-1 d-inline-block">STOCK ADJUSTMENT VOUCHER</span>
+            <div class="font-monospace fw-bold fs-5 text-dark mt-1">{{ $adjustment->adjustment_number }}</div>
+            <div class="small text-secondary">Adjustment Date: <strong>{{ $adjustment->adjustment_date->format('d M, Y') }}</strong></div>
+            <div class="small text-secondary">Type: <strong class="text-uppercase">{{ $adjustment->type === 'addition' ? 'Stock Addition' : 'Stock Deduction' }}</strong></div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
     <div>
         <div class="d-flex align-items-center gap-2">
             <h4 class="mb-0 fw-bold">{{ $adjustment->adjustment_number }}</h4>
@@ -83,4 +107,31 @@
         <p class="mb-0 mt-1">{{ $adjustment->notes }}</p>
     </div>
 @endif
+
+{{-- Printable Official Authorization Signatures Footer (Print Only) --}}
+<div class="d-none d-print-block print-signature-block">
+    <div class="row text-center">
+        <div class="col-4">
+            <div class="border-top border-dark pt-2 mx-3">
+                <strong class="d-block text-dark small text-uppercase">Recorded By</strong>
+                <span class="text-secondary" style="font-size: 11px;">{{ $adjustment->creator?->name ?? auth()->user()->name }}</span>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="border-top border-dark pt-2 mx-3">
+                <strong class="d-block text-dark small text-uppercase">Internal Stock Auditor</strong>
+                <span class="text-secondary" style="font-size: 11px;">Verification & Stamp</span>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="border-top border-dark pt-2 mx-3">
+                <strong class="d-block text-dark small text-uppercase">Operations / Manager</strong>
+                <span class="text-secondary" style="font-size: 11px;">Approval Signature</span>
+            </div>
+        </div>
+    </div>
+    <div class="text-center text-secondary mt-4" style="font-size: 10px;">
+        Generated on {{ now()->format('d M, Y h:i A') }} &bull; DenFin ERP Enterprise Document &bull; Stock Adjustment Voucher
+    </div>
+</div>
 @endsection

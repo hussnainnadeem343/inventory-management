@@ -153,10 +153,34 @@
                 </div>
             @endif
 
+            {{-- Printable Official Authorization Signatures Footer (Print Only) --}}
+            <div class="d-none d-print-block print-signature-block mb-4">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="border-top border-dark pt-2 mx-3">
+                            <strong class="d-block text-dark small text-uppercase">Prepared / Cashier</strong>
+                            <span class="text-secondary" style="font-size: 11px;">{{ $sale->creator->name ?? 'Staff' }}</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-top border-dark pt-2 mx-3">
+                            <strong class="d-block text-dark small text-uppercase">Customer Acknowledgment</strong>
+                            <span class="text-secondary" style="font-size: 11px;">Received in Good Condition</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-top border-dark pt-2 mx-3">
+                            <strong class="d-block text-dark small text-uppercase">Authorized Signature</strong>
+                            <span class="text-secondary" style="font-size: 11px;">Store Manager / Stamp</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- Footer --}}
             <div class="border-top pt-3 text-center text-secondary small">
                 <p class="mb-0">Thank you for your business! Please retain this receipt for any exchange within 7 days.</p>
-                <div class="text-muted" style="font-size: 11px;">Powered by Multi-Shop Retail System</div>
+                <div class="text-muted" style="font-size: 11px;">Powered by DenFin ERP</div>
             </div>
         </div>
     </div>

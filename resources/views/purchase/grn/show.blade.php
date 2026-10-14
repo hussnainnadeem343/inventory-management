@@ -1,11 +1,36 @@
 @extends('layouts.app')
 @section('title', 'GRN ' . $grn->grn_number)
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
+{{-- Printable Official GRN Letterhead Header (Print Only) --}}
+<div class="d-none d-print-block mb-4 pb-3 border-bottom">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h2 class="h4 fw-bold mb-1 text-dark">{{ auth()->user()->shop ? auth()->user()->shop->name : 'DenFin ERP' }}</h2>
+            <div class="text-secondary small">
+                @if(auth()->user()->shop && auth()->user()->shop->address)
+                    <div><i class="bi bi-geo-alt me-1"></i>{{ auth()->user()->shop->address }}</div>
+                @endif
+                @if(auth()->user()->shop && auth()->user()->shop->phone)
+                    <div><i class="bi bi-telephone me-1"></i>Phone: {{ auth()->user()->shop->phone }}</div>
+                @endif
+                <div>Branch Code: <strong>{{ auth()->user()->shop ? auth()->user()->shop->code : 'MAIN' }}</strong></div>
+            </div>
+        </div>
+        <div class="text-end">
+            <span class="badge border border-dark px-3 py-1 fs-6 text-uppercase fw-bold mb-1 d-inline-block">GOODS RECEIVED NOTE (GRN)</span>
+            <div class="font-monospace fw-bold fs-5 text-dark mt-1">{{ $grn->grn_number }}</div>
+            <div class="small text-secondary">Received Date: <strong>{{ $grn->received_date->format('d M, Y') }}</strong></div>
+            <div class="small text-secondary">Billing Status: <strong class="text-uppercase">{{ str_replace('_', ' ', $grn->billing_status) }}</strong></div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
     <div>
         <div class="d-flex align-items-center gap-2">
             <h4 class="mb-0 fw-bold">{{ $grn->grn_number }}</h4>
-            <span class="badge bg-success-subtle text-success fs-6">Stock Inward Received</span>
+            <span class="badge bg-success-subtle text-success fs-6"><i class="bi bi-check-circle-fill me-1"></i> Stock Inward Received</span>
+            <span class="badge bg-secondary-subtle text-secondary fs-6"><i class="bi bi-lock-fill me-1"></i> Posted (Locked)</span>
             @if($grn->billing_status === 'fully_billed')
                 <span class="badge bg-primary-subtle text-primary">Fully Billed</span>
             @else
@@ -172,4 +197,32 @@
         <p class="mb-0 mt-1">{{ $grn->notes }}</p>
     </div>
 @endif
+
+{{-- Printable Official Authorization Signatures Footer (Print Only) --}}
+<div class="d-none d-print-block print-signature-block">
+    <div class="row text-center">
+        <div class="col-4">
+            <div class="border-top border-dark pt-2 mx-3">
+                <strong class="d-block text-dark small text-uppercase">Goods Received By</strong>
+                <span class="text-secondary" style="font-size: 11px;">{{ $grn->receiver?->name ?? auth()->user()->name }}</span>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="border-top border-dark pt-2 mx-3">
+                <strong class="d-block text-dark small text-uppercase">Quality Inspected By</strong>
+                <span class="text-secondary" style="font-size: 11px;">QC Inspector / Stamp</span>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="border-top border-dark pt-2 mx-3">
+                <strong class="d-block text-dark small text-uppercase">Warehouse Manager</strong>
+                <span class="text-secondary" style="font-size: 11px;">Authorized Approval</span>
+            </div>
+        </div>
+    </div>
+    <div class="text-center text-secondary mt-4" style="font-size: 10px;">
+        Generated on {{ now()->format('d M, Y h:i A') }} &bull; DenFin ERP Enterprise Document &bull; Stock Inward Voucher
+    </div>
+</div>
+
 @endsection

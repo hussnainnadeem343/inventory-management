@@ -1,6 +1,379 @@
 :root{--primary:#2563eb;--primary-dark:#1d4ed8;--sidebar:#0f1f3d;--sidebar-muted:#91a4c4;--background:#f5f7fb;--surface:#fff;--text:#172033;--muted:#667085;--border:#e5eaf1;--success:#15803d;--warning:#b45309;--danger:#c62828;--radius:12px;--shadow:0 2px 10px rgba(16,24,40,.055)}
-*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:1.5}input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none!important;margin:0!important}input[type=number]{-moz-appearance:textfield!important}.app-shell{min-height:100vh}.sidebar{width:244px;min-height:100vh;background:var(--sidebar);position:fixed;inset:0 auto 0 0;z-index:1030;padding:22px 14px;overflow-y:auto}.brand{display:flex;align-items:center;gap:11px;color:#fff;text-decoration:none;padding:0 8px 22px}.brand-mark{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;background:var(--primary);font-size:20px}.brand-copy strong,.brand-copy small{display:block}.brand-copy strong{font-size:15px}.brand-copy small{color:#9fb0cc;font-size:11px;letter-spacing:.05em}.nav-label{color:#6f84a7;font-size:10px;font-weight:700;letter-spacing:.13em;padding:18px 12px 7px}.app-nav{display:grid;gap:4px}.app-nav a,.logout-btn{display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;border:0;border-radius:8px;color:#b8c5d9;background:transparent;text-decoration:none;font-weight:500;text-align:left;transition:.16s ease}.app-nav a i,.logout-btn i{font-size:17px;width:20px;text-align:center}.app-nav a:hover,.logout-btn:hover{color:#fff;background:rgba(255,255,255,.07)}.app-nav a.active{color:#fff;background:var(--primary);box-shadow:0 3px 8px rgba(37,99,235,.24)}.app-main{margin-left:244px;min-width:0}.topbar{height:70px;background:rgba(255,255,255,.96);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:1020}.topbar-context small{display:block;color:var(--muted);font-size:12px}.topbar-context strong{font-size:15px}.user-menu{display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:6px;border-radius:9px}.user-menu:hover{background:#f3f6fa}.avatar{width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:#e8efff;color:var(--primary-dark);font-size:12px;font-weight:700}.user-copy{text-align:left}.user-copy strong,.user-copy small{display:block}.user-copy strong{font-size:13px}.user-copy small{font-size:11px;color:var(--muted)}.page-wrap{padding:28px 30px 42px;max-width:1800px;margin:auto}.page-heading{margin-bottom:22px}.page-heading h1{font-size:26px;line-height:1.2;letter-spacing:-.025em;margin:0;font-weight:700}.breadcrumb{font-size:12px;margin:0 0 6px}.breadcrumb a{color:var(--muted);text-decoration:none}.card{background:var(--surface);border:1px solid var(--border)!important;border-radius:var(--radius)!important;box-shadow:var(--shadow)!important}.card-header{background:#fff;border-color:var(--border);padding:17px 20px}.btn{border-radius:8px;font-weight:600;font-size:13px;padding:.55rem .85rem;transition:.16s ease}.btn-sm{padding:.38rem .62rem;font-size:12px}.btn-primary{background:var(--primary);border-color:var(--primary)}.btn-primary:hover{background:var(--primary-dark);border-color:var(--primary-dark);transform:translateY(-1px)}.btn-light{background:#f4f6f9;border-color:#e5e9ef}.form-label{color:#344054;font-size:12px;font-weight:600;margin-bottom:6px}.form-control,.form-select,.ts-control{min-height:42px;border:1px solid #d8dee8;border-radius:8px;padding:.58rem .72rem;font-size:13px;background-color:#fff}.form-control:focus,.form-select:focus,.ts-wrapper.focus .ts-control{border-color:#80a6f8;box-shadow:0 0 0 3px rgba(37,99,235,.11)}.form-text{font-size:11px;color:var(--muted)}.table-responsive{border-radius:var(--radius)}.table{font-size:13px;color:var(--text)}.table>:not(caption)>*>*{padding:.85rem .9rem;border-bottom-color:#edf0f4;vertical-align:middle}.table thead th{background:#f8fafc;color:#475467;font-size:11px;text-transform:uppercase;letter-spacing:.045em;font-weight:700;white-space:nowrap}.table-hover>tbody>tr:hover>*{background:#f8fbff}.badge{font-size:10px;letter-spacing:.025em;font-weight:700;padding:.42em .65em;border-radius:6px}.text-bg-success{background:#e8f7ee!important;color:#13763a!important}.text-bg-secondary{background:#eef1f5!important;color:#556070!important}.text-bg-danger{background:#feeeee!important;color:#b42318!important}.text-bg-warning{background:#fff3df!important;color:#9a5300!important}.alert{border:1px solid transparent;border-radius:10px;padding:.8rem 1rem;font-size:13px}.alert-success{background:#ecf9f0;border-color:#c9ead4;color:#126b34}.alert-danger{background:#fff0f0;border-color:#f3cccc;color:#a61b1b}.pagination{gap:4px}.page-link{border:1px solid var(--border);border-radius:7px!important;color:#475467;font-size:12px;min-width:34px;text-align:center}.active>.page-link{background:var(--primary);border-color:var(--primary)}.kpi-card{height:100%;padding:20px}.kpi-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:10px;background:#edf3ff;color:var(--primary);font-size:19px}.kpi-label{font-size:12px;color:var(--muted);font-weight:600}.kpi-value{font-size:25px;font-weight:700;letter-spacing:-.025em;margin-top:7px}.section-title{font-size:16px;font-weight:700;margin:0}.filter-card{padding:18px}.empty-state{padding:48px 20px;text-align:center;color:var(--muted)}.empty-state i{display:block;font-size:34px;color:#aab6c8;margin-bottom:10px}.auth-page{min-height:100vh;background:linear-gradient(135deg,#eef4ff 0,#f8fafc 58%,#eef2f7 100%);display:grid;place-items:center;padding:24px}.auth-card{width:100%;max-width:430px;padding:34px}.auth-logo{width:48px;height:48px;display:grid;place-items:center;margin:0 auto 18px;border-radius:13px;background:var(--primary);color:#fff;font-size:23px}.auth-title{text-align:center;font-size:23px;font-weight:700}.auth-subtitle{text-align:center;color:var(--muted);margin-bottom:26px}.mobile-brand{font-weight:700}.offcanvas.sidebar-mobile{background:var(--sidebar);color:#fff;width:270px}.chart-wrap{height:300px}.dropdown-menu{border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 30px rgba(16,24,40,.1);padding:6px}.dropdown-item{font-size:13px;border-radius:6px;padding:8px 10px}.form-section{padding:20px}.form-section+.form-section{border-top:1px solid var(--border)}.form-section-title{font-size:14px;font-weight:700;margin-bottom:16px}.stock-number{font-variant-numeric:tabular-nums;font-weight:650}.action-group{display:flex;flex-wrap:wrap;gap:5px}
+*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:14px;line-height:1.5}input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none!important;margin:0!important}input[type=number]{-moz-appearance:textfield!important}.app-shell{min-height:100vh}.sidebar{width:272px;min-height:100vh;background:var(--sidebar);position:fixed;inset:0 auto 0 0;z-index:1030;padding:22px 14px;overflow-y:auto}.brand{display:flex;align-items:center;gap:11px;color:#fff;text-decoration:none;padding:0 8px 22px}.brand-mark{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;background:var(--primary);font-size:20px}.brand-copy strong,.brand-copy small{display:block}.brand-copy strong{font-size:15px}.brand-copy small{color:#9fb0cc;font-size:11px;letter-spacing:.05em}.nav-label{color:#6f84a7;font-size:10px;font-weight:700;letter-spacing:.13em;padding:18px 12px 7px}.app-nav{display:grid;gap:4px}.app-nav a,.logout-btn{display:flex;align-items:center;gap:11px;width:100%;padding:10px 12px;border:0;border-radius:8px;color:#b8c5d9;background:transparent;text-decoration:none;font-weight:500;text-align:left;transition:.16s ease}.app-nav a i,.logout-btn i{font-size:17px;width:20px;text-align:center}.app-nav a:hover,.logout-btn:hover{color:#fff;background:rgba(255,255,255,.07)}.app-nav a.active{color:#fff;background:var(--primary);box-shadow:0 3px 8px rgba(37,99,235,.24)}.app-main{margin-left:272px;min-width:0}.topbar{height:70px;background:rgba(255,255,255,.96);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 30px;position:sticky;top:0;z-index:1020}.topbar-context small{display:block;color:var(--muted);font-size:12px}.topbar-context strong{font-size:15px}.user-menu{display:flex;align-items:center;gap:10px;border:0;background:transparent;padding:6px;border-radius:9px}.user-menu:hover{background:#f3f6fa}.avatar{width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:#e8efff;color:var(--primary-dark);font-size:12px;font-weight:700}.user-copy{text-align:left}.user-copy strong,.user-copy small{display:block}.user-copy strong{font-size:13px}.user-copy small{font-size:11px;color:var(--muted)}.page-wrap{padding:28px 30px 42px;max-width:1800px;margin:auto}.page-heading{margin-bottom:22px}.page-heading h1{font-size:26px;line-height:1.2;letter-spacing:-.025em;margin:0;font-weight:700}.breadcrumb{font-size:12px;margin:0 0 6px}.breadcrumb a{color:var(--muted);text-decoration:none}.card{background:var(--surface);border:1px solid var(--border)!important;border-radius:var(--radius)!important;box-shadow:var(--shadow)!important}.card-header{background:#fff;border-color:var(--border);padding:17px 20px}.btn{border-radius:8px;font-weight:600;font-size:13px;padding:.55rem .85rem;transition:.16s ease}.btn-sm{padding:.38rem .62rem;font-size:12px}.btn-primary{background:var(--primary);border-color:var(--primary)}.btn-primary:hover{background:var(--primary-dark);border-color:var(--primary-dark);transform:translateY(-1px)}.btn-light{background:#f4f6f9;border-color:#e5e9ef}.form-label{color:#344054;font-size:12px;font-weight:600;margin-bottom:6px}.form-control,.form-select,.ts-control{min-height:42px;border:1px solid #d8dee8;border-radius:8px;padding:.58rem .72rem;font-size:13px;background-color:#fff}.form-control:focus,.form-select:focus,.ts-wrapper.focus .ts-control{border-color:#80a6f8;box-shadow:0 0 0 3px rgba(37,99,235,.11)}.form-text{font-size:11px;color:var(--muted)}.table-responsive{border-radius:var(--radius)}.table{font-size:13px;color:var(--text)}.table>:not(caption)>*>*{padding:.85rem .9rem;border-bottom-color:#edf0f4;vertical-align:middle}.table thead th{background:#f8fafc;color:#475467;font-size:11px;text-transform:uppercase;letter-spacing:.045em;font-weight:700;white-space:nowrap}.table-hover>tbody>tr:hover>*{background:#f8fbff}.badge{font-size:10px;letter-spacing:.025em;font-weight:700;padding:.42em .65em;border-radius:6px}.text-bg-success{background:#e8f7ee!important;color:#13763a!important}.text-bg-secondary{background:#eef1f5!important;color:#556070!important}.text-bg-danger{background:#feeeee!important;color:#b42318!important}.text-bg-warning{background:#fff3df!important;color:#9a5300!important}.alert{border:1px solid transparent;border-radius:10px;padding:.8rem 1rem;font-size:13px}.alert-success{background:#ecf9f0;border-color:#c9ead4;color:#126b34}.alert-danger{background:#fff0f0;border-color:#f3cccc;color:#a61b1b}.pagination{gap:4px}.page-link{border:1px solid var(--border);border-radius:7px!important;color:#475467;font-size:12px;min-width:34px;text-align:center}.active>.page-link{background:var(--primary);border-color:var(--primary)}.kpi-card{height:100%;padding:20px}.kpi-icon{width:42px;height:42px;display:grid;place-items:center;border-radius:10px;background:#edf3ff;color:var(--primary);font-size:19px}.kpi-label{font-size:12px;color:var(--muted);font-weight:600}.kpi-value{font-size:25px;font-weight:700;letter-spacing:-.025em;margin-top:7px}.section-title{font-size:16px;font-weight:700;margin:0}.filter-card{padding:18px}.empty-state{padding:48px 20px;text-align:center;color:var(--muted)}.empty-state i{display:block;font-size:34px;color:#aab6c8;margin-bottom:10px}.auth-page{min-height:100vh;background:linear-gradient(135deg,#eef4ff 0,#f8fafc 58%,#eef2f7 100%);display:grid;place-items:center;padding:24px}.auth-card{width:100%;max-width:430px;padding:34px}.auth-logo{width:48px;height:48px;display:grid;place-items:center;margin:0 auto 18px;border-radius:13px;background:var(--primary);color:#fff;font-size:23px}.auth-title{text-align:center;font-size:23px;font-weight:700}.auth-subtitle{text-align:center;color:var(--muted);margin-bottom:26px}.mobile-brand{font-weight:700}.offcanvas.sidebar-mobile{background:var(--sidebar);color:#fff;width:285px}.chart-wrap{height:300px}.dropdown-menu{border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 30px rgba(16,24,40,.1);padding:6px}.dropdown-item{font-size:13px;border-radius:6px;padding:8px 10px}.form-section{padding:20px}.form-section+.form-section{border-top:1px solid var(--border)}.form-section-title{font-size:14px;font-weight:700;margin-bottom:16px}.stock-number{font-variant-numeric:tabular-nums;font-weight:650}.action-group{display:flex;flex-wrap:wrap;gap:5px}
 @media(max-width:991.98px){.sidebar{display:none}.app-main{margin-left:0}.topbar{height:62px;padding:0 18px}.page-wrap{padding:22px 18px 36px}.user-copy{display:none}}
 @media(max-width:575.98px){.page-wrap{padding:18px 12px 30px}.page-heading h1{font-size:22px}.auth-card{padding:26px 22px}.btn{min-height:40px}.table>:not(caption)>*>*{padding:.75rem}.filter-card .btn{width:100%}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 .nav-group-item{margin-bottom:2px}.nav-group-btn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:9px 12px;border:0;border-radius:8px;color:#b8c5d9;background:transparent;text-decoration:none;font-weight:500;font-size:13.5px;text-align:left;cursor:pointer;transition:all .16s ease}.nav-group-btn:hover{color:#fff;background:rgba(255,255,255,.08)}.nav-group-btn.has-active{color:#fff;font-weight:600;background:rgba(255,255,255,.06)}.nav-group-chevron{font-size:11px;transition:transform .2s ease;margin-left:auto;color:#6f84a7}.nav-group-btn[aria-expanded="true"] .nav-group-chevron{transform:rotate(90deg);color:#fff}.nav-submenu{padding-left:6px;margin:3px 0 6px 14px;border-left:2px solid rgba(255,255,255,.12);display:grid;gap:2px}.nav-submenu a{padding:7px 10px 7px 10px;font-size:12.5px;color:#9bb0cc;border-radius:6px;display:flex;align-items:center;gap:8px;text-decoration:none;transition:all .15s ease}.nav-submenu a i{font-size:13px;width:16px;text-align:center;opacity:.85}.nav-submenu a:hover{color:#fff;background:rgba(255,255,255,.08)}.nav-submenu a.active{color:#fff;background:var(--primary);font-weight:600;box-shadow:0 2px 6px rgba(37,99,235,.28)}.nav-submenu a.active i{opacity:1}
+
+/* Collapsible Mini Sidebar on Desktop (Default collapsed, hover to expand, pin to lock) */
+@media (min-width: 992px) {
+    .sidebar {
+        width: 88px;
+        min-height: 100vh;
+        background: var(--sidebar);
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 1030;
+        padding: 20px 12px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        transition: width 0.24s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.24s ease, padding 0.2s ease;
+    }
+    .app-main {
+        margin-left: 88px;
+        min-width: 0;
+        transition: margin-left 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .brand-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px 18px;
+    }
+    .brand-wrap .brand {
+        padding: 0;
+    }
+    .sidebar-pin-btn {
+        color: #94a3b8;
+        background: transparent;
+        border: 0;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        display: none;
+        cursor: pointer;
+    }
+    .sidebar-pin-btn:hover {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.12);
+    }
+    .sidebar .brand-copy,
+    .sidebar .nav-label,
+    .sidebar .nav-text,
+    .sidebar .nav-group-chevron {
+        opacity: 0;
+        visibility: hidden;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+        display: none;
+        transition: opacity 0.18s ease;
+    }
+    .sidebar .app-nav a,
+    .sidebar .logout-btn,
+    .sidebar .nav-group-btn {
+        justify-content: center;
+        padding: 10px 0;
+        text-align: center;
+    }
+    .sidebar .app-nav a i,
+    .sidebar .logout-btn i,
+    .sidebar .nav-group-btn i.nav-icon {
+        margin: 0;
+        font-size: 19px;
+        width: auto;
+    }
+    .sidebar .nav-submenu {
+        display: none !important;
+    }
+
+    /* Hover Expansion (when not pinned) */
+    html:not(.sidebar-pinned) .sidebar:hover {
+        width: 272px !important;
+        padding: 20px 16px;
+        z-index: 1050;
+        box-shadow: 8px 0 32px rgba(10, 20, 45, 0.45);
+    }
+    html:not(.sidebar-pinned) .sidebar:hover .brand-wrap {
+        justify-content: space-between;
+    }
+    html:not(.sidebar-pinned) .sidebar:hover .brand-copy {
+        opacity: 1;
+        visibility: visible;
+        width: auto;
+        height: auto;
+        display: block;
+    }
+    html:not(.sidebar-pinned) .sidebar:hover .sidebar-pin-btn {
+        opacity: 1;
+        visibility: visible;
+        display: inline-flex;
+    }
+    html:not(.sidebar-pinned) .sidebar:hover .nav-label {
+        opacity: 1;
+        visibility: visible;
+        width: auto;
+        height: auto;
+        display: block;
+    }
+    html:not(.sidebar-pinned) .sidebar:hover .nav-text {
+        opacity: 1;
+        visibility: visible;
+        width: auto;
+        height: auto;
+        display: inline-block;
+    }
+    html:not(.sidebar-pinned) .sidebar:hover .nav-group-chevron {
+        opacity: 1;
+        visibility: visible;
+        width: auto;
+        height: auto;
+        display: inline-block;
+    }
+    html:not(.sidebar-pinned) .sidebar:hover .app-nav a,
+    html:not(.sidebar-pinned) .sidebar:hover .logout-btn,
+    html:not(.sidebar-pinned) .sidebar:hover .nav-group-btn {
+        justify-content: flex-start;
+        padding: 9px 12px;
+        text-align: left;
+    }
+    html:not(.sidebar-pinned) .sidebar:hover .app-nav a i,
+    html:not(.sidebar-pinned) .sidebar:hover .logout-btn i,
+    html:not(.sidebar-pinned) .sidebar:hover .nav-group-btn i.nav-icon {
+        width: 20px;
+        font-size: 17px;
+    }
+    html:not(.sidebar-pinned) .sidebar:hover .collapse.show .nav-submenu,
+    html:not(.sidebar-pinned) .sidebar:hover .collapsing .nav-submenu {
+        display: grid !important;
+    }
+
+    /* Pinned State (Permanently Expanded) */
+    html.sidebar-pinned .sidebar {
+        width: 272px !important;
+        padding: 20px 16px;
+        z-index: 1030;
+        box-shadow: none;
+    }
+    html.sidebar-pinned .app-main {
+        margin-left: 272px !important;
+    }
+    html.sidebar-pinned .sidebar .brand-wrap {
+        justify-content: space-between;
+    }
+    html.sidebar-pinned .sidebar .brand-copy {
+        opacity: 1;
+        visibility: visible;
+        width: auto;
+        height: auto;
+        display: block;
+    }
+    html.sidebar-pinned .sidebar .sidebar-pin-btn {
+        opacity: 1;
+        visibility: visible;
+        display: inline-flex;
+    }
+    html.sidebar-pinned .sidebar .nav-label {
+        opacity: 1;
+        visibility: visible;
+        width: auto;
+        height: auto;
+        display: block;
+    }
+    html.sidebar-pinned .sidebar .nav-text {
+        opacity: 1;
+        visibility: visible;
+        width: auto;
+        height: auto;
+        display: inline-block;
+    }
+    html.sidebar-pinned .sidebar .nav-group-chevron {
+        opacity: 1;
+        visibility: visible;
+        width: auto;
+        height: auto;
+        display: inline-block;
+    }
+    html.sidebar-pinned .sidebar .app-nav a,
+    html.sidebar-pinned .sidebar .logout-btn,
+    html.sidebar-pinned .sidebar .nav-group-btn {
+        justify-content: flex-start;
+        padding: 9px 12px;
+        text-align: left;
+    }
+    html.sidebar-pinned .sidebar .app-nav a i,
+    html.sidebar-pinned .sidebar .logout-btn i,
+    html.sidebar-pinned .sidebar .nav-group-btn i.nav-icon {
+        width: 20px;
+        font-size: 17px;
+    }
+    html.sidebar-pinned .sidebar .collapse.show .nav-submenu,
+    html.sidebar-pinned .sidebar .collapsing .nav-submenu {
+        display: grid !important;
+    }
+    html.sidebar-pinned .sidebar-pin-icon {
+        color: #38bdf8 !important;
+        transform: rotate(-45deg);
+    }
+}
+
+/* ==========================================================================
+   ENTERPRISE PRINT STYLESHEET
+   Translates on-screen web vouchers into crisp, professional physical documents
+   ========================================================================== */
+@media print {
+    /* 1. Hide web chrome, interactive UI, and buttons */
+    .sidebar,
+    .sidebar-mobile,
+    .topbar,
+    .sidebar-pin-btn,
+    .btn,
+    button,
+    .btn-close,
+    .alert,
+    .d-print-none,
+    nav.pagination,
+    .modal,
+    .dropdown,
+    .offcanvas,
+    .badge-filter,
+    #sidebarPinToggle {
+        display: none !important;
+    }
+
+    /* 2. Page & canvas reset */
+    @page {
+        size: A4 portrait;
+        margin: 10mm 12mm 12mm 12mm;
+    }
+    html, body {
+        background: #fff !important;
+        color: #0f172a !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+        font-size: 10pt !important;
+        line-height: 1.35 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .app-shell,
+    .app-main,
+    .page-wrap {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        min-height: auto !important;
+    }
+
+    /* 3. Strip web card shadows, borders, backgrounds */
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+        margin-bottom: 12px !important;
+        background: transparent !important;
+    }
+    .card-header,
+    .card-body,
+    .card-footer {
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    /* 4. Professional Document Tables */
+    .table-responsive {
+        overflow: visible !important;
+    }
+    .table {
+        width: 100% !important;
+        margin-bottom: 12px !important;
+        border-collapse: collapse !important;
+        color: #0f172a !important;
+    }
+    .table th,
+    .table td {
+        border: 1px solid #cbd5e1 !important;
+        padding: 5px 8px !important;
+        font-size: 9pt !important;
+        background: #fff !important;
+    }
+    .table thead th {
+        background-color: #f1f5f9 !important;
+        color: #1e293b !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        font-size: 8pt !important;
+        letter-spacing: 0.03em !important;
+    }
+    .table tfoot td,
+    .table tfoot th {
+        background-color: #f8fafc !important;
+        font-weight: 700 !important;
+    }
+    .table-borderless th,
+    .table-borderless td {
+        border: none !important;
+    }
+
+    /* 5. Clean Printable Badges */
+    .badge {
+        border: 1px solid #64748b !important;
+        color: #0f172a !important;
+        background: transparent !important;
+        font-weight: 600 !important;
+        padding: 2px 5px !important;
+        font-size: 8pt !important;
+    }
+
+    /* 6. Avoid breaking across pages */
+    tr,
+    .print-avoid-break,
+    .print-signature-block {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    thead {
+        display: table-header-group !important;
+    }
+    tfoot {
+        display: table-footer-group !important;
+    }
+
+    /* 7. Strip hyperlink text decorations and automatic URL prints */
+    a[href]:after {
+        content: none !important;
+    }
+    a {
+        text-decoration: none !important;
+        color: inherit !important;
+    }
+
+    /* 8. Tabs in Print: Reveal all sections sequentially */
+    .nav-tabs {
+        display: none !important;
+    }
+    .tab-content > .tab-pane {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        margin-bottom: 12px !important;
+    }
+
+    /* 9. Print Display Utilities */
+    .d-print-none {
+        display: none !important;
+    }
+    .d-print-block {
+        display: block !important;
+    }
+    .d-print-inline {
+        display: inline !important;
+    }
+    .d-print-inline-block {
+        display: inline-block !important;
+    }
+    .d-print-flex {
+        display: flex !important;
+    }
+
+    /* 10. Printable signature block */
+    .print-signature-block {
+        margin-top: 36px !important;
+        padding-top: 18px !important;
+    }
+}
+

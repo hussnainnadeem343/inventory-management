@@ -1,7 +1,31 @@
 @extends('layouts.app')
 @section('title', 'PO ' . $order->po_number)
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
+{{-- Printable Official Document Letterhead Header (Print Only) --}}
+<div class="d-none d-print-block mb-4 pb-3 border-bottom">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h2 class="h4 fw-bold mb-1 text-dark">{{ auth()->user()->shop ? auth()->user()->shop->name : 'DenFin ERP' }}</h2>
+            <div class="text-secondary small">
+                @if(auth()->user()->shop && auth()->user()->shop->address)
+                    <div><i class="bi bi-geo-alt me-1"></i>{{ auth()->user()->shop->address }}</div>
+                @endif
+                @if(auth()->user()->shop && auth()->user()->shop->phone)
+                    <div><i class="bi bi-telephone me-1"></i>Phone: {{ auth()->user()->shop->phone }}</div>
+                @endif
+                <div>Branch Code: <strong>{{ auth()->user()->shop ? auth()->user()->shop->code : 'MAIN' }}</strong></div>
+            </div>
+        </div>
+        <div class="text-end">
+            <span class="badge border border-dark px-3 py-1 fs-6 text-uppercase fw-bold mb-1 d-inline-block">PURCHASE ORDER</span>
+            <div class="font-monospace fw-bold fs-5 text-dark mt-1">{{ $order->po_number }}</div>
+            <div class="small text-secondary">Order Date: <strong>{{ $order->order_date->format('d M, Y') }}</strong></div>
+            <div class="small text-secondary">Status: <strong class="text-uppercase">{{ str_replace('_', ' ', $order->status) }}</strong></div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
     <div>
         <div class="d-flex align-items-center gap-2">
             <h4 class="mb-0 fw-bold">{{ $order->po_number }}</h4>
@@ -77,6 +101,15 @@
                 <div class="col-6"><strong>Order Date:</strong> {{ $order->order_date->format('d M Y') }}</div>
                 <div class="col-6"><strong>Expected Delivery:</strong> {{ $order->expected_delivery_date ? $order->expected_delivery_date->format('d M Y') : 'Immediate' }}</div>
                 <div class="col-6"><strong>Created By:</strong> {{ $order->creator ? $order->creator->name : 'System' }}</div>
+                @if($order->purchaseRequisition)
+                    <div class="col-6"><strong>Requisition Ref:</strong> <span class="badge bg-info-subtle text-info">{{ $order->purchaseRequisition->pr_number }}</span></div>
+                @endif
+                @if($order->delivery_station)
+                    <div class="col-6"><strong>Delivery Station:</strong> {{ $order->delivery_station }}</div>
+                @endif
+                @if($order->payment_terms)
+                    <div class="col-6"><strong>Payment Terms:</strong> {{ $order->payment_terms }}</div>
+                @endif
             </div>
         </div>
     </div>
@@ -152,7 +185,7 @@
 </div>
 
 @if($order->goodsReceivedNotes->isNotEmpty())
-    <div class="card shadow-sm mb-4">
+    <div class="card shadow-sm mb-4 d-print-none">
         <div class="card-header bg-white py-3">
             <h6 class="mb-0 fw-bold"><i class="bi bi-box-arrow-in-down me-1 text-success"></i> Related Goods Received Notes (GRN)</h6>
         </div>
@@ -188,9 +221,37 @@
 @endif
 
 @if($order->notes)
-    <div class="card shadow-sm p-3">
+    <div class="card shadow-sm p-3 mb-4">
         <strong class="text-secondary small">NOTES / INSTRUCTIONS:</strong>
         <p class="mb-0 mt-1">{{ $order->notes }}</p>
     </div>
 @endif
+
+{{-- Printable Official Authorization Signatures Footer (Print Only) --}}
+<div class="d-none d-print-block print-signature-block">
+    <div class="row text-center">
+        <div class="col-4">
+            <div class="border-top border-dark pt-2 mx-3">
+                <strong class="d-block text-dark small text-uppercase">Prepared By</strong>
+                <span class="text-secondary" style="font-size: 11px;">{{ $order->creator?->name ?? auth()->user()->name }}</span>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="border-top border-dark pt-2 mx-3">
+                <strong class="d-block text-dark small text-uppercase">Checked / Store In-charge</strong>
+                <span class="text-secondary" style="font-size: 11px;">Signature & Stamp</span>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="border-top border-dark pt-2 mx-3">
+                <strong class="d-block text-dark small text-uppercase">Authorized Approval</strong>
+                <span class="text-secondary" style="font-size: 11px;">Manager / Director</span>
+            </div>
+        </div>
+    </div>
+    <div class="text-center text-secondary mt-4" style="font-size: 10px;">
+        Generated on {{ now()->format('d M, Y h:i A') }} &bull; DenFin ERP Enterprise Document &bull; Purchase Order Voucher
+    </div>
+</div>
+
 @endsection

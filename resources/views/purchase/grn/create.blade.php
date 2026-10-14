@@ -88,7 +88,7 @@
                     <select class="form-select form-select-sm" name="purchase_order_id" id="poSelect">
                         <option value="">-- No PO / Direct Inward --</option>
                         @foreach($pendingOrders as $po)
-                            <option value="{{ $po->id }}" @selected(old('purchase_order_id', $selectedPo?->id ?? $selectedIgp?->purchase_order_id) == $po->id)>
+                            <option value="{{ $po->id }}" @selected(old('purchase_order_id', $selectedPo?->id ?? $selectedIgp?->purchase_order_id) == $po->id) data-supplier="{{ $po->supplier_id }}">
                                 {{ $po->po_number }} (Rs. {{ number_format($po->grand_total, 2) }})
                             </option>
                         @endforeach
@@ -140,14 +140,13 @@
                             <thead class="bg-primary text-white small" style="background-color: #1e3a8a !important;">
                                 <tr>
                                     <th style="width: 4%;" class="text-center">Sr</th>
-                                    <th style="width: 25%;">Product <span class="text-danger">*</span></th>
-                                    <th style="width: 14%;">Warehouse / Godown</th>
-                                    <th style="width: 7%;" class="text-center">UOM</th>
-                                    <th style="width: 10%;" class="text-end">Total Delivered <span class="text-danger">*</span></th>
-                                    <th style="width: 9%;" class="text-end">Rejected Qty</th>
-                                    <th style="width: 9%;" class="text-end">Accepted Qty</th>
-                                    <th style="width: 10%;" class="text-end">Unit Cost (Rs.)</th>
-                                    <th style="width: 11%;">Batch / Expiry</th>
+                                    <th style="width: 28%;">Product <span class="text-danger">*</span></th>
+                                    <th style="width: 15%;">Warehouse / Godown</th>
+                                    <th style="width: 8%;" class="text-center">UOM</th>
+                                    <th style="width: 12%;" class="text-end">Total Delivered <span class="text-danger">*</span></th>
+                                    <th style="width: 10%;" class="text-end">Rejected Qty</th>
+                                    <th style="width: 10%;" class="text-end">Accepted Qty</th>
+                                    <th style="width: 10%;">Batch / Expiry</th>
                                     <th style="width: 3%;" class="text-center">Action</th>
                                 </tr>
                             </thead>
@@ -181,16 +180,14 @@
                                             </td>
                                             <td class="text-center uom-label fw-bold">{{ $line->inventoryItem->unit }}</td>
                                             <td>
-                                                <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end qty-total" name="items[{{ $idx }}][total_delivered]" value="{{ $declaredQty }}" required>
+                                                <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end qty-total auto-clear-zero" name="items[{{ $idx }}][total_delivered]" value="{{ $declaredQty }}" required placeholder="1.00">
                                             </td>
                                             <td>
-                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end qty-rejected text-danger" name="items[{{ $idx }}][rejected_quantity]" value="0">
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end qty-rejected text-danger auto-clear-zero" name="items[{{ $idx }}][rejected_quantity]" value="0" placeholder="0.00">
                                             </td>
                                             <td>
-                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end qty-accepted fw-bold text-success" name="items[{{ $idx }}][quantity]" value="{{ $declaredQty }}" required>
-                                            </td>
-                                            <td>
-                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end unit-cost" name="items[{{ $idx }}][unit_cost]" value="{{ $defaultCost }}" required>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end qty-accepted fw-bold text-success auto-clear-zero" name="items[{{ $idx }}][quantity]" value="{{ $declaredQty }}" required placeholder="1.00">
+                                                <input type="hidden" class="unit-cost" name="items[{{ $idx }}][unit_cost]" value="{{ $defaultCost }}">
                                             </td>
                                             <td>
                                                 <input type="text" class="form-control form-control-sm mb-1" name="items[{{ $idx }}][batch_number]" placeholder="Batch # (Auto)">
@@ -226,16 +223,14 @@
                                         </td>
                                         <td class="text-center uom-label fw-bold">PCS</td>
                                         <td>
-                                            <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end qty-total" name="items[0][total_delivered]" value="1" required>
+                                            <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end qty-total auto-clear-zero" name="items[0][total_delivered]" value="1" required placeholder="1.00">
                                         </td>
                                         <td>
-                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end qty-rejected text-danger" name="items[0][rejected_quantity]" value="0">
+                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end qty-rejected text-danger auto-clear-zero" name="items[0][rejected_quantity]" value="0" placeholder="0.00">
                                         </td>
                                         <td>
-                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end qty-accepted fw-bold text-success" name="items[0][quantity]" value="1" required>
-                                        </td>
-                                        <td>
-                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end unit-cost" name="items[0][unit_cost]" value="0" required>
+                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end qty-accepted fw-bold text-success auto-clear-zero" name="items[0][quantity]" value="1" required placeholder="1.00">
+                                            <input type="hidden" class="unit-cost" name="items[0][unit_cost]" value="0">
                                         </td>
                                         <td>
                                             <input type="text" class="form-control form-control-sm mb-1" name="items[0][batch_number]" placeholder="Batch # (Auto)">
@@ -387,7 +382,7 @@
                         </thead>
                         <tbody>
                             @forelse($pendingIgps as $pigp)
-                                <tr>
+                                <tr class="igp-modal-row" data-supplier="{{ $pigp->supplier_id }}">
                                     <td class="ps-3 fw-bold">{{ $pigp->igp_number }}</td>
                                     <td>{{ $pigp->igp_date->format('d M, Y') }}</td>
                                     <td>{{ $pigp->supplier->name }}</td>
@@ -417,6 +412,66 @@
 document.addEventListener('DOMContentLoaded', function () {
     let prodIndex = {{ $loadedItems->isNotEmpty() ? $loadedItems->count() : 1 }};
     let expIndex = 1;
+
+    const supplierSelect = document.getElementById('supplierSelect');
+    const poSelect = document.getElementById('poSelect');
+
+    // Point 8: Supplier Filter for PO and IGP
+    function filterBySupplier() {
+        if (!supplierSelect) return;
+        const selectedSupplier = supplierSelect.value;
+
+        if (poSelect) {
+            poSelect.querySelectorAll('option').forEach(opt => {
+                if (!opt.value) return;
+                const poSup = opt.getAttribute('data-supplier');
+                opt.style.display = (!selectedSupplier || poSup === selectedSupplier) ? '' : 'none';
+            });
+            const curOpt = poSelect.options[poSelect.selectedIndex];
+            if (curOpt && curOpt.value && selectedSupplier && curOpt.getAttribute('data-supplier') !== selectedSupplier) {
+                poSelect.value = '';
+            }
+        }
+
+        document.querySelectorAll('.igp-modal-row').forEach(row => {
+            const sup = row.getAttribute('data-supplier');
+            row.style.display = (!selectedSupplier || sup === selectedSupplier) ? '' : 'none';
+        });
+    }
+
+    if (supplierSelect) {
+        supplierSelect.addEventListener('change', filterBySupplier);
+        if (poSelect) {
+            poSelect.addEventListener('change', function () {
+                const opt = poSelect.options[poSelect.selectedIndex];
+                if (opt && opt.value) {
+                    const poSup = opt.getAttribute('data-supplier');
+                    if (poSup && supplierSelect.value !== poSup) {
+                        supplierSelect.value = poSup;
+                        filterBySupplier();
+                    }
+                }
+            });
+        }
+        filterBySupplier();
+    }
+
+    // Point 4: Auto-clear 0.00 helper
+    function setupAutoClear(el) {
+        el.addEventListener('focus', function () {
+            if (this.value === '0.00' || this.value === '0' || this.value === '0.0') {
+                this.select();
+            }
+        });
+        el.addEventListener('blur', function () {
+            if (this.value.trim() === '') {
+                this.value = this.classList.contains('qty-total') || this.classList.contains('qty-accepted') ? '1.00' : '0.00';
+                updateTotals();
+            }
+        });
+    }
+
+    document.querySelectorAll('.auto-clear-zero').forEach(setupAutoClear);
 
     const prodBody = document.getElementById('grnProductsBody');
     const expBody = document.getElementById('grnExpensesBody');

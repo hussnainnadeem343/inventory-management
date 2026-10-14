@@ -1,17 +1,26 @@
 @props(['prefix' => 'sb'])
 
-<a class="brand" href="{{ route('dashboard') }}">
-    <span class="brand-mark"><i class="bi bi-box-seam"></i></span>
-    <span class="brand-copy">
-        <strong>{{ auth()->user()->shop ? auth()->user()->shop->name : 'Inventory' }}</strong>
-        <small>{{ auth()->user()->shop ? 'SHOP' : 'MANAGEMENT' }}</small>
-    </span>
-</a>
+<div class="brand-wrap">
+    <a class="brand" href="{{ route('dashboard') }}" title="DenFin ERP">
+        <span class="brand-mark p-0 overflow-hidden flex-shrink-0" style="background: transparent;">
+            <img src="{{ asset('images/branding/denfin-icon.png') }}" alt="DenFin ERP" width="38" height="38" style="object-fit: cover; border-radius: 10px;">
+        </span>
+        <span class="brand-copy">
+            <strong>DenFin ERP</strong>
+            <small>{{ auth()->user()->shop ? auth()->user()->shop->name : 'Everything Your Business Needs' }}</small>
+        </span>
+    </a>
+    @if($prefix === 'd')
+        <button type="button" class="sidebar-pin-btn" id="sidebarPinToggle" title="Pin / Lock Sidebar" aria-label="Pin Sidebar">
+            <i class="bi bi-pin-angle sidebar-pin-icon fs-5"></i>
+        </button>
+    @endif
+</div>
 
 <nav class="app-nav">
     {{-- Direct Link: Dashboard --}}
-    <a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
-        <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
+    <a class="{{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}" title="Dashboard">
+        <i class="bi bi-grid-1x2"></i><span class="nav-text">Dashboard</span>
     </a>
 
     @php
@@ -76,10 +85,11 @@
                     type="button" 
                     data-bs-toggle="collapse" 
                     data-bs-target="#{{ $prefix }}_sales" 
-                    aria-expanded="{{ $isSalesActive ? 'true' : 'false' }}">
+                    aria-expanded="{{ $isSalesActive ? 'true' : 'false' }}"
+                    title="Sales & POS">
                 <span class="d-flex align-items-center gap-2">
-                    <i class="bi bi-cart3"></i>
-                    <span>Sales &amp; POS</span>
+                    <i class="bi bi-cart3 nav-icon"></i>
+                    <span class="nav-text">Sales &amp; POS</span>
                 </span>
                 <i class="bi bi-chevron-right nav-group-chevron"></i>
             </button>
@@ -112,10 +122,11 @@
                     type="button" 
                     data-bs-toggle="collapse" 
                     data-bs-target="#{{ $prefix }}_inventory" 
-                    aria-expanded="{{ $isInventoryActive ? 'true' : 'false' }}">
+                    aria-expanded="{{ $isInventoryActive ? 'true' : 'false' }}"
+                    title="Inventory & Stock">
                 <span class="d-flex align-items-center gap-2">
-                    <i class="bi bi-layers"></i>
-                    <span>Inventory</span>
+                    <i class="bi bi-layers nav-icon"></i>
+                    <span class="nav-text">Inventory</span>
                 </span>
                 <i class="bi bi-chevron-right nav-group-chevron"></i>
             </button>
@@ -145,10 +156,11 @@
                     type="button" 
                     data-bs-toggle="collapse" 
                     data-bs-target="#{{ $prefix }}_purchases" 
-                    aria-expanded="{{ $isPurchaseActive ? 'true' : 'false' }}">
+                    aria-expanded="{{ $isPurchaseActive ? 'true' : 'false' }}"
+                    title="Purchases & Procurement">
                 <span class="d-flex align-items-center gap-2">
-                    <i class="bi bi-truck"></i>
-                    <span>Purchases</span>
+                    <i class="bi bi-truck nav-icon"></i>
+                    <span class="nav-text">Purchases</span>
                 </span>
                 <i class="bi bi-chevron-right nav-group-chevron"></i>
             </button>
@@ -199,10 +211,11 @@
                     type="button" 
                     data-bs-toggle="collapse" 
                     data-bs-target="#{{ $prefix }}_finance" 
-                    aria-expanded="{{ $isFinanceActive ? 'true' : 'false' }}">
+                    aria-expanded="{{ $isFinanceActive ? 'true' : 'false' }}"
+                    title="Finance & Accounts">
                 <span class="d-flex align-items-center gap-2">
-                    <i class="bi bi-diagram-3"></i>
-                    <span>Finance &amp; Accounts</span>
+                    <i class="bi bi-diagram-3 nav-icon"></i>
+                    <span class="nav-text">Finance &amp; Accounts</span>
                 </span>
                 <i class="bi bi-chevron-right nav-group-chevron"></i>
             </button>
@@ -243,10 +256,11 @@
                     type="button" 
                     data-bs-toggle="collapse" 
                     data-bs-target="#{{ $prefix }}_hr" 
-                    aria-expanded="{{ $isHrActive ? 'true' : 'false' }}">
+                    aria-expanded="{{ $isHrActive ? 'true' : 'false' }}"
+                    title="HR & Payroll">
                 <span class="d-flex align-items-center gap-2">
-                    <i class="bi bi-people"></i>
-                    <span>HR &amp; Payroll</span>
+                    <i class="bi bi-people nav-icon"></i>
+                    <span class="nav-text">HR &amp; Payroll</span>
                 </span>
                 <i class="bi bi-chevron-right nav-group-chevron"></i>
             </button>
@@ -282,10 +296,11 @@
                     type="button" 
                     data-bs-toggle="collapse" 
                     data-bs-target="#{{ $prefix }}_mgmt" 
-                    aria-expanded="{{ $isManagementActive ? 'true' : 'false' }}">
+                    aria-expanded="{{ $isManagementActive ? 'true' : 'false' }}"
+                    title="Management & Settings">
                 <span class="d-flex align-items-center gap-2">
-                    <i class="bi bi-gear"></i>
-                    <span>Management</span>
+                    <i class="bi bi-gear nav-icon"></i>
+                    <span class="nav-text">Management</span>
                 </span>
                 <i class="bi bi-chevron-right nav-group-chevron"></i>
             </button>
@@ -329,10 +344,11 @@
                     type="button" 
                     data-bs-toggle="collapse" 
                     data-bs-target="#{{ $prefix }}_reports" 
-                    aria-expanded="{{ $isReportsActive ? 'true' : 'false' }}">
+                    aria-expanded="{{ $isReportsActive ? 'true' : 'false' }}"
+                    title="Reports & Analytics">
                 <span class="d-flex align-items-center gap-2">
-                    <i class="bi bi-bar-chart"></i>
-                    <span>Reports</span>
+                    <i class="bi bi-bar-chart nav-icon"></i>
+                    <span class="nav-text">Reports</span>
                 </span>
                 <i class="bi bi-chevron-right nav-group-chevron"></i>
             </button>
@@ -362,8 +378,8 @@
     <div class="nav-label mt-2">ACCOUNT</div>
     <form method="post" action="{{ route('logout') }}">
         @csrf
-        <button class="logout-btn" type="submit">
-            <i class="bi bi-box-arrow-right"></i><span>Logout</span>
+        <button class="logout-btn" type="submit" title="Logout">
+            <i class="bi bi-box-arrow-right"></i><span class="nav-text">Logout</span>
         </button>
     </form>
 </nav>

@@ -10,6 +10,7 @@ use App\Models\Purchase\PurchaseInvoice;
 use App\Models\Purchase\PurchaseInvoiceCommission;
 use App\Models\Purchase\PurchaseInvoiceExpense;
 use App\Models\Purchase\PurchaseInvoiceItem;
+use App\Models\Purchase\PurchaseOrder;
 use App\Models\Purchase\Supplier;
 use App\Services\Finance\JournalEntryService;
 use Illuminate\Http\RedirectResponse;
@@ -56,9 +57,15 @@ class PurchaseInvoiceController extends Controller
 
         $selectedGrn = null;
         if ($grnId) {
-            $selectedGrn = GoodsReceivedNote::with(['items.inventoryItem', 'supplier', 'purchaseOrder', 'expenses.account'])
+            $selectedGrn = GoodsReceivedNote::with(['items.inventoryItem', 'supplier', 'purchaseOrder.items', 'expenses.account'])
                 ->forShop($shopId)
                 ->find($grnId);
+        }
+
+        $poId = $request->query('purchase_order_id');
+        $selectedPo = null;
+        if ($poId) {
+            $selectedPo = PurchaseOrder::with(['items.inventoryItem', 'supplier'])->forShop($shopId)->find($poId);
         }
 
         $suppliers = Supplier::forShop($shopId)->active()->orderBy('name')->get();
@@ -72,13 +79,20 @@ class PurchaseInvoiceController extends Controller
             ->latest('id')
             ->get(['id', 'grn_number', 'supplier_id', 'total_amount', 'received_date']);
 
+        $pendingOrders = PurchaseOrder::forShop($shopId)
+            ->whereIn('status', [PurchaseOrder::STATUS_APPROVED, PurchaseOrder::STATUS_PARTIALLY_RECEIVED, PurchaseOrder::STATUS_RECEIVED])
+            ->latest('id')
+            ->get(['id', 'po_number', 'supplier_id', 'grand_total', 'order_date']);
+
         $expenseAccounts = Account::forShop($shopId)->orderBy('code')->get(['id', 'code', 'name']);
 
         return view('purchase.invoices.create', compact(
             'suppliers',
             'products',
             'pendingGrns',
+            'pendingOrders',
             'selectedGrn',
+            'selectedPo',
             'expenseAccounts',
             'shopId'
         ));
@@ -88,6 +102,23 @@ class PurchaseInvoiceController extends Controller
     {
         $user = $request->user();
         $shopId = $user->isSuperAdmin() ? $request->input('shop_id', $user->shop_id) : $user->shop_id;
+
+        // Clean out default blank expense and commission rows from the form
+        if ($request->has('expenses')) {
+            $filteredExpenses = array_values(array_filter((array) $request->input('expenses'), function ($exp) {
+                $hasAmount = (!empty($exp['debit']) && (float) $exp['debit'] > 0) || (!empty($exp['rate']) && (float) $exp['rate'] > 0);
+                $hasType = !empty($exp['expense_type']) && $exp['expense_type'] !== 'Freight';
+                return !empty($exp['account_id']) || $hasAmount || $hasType;
+            }));
+            $request->merge(['expenses' => $filteredExpenses]);
+        }
+
+        if ($request->has('commissions')) {
+            $filteredCommissions = array_values(array_filter((array) $request->input('commissions'), function ($comm) {
+                return !empty($comm['agent_name']) && trim($comm['agent_name']) !== '';
+            }));
+            $request->merge(['commissions' => $filteredCommissions]);
+        }
 
         $validated = $request->validate([
             'supplier_id' => ['required', 'exists:suppliers,id'],
@@ -112,7 +143,7 @@ class PurchaseInvoiceController extends Controller
             'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.tax_percent' => ['nullable', 'numeric', 'min:0'],
             'expenses' => ['nullable', 'array'],
-            'expenses.*.account_id' => ['nullable', 'exists:accounts,id'],
+            'expenses.*.account_id' => ['nullable'],
             'expenses.*.category' => ['nullable', 'in:inventory,other'],
             'expenses.*.expense_type' => ['nullable', 'string', 'max:100'],
             'expenses.*.comments' => ['nullable', 'string', 'max:255'],

@@ -56,7 +56,7 @@ class PurchaseReturnController extends Controller
         $invoiceId = $request->query('purchase_invoice_id');
         $selectedInvoice = null;
         if ($invoiceId) {
-            $selectedInvoice = PurchaseInvoice::with(['items.inventoryItem', 'items.batch', 'supplier'])->forShop($shopId)->find($invoiceId);
+            $selectedInvoice = PurchaseInvoice::with(['items.inventoryItem', 'items.goodsReceivedItem.batch', 'supplier'])->forShop($shopId)->find($invoiceId);
         }
 
         $suppliers = Supplier::forShop($shopId)->active()->orderBy('name')->get();
@@ -90,7 +90,7 @@ class PurchaseReturnController extends Controller
         $pendingInvoices = PurchaseInvoice::forShop($shopId)
             ->latest('id')
             ->limit(50)
-            ->get(['id', 'invoice_number', 'supplier_id', 'total_amount', 'invoice_date']);
+            ->get(['id', 'invoice_number', 'supplier_id', 'grand_total', 'grand_total as total_amount', 'invoice_date']);
 
         return view('purchase.returns.create', compact('suppliers', 'products', 'productsData', 'selectedGrn', 'selectedInvoice', 'pendingGrns', 'pendingInvoices', 'shopId'));
     }

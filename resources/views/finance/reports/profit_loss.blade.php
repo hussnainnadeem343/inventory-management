@@ -1,7 +1,30 @@
 @extends('layouts.app')
 @section('title', 'Profit & Loss Statement')
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
+{{-- Printable Official P&L Header (Print Only) --}}
+<div class="d-none d-print-block mb-4 pb-3 border-bottom">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h2 class="h4 fw-bold mb-1 text-dark">{{ auth()->user()->shop ? auth()->user()->shop->name : 'DenFin ERP' }}</h2>
+            <div class="text-secondary small">
+                @if(auth()->user()->shop && auth()->user()->shop->address)
+                    <div><i class="bi bi-geo-alt me-1"></i>{{ auth()->user()->shop->address }}</div>
+                @endif
+                @if(auth()->user()->shop && auth()->user()->shop->phone)
+                    <div><i class="bi bi-telephone me-1"></i>Phone: {{ auth()->user()->shop->phone }}</div>
+                @endif
+                <div>Branch Code: <strong>{{ auth()->user()->shop ? auth()->user()->shop->code : 'MAIN' }}</strong></div>
+            </div>
+        </div>
+        <div class="text-end">
+            <span class="badge border border-dark px-3 py-1 fs-6 text-uppercase fw-bold mb-1 d-inline-block">INCOME STATEMENT (P&L)</span>
+            <div class="small text-secondary mt-1">Period: <strong>{{ \Carbon\Carbon::parse($startDate)->format('d M, Y') }} &mdash; {{ \Carbon\Carbon::parse($endDate)->format('d M, Y') }}</strong></div>
+            <div class="small text-secondary">Statement of Profit & Loss</div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
     <div>
         <h4 class="mb-0 fw-bold">Income Statement (Profit & Loss)</h4>
         <small class="text-secondary">Summary of revenues, cost of goods sold, and net income</small>
@@ -13,7 +36,7 @@
     </div>
 </div>
 
-<div class="card p-3 mb-4">
+<div class="card p-3 mb-4 d-print-none">
     <form method="get" class="row g-2 align-items-end">
         <div class="col-md-4">
             <label class="form-label">From Date</label>

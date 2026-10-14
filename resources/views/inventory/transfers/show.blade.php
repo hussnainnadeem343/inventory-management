@@ -1,7 +1,31 @@
 @extends('layouts.app')
 @section('title', 'Transfer ' . $transfer->transfer_number)
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
+{{-- Printable Official Transfer Delivery Challan Header (Print Only) --}}
+<div class="d-none d-print-block mb-4 pb-3 border-bottom">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h2 class="h4 fw-bold mb-1 text-dark">{{ auth()->user()->shop ? auth()->user()->shop->name : 'DenFin ERP' }}</h2>
+            <div class="text-secondary small">
+                @if(auth()->user()->shop && auth()->user()->shop->address)
+                    <div><i class="bi bi-geo-alt me-1"></i>{{ auth()->user()->shop->address }}</div>
+                @endif
+                @if(auth()->user()->shop && auth()->user()->shop->phone)
+                    <div><i class="bi bi-telephone me-1"></i>Phone: {{ auth()->user()->shop->phone }}</div>
+                @endif
+                <div>Branch Code: <strong>{{ auth()->user()->shop ? auth()->user()->shop->code : 'MAIN' }}</strong></div>
+            </div>
+        </div>
+        <div class="text-end">
+            <span class="badge border border-dark px-3 py-1 fs-6 text-uppercase fw-bold mb-1 d-inline-block">STOCK TRANSFER / DELIVERY CHALLAN</span>
+            <div class="font-monospace fw-bold fs-5 text-dark mt-1">{{ $transfer->transfer_number }}</div>
+            <div class="small text-secondary">Dispatch Date: <strong>{{ $transfer->transfer_date->format('d M, Y') }}</strong></div>
+            <div class="small text-secondary">Status: <strong class="text-uppercase">{{ str_replace('_', ' ', $transfer->status) }}</strong></div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
     <div>
         <div class="d-flex align-items-center gap-2">
             <h4 class="mb-0 fw-bold">{{ $transfer->transfer_number }}</h4>
@@ -70,4 +94,31 @@
         <p class="mb-0 mt-1">{{ $transfer->notes }}</p>
     </div>
 @endif
+
+{{-- Printable Official Authorization Signatures Footer (Print Only) --}}
+<div class="d-none d-print-block print-signature-block">
+    <div class="row text-center">
+        <div class="col-4">
+            <div class="border-top border-dark pt-2 mx-3">
+                <strong class="d-block text-dark small text-uppercase">Dispatched By</strong>
+                <span class="text-secondary" style="font-size: 11px;">Source Warehouse Officer</span>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="border-top border-dark pt-2 mx-3">
+                <strong class="d-block text-dark small text-uppercase">Carrier / Driver</strong>
+                <span class="text-secondary" style="font-size: 11px;">Transit Signature</span>
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="border-top border-dark pt-2 mx-3">
+                <strong class="d-block text-dark small text-uppercase">Received At Destination</strong>
+                <span class="text-secondary" style="font-size: 11px;">Destination Store Incharge</span>
+            </div>
+        </div>
+    </div>
+    <div class="text-center text-secondary mt-4" style="font-size: 10px;">
+        Generated on {{ now()->format('d M, Y h:i A') }} &bull; DenFin ERP Enterprise Document &bull; Stock Transfer Delivery Challan
+    </div>
+</div>
 @endsection

@@ -17,6 +17,9 @@ class PurchaseOrderItem extends Model
         'quantity',
         'received_quantity',
         'unit_cost',
+        'discount_amount',
+        'tax_percent',
+        'tax_amount',
         'subtotal',
     ];
 
@@ -26,6 +29,9 @@ class PurchaseOrderItem extends Model
             'quantity' => 'decimal:2',
             'received_quantity' => 'decimal:2',
             'unit_cost' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'tax_percent' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
             'subtotal' => 'decimal:2',
         ];
     }

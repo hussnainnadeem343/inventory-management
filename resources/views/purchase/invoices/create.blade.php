@@ -13,6 +13,9 @@
             <a href="{{ route('purchases.invoices.index') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-x-lg me-1"></i> Cancel
             </a>
+            <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#loadPoModal">
+                <i class="bi bi-cart-check me-1"></i> Load from PO
+            </button>
             <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#loadGrnModal">
                 <i class="bi bi-upload me-1"></i> Load from GRN
             </button>
@@ -30,6 +33,17 @@
             <a href="{{ route('purchases.invoices.create') }}" class="btn btn-sm btn-outline-primary">Clear GRN</a>
         </div>
         <input type="hidden" name="goods_received_note_id" value="{{ $selectedGrn->id }}">
+        @if($selectedGrn->purchase_order_id)
+            <input type="hidden" name="purchase_order_id" value="{{ $selectedGrn->purchase_order_id }}">
+        @endif
+    @elseif($selectedPo)
+        <div class="alert alert-info py-2 mb-3 d-flex justify-content-between align-items-center">
+            <span>
+                <i class="bi bi-cart3 me-1"></i> Loaded from Purchase Order: <strong>{{ $selectedPo->po_number }}</strong> (Date: {{ $selectedPo->order_date->format('d M, Y') }}, PO Total: Rs. {{ number_format($selectedPo->grand_total, 2) }})
+            </span>
+            <a href="{{ route('purchases.invoices.create') }}" class="btn btn-sm btn-outline-primary">Clear PO</a>
+        </div>
+        <input type="hidden" name="purchase_order_id" value="{{ $selectedPo->id }}">
     @endif
 
     {{-- Header Section (Matching Screenshots 1, 2, 3) --}}
@@ -53,7 +67,7 @@
                         @foreach($suppliers as $sup)
                             <option value="{{ $sup->id }}" 
                                     data-balance="{{ $sup->current_balance }}" 
-                                    @selected(old('supplier_id', $selectedGrn?->supplier_id) == $sup->id)>
+                                    @selected(old('supplier_id', $selectedGrn?->supplier_id ?? $selectedPo?->supplier_id) == $sup->id)>
                                 {{ $sup->name }} @if($sup->company_name) - {{ $sup->company_name }} @endif
                             </option>
                         @endforeach
@@ -179,30 +193,52 @@
                                 </tr>
                             </thead>
                             <tbody id="piProductsBody">
-                                @if($selectedGrn && $selectedGrn->items->isNotEmpty())
-                                    @foreach($selectedGrn->items as $idx => $gItem)
+                                @php
+                                    $loadedItems = $selectedGrn ? $selectedGrn->items : ($selectedPo ? $selectedPo->items : collect());
+                                @endphp
+
+                                @if($loadedItems->isNotEmpty())
+                                    @foreach($loadedItems as $idx => $line)
+                                        @php
+                                            if ($selectedGrn) {
+                                                $poItem = $selectedGrn->purchaseOrder?->items->firstWhere('inventory_item_id', $line->inventory_item_id);
+                                                $lineQty = $line->quantity;
+                                                $lineRate = $line->unit_cost;
+                                                $lineDisc = (float) ($poItem?->discount_amount ?? 0);
+                                                $lineTaxPct = (float) ($poItem?->tax_percent ?? ($selectedGrn->purchaseOrder?->tax_percent ?? 0));
+                                                $grnItemId = $line->id;
+                                            } else {
+                                                $lineQty = max(0, $line->quantity - $line->received_quantity) > 0 ? ($line->quantity - $line->received_quantity) : $line->quantity;
+                                                $lineRate = $line->unit_cost;
+                                                $lineDisc = (float) ($line->discount_amount ?? 0);
+                                                $lineTaxPct = (float) ($line->tax_percent ?? ($selectedPo?->tax_percent ?? 0));
+                                                $grnItemId = null;
+                                            }
+                                        @endphp
                                         <tr class="pi-prod-row">
                                             <td class="text-center pi-sr">{{ $idx + 1 }}</td>
                                             <td>
                                                 <select class="form-select form-select-sm pi-prod-select" name="items[{{ $idx }}][inventory_item_id]" required>
-                                                    <option value="{{ $gItem->inventory_item_id }}" data-uom="{{ $gItem->inventoryItem->unit }}" selected>
-                                                        {{ $gItem->inventoryItem->item_name }} ({{ $gItem->inventoryItem->sku }})
+                                                    <option value="{{ $line->inventory_item_id }}" data-uom="{{ $line->inventoryItem->unit }}" selected>
+                                                        {{ $line->inventoryItem->item_name }} ({{ $line->inventoryItem->sku }})
                                                     </option>
                                                 </select>
-                                                <input type="hidden" name="items[{{ $idx }}][goods_received_item_id]" value="{{ $gItem->id }}">
+                                                @if($grnItemId)
+                                                    <input type="hidden" name="items[{{ $idx }}][goods_received_item_id]" value="{{ $grnItemId }}">
+                                                @endif
                                             </td>
-                                            <td class="text-center pi-uom fw-bold">{{ $gItem->inventoryItem->unit }}</td>
+                                            <td class="text-center pi-uom fw-bold">{{ $line->inventoryItem->unit }}</td>
                                             <td>
-                                                <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end pi-qty" name="items[{{ $idx }}][quantity]" value="{{ $gItem->quantity }}" required>
-                                            </td>
-                                            <td>
-                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end pi-rate" name="items[{{ $idx }}][unit_cost]" value="{{ $gItem->unit_cost }}" required>
-                                            </td>
-                                            <td>
-                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end pi-disc" name="items[{{ $idx }}][discount_amount]" value="0">
+                                                <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end pi-qty auto-clear-zero" name="items[{{ $idx }}][quantity]" value="{{ $lineQty }}" required placeholder="1.00">
                                             </td>
                                             <td>
-                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end pi-tax-pct" name="items[{{ $idx }}][tax_percent]" value="0">
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end pi-rate auto-clear-zero" name="items[{{ $idx }}][unit_cost]" value="{{ $lineRate }}" required placeholder="0.00">
+                                            </td>
+                                            <td>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end pi-disc auto-clear-zero" name="items[{{ $idx }}][discount_amount]" value="{{ $lineDisc }}" placeholder="0.00">
+                                            </td>
+                                            <td>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end pi-tax-pct auto-clear-zero" name="items[{{ $idx }}][tax_percent]" value="{{ $lineTaxPct }}" placeholder="0%">
                                             </td>
                                             <td>
                                                 <input type="text" class="form-control form-control-sm text-end bg-light fw-bold pi-line-subtotal" value="0.00" readonly>
@@ -229,16 +265,16 @@
                                         </td>
                                         <td class="text-center pi-uom fw-bold">PCS</td>
                                         <td>
-                                            <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end pi-qty" name="items[0][quantity]" value="1" required>
+                                            <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end pi-qty auto-clear-zero" name="items[0][quantity]" value="1" required placeholder="1.00">
                                         </td>
                                         <td>
-                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end pi-rate" name="items[0][unit_cost]" value="0" required>
+                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end pi-rate auto-clear-zero" name="items[0][unit_cost]" value="0" required placeholder="0.00">
                                         </td>
                                         <td>
-                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end pi-disc" name="items[0][discount_amount]" value="0">
+                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end pi-disc auto-clear-zero" name="items[0][discount_amount]" value="0" placeholder="0.00">
                                         </td>
                                         <td>
-                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end pi-tax-pct" name="items[0][tax_percent]" value="0">
+                                            <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end pi-tax-pct auto-clear-zero" name="items[0][tax_percent]" value="0" placeholder="0%">
                                         </td>
                                         <td>
                                             <input type="text" class="form-control form-control-sm text-end bg-light fw-bold pi-line-subtotal" value="0.00" readonly>
@@ -523,8 +559,55 @@
                 </div>
             </div>
         </div>
-    </div>
 </form>
+
+{{-- Load PO Modal --}}
+<div class="modal fade" id="loadPoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-cart3 me-2"></i> Select Purchase Order (PO) to Bill</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light small">
+                            <tr>
+                                <th class="ps-3">PO #</th>
+                                <th>Date</th>
+                                <th>Supplier</th>
+                                <th class="text-end">PO Amount</th>
+                                <th class="text-end pe-3">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($pendingOrders as $ppo)
+                                <tr>
+                                    <td class="ps-3 fw-bold">{{ $ppo->po_number }}</td>
+                                    <td>{{ $ppo->order_date->format('d M, Y') }}</td>
+                                    <td>{{ $ppo->supplier->name }}</td>
+                                    <td class="text-end fw-semibold">Rs. {{ number_format($ppo->grand_total, 2) }}</td>
+                                    <td class="text-end pe-3">
+                                        <a href="{{ route('purchases.invoices.create', ['purchase_order_id' => $ppo->id]) }}" class="btn btn-sm btn-info text-white">
+                                            Load into Invoice
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        No pending Purchase Orders found.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {{-- Load GRN Modal --}}
 <div class="modal fade" id="loadGrnModal" tabindex="-1">
@@ -594,6 +677,23 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         vendorSelect.dispatchEvent(new Event('change'));
     }
+
+    function setupAutoClear(el) {
+        if (!el) return;
+        el.addEventListener('focus', function () {
+            if (this.value === '0.00' || this.value === '0' || this.value === '0.0') {
+                this.value = '';
+            }
+        });
+        el.addEventListener('blur', function () {
+            if (this.value.trim() === '') {
+                this.value = (this.classList.contains('pi-qty') || this.classList.contains('ie-qty') || this.classList.contains('oe-qty')) ? '1' : '0.00';
+                calculatePiTotals();
+            }
+        });
+    }
+
+    document.querySelectorAll('.auto-clear-zero, .ie-qty, .ie-rate, .ie-debit, .ie-credit, .oe-qty, .oe-rate, .oe-debit, .oe-credit, .comm-rate, .comm-amount').forEach(setupAutoClear);
 
     function calculatePiTotals() {
         let prodSub = 0;
@@ -700,7 +800,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         [qty, rate, disc, tax].forEach(i => {
-            if (i) i.addEventListener('input', calculatePiTotals);
+            if (i) {
+                i.addEventListener('input', calculatePiTotals);
+                setupAutoClear(i);
+            }
         });
 
         if (btnRemove) {
@@ -750,7 +853,10 @@ document.addEventListener('DOMContentLoaded', function () {
     // Expenses listeners
     function attachExpListeners(tableId, rowClass) {
         document.querySelectorAll(`#${tableId} .${rowClass}`).forEach(row => {
-            row.querySelectorAll('input').forEach(i => i.addEventListener('input', calculatePiTotals));
+            row.querySelectorAll('input').forEach(i => {
+                i.addEventListener('input', calculatePiTotals);
+                setupAutoClear(i);
+            });
             const btn = row.querySelector('button');
             if (btn) {
                 btn.addEventListener('click', function () {
@@ -814,7 +920,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Commission Listeners
     function attachCommListeners(row) {
-        row.querySelectorAll('input, select').forEach(i => i.addEventListener('input', calculatePiTotals));
+        row.querySelectorAll('input, select').forEach(i => {
+            i.addEventListener('input', calculatePiTotals);
+            if (i.tagName === 'INPUT' && (i.classList.contains('comm-rate') || i.classList.contains('comm-amount'))) {
+                setupAutoClear(i);
+            }
+        });
         const btn = row.querySelector('.btn-remove-comm');
         if (btn) {
             btn.addEventListener('click', function () {

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 @section('title', 'Payslip - ' . $payroll->payroll_number)
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex justify-content-between align-items-center mb-3 d-print-none">
     <div>
         <div class="d-flex align-items-center gap-2">
             <h4 class="mb-0 fw-bold">{{ $payroll->payroll_number }}</h4>
@@ -27,7 +27,7 @@
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
                 <div>
-                    <h5 class="fw-bold mb-0">{{ $payroll->employee->shop ? $payroll->employee->shop->name : 'Inventory Management' }}</h5>
+                    <h5 class="fw-bold mb-0">{{ $payroll->employee->shop ? $payroll->employee->shop->name : 'DenFin ERP' }}</h5>
                     <small class="text-secondary">Official Monthly Salary Slip</small>
                 </div>
                 <div class="text-end">
@@ -96,15 +96,19 @@
                 </table>
             </div>
 
-            <!-- Signatures -->
-            <div class="row pt-4 mt-4 border-top text-center">
+            <!-- Signatures (Print Only) -->
+            <div class="row pt-4 mt-4 text-center d-none d-print-flex print-signature-block">
                 <div class="col-6">
-                    <div style="border-top: 1px dashed #aaa; width: 60%; margin: 40px auto 5px;"></div>
-                    <small class="text-secondary">Employee Signature</small>
+                    <div class="border-top border-dark pt-2 mx-4">
+                        <strong class="d-block text-dark small text-uppercase">Employee Signature</strong>
+                        <span class="text-secondary" style="font-size: 11px;">Acknowledgment of Receipt</span>
+                    </div>
                 </div>
                 <div class="col-6">
-                    <div style="border-top: 1px dashed #aaa; width: 60%; margin: 40px auto 5px;"></div>
-                    <small class="text-secondary">Authorized Signature / Stamp</small>
+                    <div class="border-top border-dark pt-2 mx-4">
+                        <strong class="d-block text-dark small text-uppercase">HR / Finance Manager</strong>
+                        <span class="text-secondary" style="font-size: 11px;">Authorized Sign & Stamp</span>
+                    </div>
                 </div>
             </div>
         </div>

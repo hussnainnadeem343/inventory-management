@@ -16,6 +16,7 @@ class InwardGatePassItem extends Model
         'inventory_item_id',
         'packages_count',
         'declared_quantity',
+        'rejected_quantity',
         'remarks',
     ];
 
@@ -24,7 +25,13 @@ class InwardGatePassItem extends Model
         return [
             'packages_count' => 'decimal:2',
             'declared_quantity' => 'decimal:2',
+            'rejected_quantity' => 'decimal:2',
         ];
+    }
+
+    public function getNetAcceptedQuantityAttribute(): float
+    {
+        return max(0, (float) $this->declared_quantity - (float) $this->rejected_quantity);
     }
 
     public function gatePass(): BelongsTo

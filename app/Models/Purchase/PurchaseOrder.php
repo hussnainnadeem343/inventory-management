@@ -33,6 +33,7 @@ class PurchaseOrder extends Model
         'status',
         'subtotal',
         'discount_amount',
+        'tax_percent',
         'tax_amount',
         'grand_total',
         'notes',
@@ -46,6 +47,7 @@ class PurchaseOrder extends Model
             'expected_delivery_date' => 'date',
             'subtotal' => 'decimal:2',
             'discount_amount' => 'decimal:2',
+            'tax_percent' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'grand_total' => 'decimal:2',
         ];

@@ -3,10 +3,10 @@
 @section('title', 'Dashboard')
 
 @section('content')
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
     <div>
-        <h2 class="h4 fw-bold mb-1">Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 18 ? 'afternoon' : 'evening') }}, {{ str(auth()->user()->name)->before(' ') }}</h2>
-        <p class="text-secondary mb-0">
+        <!-- <h2 class="h5 fw-bold mb-1">Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 18 ? 'afternoon' : 'evening') }}, {{ str(auth()->user()->name)->before(' ') }}</h2> -->
+        <p class="text-secondary small mb-0">
             @if($currentShop)
                 Store Dashboard for <strong class="text-dark">{{ $currentShop->name }}</strong> ({{ $currentShop->code }}) &bull; <span class="badge text-bg-secondary">{{ $currentShop->business_type ?? 'Retail' }}</span>
             @else
@@ -16,11 +16,11 @@
     </div>
 
     @if(auth()->user()->isSuperAdmin())
-        <form method="get" action="{{ route('dashboard') }}" class="d-flex align-items-center gap-2 bg-white p-2 rounded-3 border shadow-sm">
+        <form method="get" action="{{ route('dashboard') }}" class="d-flex align-items-center gap-2 bg-white px-3 py-1.5 rounded-3 border shadow-sm">
             <label for="dashboard_shop_selector" class="form-label mb-0 fw-semibold text-secondary small text-nowrap">
                 <i class="bi bi-shop text-primary me-1"></i>Active Shop:
             </label>
-            <select id="dashboard_shop_selector" name="shop_id" class="form-select form-select-sm" style="min-width: 210px;" onchange="this.form.submit()">
+            <select id="dashboard_shop_selector" name="shop_id" class="form-select form-select-sm" style="min-width: 200px;" onchange="this.form.submit()">
                 <option value="all" {{ empty($selectedShopId) ? 'selected' : '' }}>All Shops (Consolidated)</option>
                 @foreach($shops as $shop)
                     <option value="{{ $shop->id }}" {{ $selectedShopId == $shop->id ? 'selected' : '' }}>
@@ -30,8 +30,8 @@
             </select>
         </form>
     @else
-        <div class="d-inline-flex align-items-center gap-2 bg-white px-3 py-2 rounded-3 border shadow-sm">
-            <span class="avatar bg-primary-subtle text-primary fw-bold" style="width: 32px; height: 32px; font-size: 13px;">
+        <div class="d-inline-flex align-items-center gap-2 bg-white px-3 py-1.5 rounded-3 border shadow-sm">
+            <span class="avatar bg-primary-subtle text-primary fw-bold" style="width: 28px; height: 28px; font-size: 12px;">
                 <i class="bi bi-shop"></i>
             </span>
             <div>
@@ -42,373 +42,353 @@
     @endif
 </div>
 
-{{-- KPI Metric Cards --}}
+{{-- ROW 1: Simple Operational KPI Cards (No verbose descriptions) --}}
+<div class="row g-3 mb-3">
+    {{-- Card 1: Sales Today --}}
+    <div class="col-sm-6 col-xl-2">
+        <a href="{{ route('sales.index') }}" class="dashboard-kpi-card shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="kpi-label">Sales Today</div>
+                    <div class="kpi-value text-success">Rs. {{ number_format($salesTodayRevenue, 0) }}</div>
+                </div>
+                <span class="kpi-icon" style="background: #ecfdf5; color: #10b981;">
+                    <i class="bi bi-cash-stack"></i>
+                </span>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card 2: Total Net Sales --}}
+    <div class="col-sm-6 col-xl-2">
+        <a href="{{ route('pos') }}" class="dashboard-kpi-card shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="kpi-label">Total Net Sales</div>
+                    <div class="kpi-value text-primary">Rs. {{ number_format($netSalesTotal, 0) }}</div>
+                </div>
+                <span class="kpi-icon" style="background: #eef4ff; color: #2563eb;">
+                    <i class="bi bi-wallet2"></i>
+                </span>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card 3: Pending Requisitions (PR) --}}
+    <div class="col-sm-6 col-xl-2">
+        <a href="{{ route('purchases.requisitions.index') }}" class="dashboard-kpi-card shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="kpi-label">Pending PRs</div>
+                    <div class="kpi-value {{ $pendingPrCount > 0 ? 'text-warning' : 'text-dark' }}">{{ number_format($pendingPrCount) }}</div>
+                </div>
+                <span class="kpi-icon" style="background: #faf5ff; color: #8b5cf6;">
+                    <i class="bi bi-file-earmark-text"></i>
+                </span>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card 4: Pending Purchase Orders (PO) --}}
+    <div class="col-sm-6 col-xl-2">
+        <a href="{{ route('purchases.orders.index') }}" class="dashboard-kpi-card shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="kpi-label">Active POs</div>
+                    <div class="kpi-value {{ $pendingPoCount > 0 ? 'text-primary' : 'text-dark' }}">{{ number_format($pendingPoCount) }}</div>
+                </div>
+                <span class="kpi-icon" style="background: #fffbeb; color: #f59e0b;">
+                    <i class="bi bi-cart-check"></i>
+                </span>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card 5: Inward to Bill (GRN) --}}
+    <div class="col-sm-6 col-xl-2">
+        <a href="{{ route('purchases.invoices.create') }}" class="dashboard-kpi-card shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="kpi-label">Inward to Bill</div>
+                    <div class="kpi-value {{ $pendingGrnCount > 0 ? 'text-info' : 'text-dark' }}">{{ number_format($pendingGrnCount) }}</div>
+                </div>
+                <span class="kpi-icon" style="background: #f0fdfa; color: #0d9488;">
+                    <i class="bi bi-box-arrow-in-down"></i>
+                </span>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card 6: Unpaid Vendor Bills --}}
+    <div class="col-sm-6 col-xl-2">
+        <a href="{{ route('purchases.invoices.index', ['payment_status' => 'unpaid']) }}" class="dashboard-kpi-card shadow-sm">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="kpi-label">Unpaid Bills</div>
+                    <div class="kpi-value {{ $unpaidInvoicesCount > 0 ? 'text-danger' : 'text-muted' }}">{{ number_format($unpaidInvoicesCount) }}</div>
+                </div>
+                <span class="kpi-icon" style="background: #fff1f2; color: #e11d48;">
+                    <i class="bi bi-receipt-cutoff"></i>
+                </span>
+            </div>
+        </a>
+    </div>
+</div>
+
+{{-- ROW 2: Four Clickable Module Launchpad Boxes (Taller, Highlighted with Background Color, Clean Labels) --}}
 <div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-2">
-        <div class="card kpi-card">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="kpi-label">Total Products</div>
-                    <div class="kpi-value">{{ number_format($totalItems) }}</div>
+    {{-- Module 1: Purchase --}}
+    <div class="col-sm-6 col-xl-3">
+        <a href="{{ route('purchases.orders.index') }}" class="module-launchpad-card card-purchase shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between mb-auto">
+                <div class="icon-tile">
+                    <i class="bi bi-truck"></i>
                 </div>
-                <span class="kpi-icon" style="background: #eef4ff; color: #2563eb;"><i class="bi bi-box"></i></span>
+                <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
             </div>
-            <div class="small text-secondary mt-2">In shop catalog</div>
-        </div>
+            <div class="module-title mt-4">Purchase</div>
+        </a>
     </div>
 
-    <div class="col-sm-6 col-xl-2">
-        <div class="card kpi-card">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="kpi-label">Remaining Stock</div>
-                    <div class="kpi-value text-success">{{ number_format($totalRemaining) }}</div>
+    {{-- Module 2: Sale --}}
+    <div class="col-sm-6 col-xl-3">
+        <a href="{{ route('sales.index') }}" class="module-launchpad-card card-sale shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between mb-auto">
+                <div class="icon-tile">
+                    <i class="bi bi-cart3"></i>
                 </div>
-                <span class="kpi-icon" style="background: #ecfdf3; color: #16a34a;"><i class="bi bi-layers"></i></span>
+                <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
             </div>
-            <div class="small text-secondary mt-2">Live units on shelf</div>
-        </div>
+            <div class="module-title mt-4">Sale</div>
+        </a>
     </div>
 
-    <div class="col-sm-6 col-xl-2">
-        <div class="card kpi-card">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="kpi-label">Total Units Sold</div>
-                    <div class="kpi-value text-primary">{{ number_format($totalSold) }}</div>
+    {{-- Module 3: Finance --}}
+    <div class="col-sm-6 col-xl-3">
+        <a href="{{ route('finance.accounts.index') }}" class="module-launchpad-card card-finance shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between mb-auto">
+                <div class="icon-tile">
+                    <i class="bi bi-diagram-3"></i>
                 </div>
-                <span class="kpi-icon" style="background: #f0fdf4; color: #0284c7;"><i class="bi bi-cart-check"></i></span>
+                <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
             </div>
-            <div class="small text-secondary mt-2">Counter sales</div>
-        </div>
+            <div class="module-title mt-4">Finance</div>
+        </a>
     </div>
 
-    <div class="col-sm-6 col-xl-2">
-        <div class="card kpi-card">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="kpi-label">Net Sales</div>
-                    <div class="kpi-value" style="font-size: 20px;">Rs. {{ number_format($netRevenue, 0) }}</div>
+    {{-- Module 4: HR --}}
+    <div class="col-sm-6 col-xl-3">
+        <a href="{{ route('hr.employees.index') }}" class="module-launchpad-card card-hr shadow-sm h-100">
+            <div class="d-flex align-items-center justify-content-between mb-auto">
+                <div class="icon-tile">
+                    <i class="bi bi-people"></i>
                 </div>
-                <span class="kpi-icon" style="background: #fef3c7; color: #d97706;"><i class="bi bi-cash-stack"></i></span>
+                <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
             </div>
-            <div class="small text-secondary mt-2">Revenue (Net)</div>
-        </div>
-    </div>
-
-    <div class="col-sm-6 col-xl-2">
-        <div class="card kpi-card">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="kpi-label">Low Stock</div>
-                    <div class="kpi-value {{ $lowStockCount > 0 ? 'text-danger' : 'text-muted' }}">{{ number_format($lowStockCount) }}</div>
-                </div>
-                <span class="kpi-icon" style="background: #fef2f2; color: #dc2626;"><i class="bi bi-exclamation-triangle"></i></span>
-            </div>
-            <div class="small text-secondary mt-2">
-                @if($lowStockCount > 0)
-                    <a href="{{ route('stock.index') }}" class="text-danger fw-semibold text-decoration-none">Needs reorder &rarr;</a>
-                @else
-                    All stock healthy
-                @endif
-            </div>
-        </div>
-    </div>
-
-    <div class="col-sm-6 col-xl-2">
-        <div class="card kpi-card">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="kpi-label">Expiring Soon</div>
-                    <div class="kpi-value {{ $expiringCount > 0 ? 'text-warning' : 'text-muted' }}">{{ number_format($expiringCount) }}</div>
-                </div>
-                <span class="kpi-icon" style="background: #fff7ed; color: #ea580c;"><i class="bi bi-clock-history"></i></span>
-            </div>
-            <div class="small text-secondary mt-2">
-                <a href="{{ route('reports.expiry') }}" class="text-secondary text-decoration-none">View alerts &rarr;</a>
-            </div>
-        </div>
+            <div class="module-title mt-4">HR &amp; Payroll</div>
+        </a>
     </div>
 </div>
 
-{{-- Stock Movement & Categories Charts --}}
-<div class="row g-4 mb-4">
-    <div class="col-xl-7">
-        <div class="card p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <h2 class="section-title">Stock Movement</h2>
-                    <small class="text-secondary">Stock In vs Counter Sales (Last 14 days)</small>
-                </div>
-                <span class="badge text-bg-light border">Movement Trend</span>
-            </div>
-            @if($movement->isNotEmpty())
-                <div class="chart-wrap"><canvas id="movementChart"></canvas></div>
-            @else
-                <div class="empty-state py-5">
-                    <i class="bi bi-graph-up text-secondary"></i>
-                    <p class="mb-0 text-secondary">No stock movement recorded in the last 14 days for this shop.</p>
-                </div>
-            @endif
-        </div>
+{{-- ROW 3: Recent Stock Activity Ledger (Strictly top 5 records) --}}
+<div class="card shadow-sm border-0 bg-white">
+    <div class="card-header bg-white py-2.5 px-3 d-flex justify-content-between align-items-center border-bottom">
+        <h6 class="fw-bold mb-0 text-dark">Recent Stock Activity</h6>
+        <a href="{{ route('stock.index') }}" class="btn btn-sm btn-outline-secondary py-1 px-2.5" style="font-size: 12px;">
+            View Stock Ledger &rarr;
+        </a>
     </div>
-
-    <div class="col-xl-5">
-        <div class="card p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <h2 class="section-title">Stock by Category</h2>
-                    <small class="text-secondary">Distribution of remaining stock units</small>
-                </div>
-                <span class="badge text-bg-light border">Top Categories</span>
-            </div>
-            @if($byCategory->isNotEmpty() && $byCategory->sum('total') > 0)
-                <div class="chart-wrap"><canvas id="categoryChart"></canvas></div>
-            @else
-                <div class="empty-state py-5">
-                    <i class="bi bi-collection text-secondary"></i>
-                    <p class="mb-0 text-secondary">No categorized stock available for this shop.</p>
-                </div>
-            @endif
-        </div>
-    </div>
-</div>
-
-{{-- Brand Breakdown & Low Stock / Recent Activity --}}
-<div class="row g-4">
-    <div class="col-xl-5">
-        <div class="card p-3 h-100">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <h2 class="section-title">Stock by Brand</h2>
-                    <small class="text-secondary">Remaining volume by manufacturer/brand</small>
-                </div>
-                <span class="badge text-bg-light border">Top Brands</span>
-            </div>
-            @if($byBrand->isNotEmpty() && $byBrand->sum('total') > 0)
-                <div class="chart-wrap"><canvas id="brandChart"></canvas></div>
-            @else
-                <div class="empty-state py-5">
-                    <i class="bi bi-tags text-secondary"></i>
-                    <p class="mb-0 text-secondary">No branded stock available for this shop.</p>
-                </div>
-            @endif
-        </div>
-    </div>
-
-    <div class="col-xl-7">
-        {{-- Urgent Low Stock Watchlist (if any) --}}
-        @if($lowStockItems->isNotEmpty())
-            <div class="card mb-4 border-warning">
-                <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center py-2">
-                    <div class="fw-bold text-warning-emphasis small">
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>Low Stock Watchlist (Needs Restock)
-                    </div>
-                    <a href="{{ route('stock.index') }}" class="btn btn-sm btn-outline-dark py-0" style="font-size: 11px;">Restock in Stock &rarr;</a>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Product / SKU</th>
-                                <th>Brand</th>
-                                <th class="text-center">Remaining</th>
-                                <th class="text-center">Alert Limit</th>
-                                <th class="text-end">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($lowStockItems as $item)
-                                <tr>
-                                    <td>
-                                        <div class="fw-semibold text-dark">{{ $item->item_name }}</div>
-                                        <code class="small text-secondary">{{ $item->sku }}</code>
-                                    </td>
-                                    <td><span class="badge text-bg-light">{{ $item->brand?->name ?? 'N/A' }}</span></td>
-                                    <td class="text-center">
-                                        <span class="badge text-bg-{{ $item->quantity <= 0 ? 'danger' : 'warning' }} fs-6">
-                                            {{ number_format($item->quantity, 0) }}
-                                        </span>
-                                    </td>
-                                    <td class="text-center text-secondary">{{ number_format($item->alert_quantity ?? 5, 0) }}</td>
-                                    <td class="text-end">
-                                        <a href="{{ route('stock.index', ['search' => $item->sku]) }}" class="btn btn-sm btn-outline-primary py-0" style="font-size: 11px;">
-                                            <i class="bi bi-plus-circle me-1"></i>Add Stock
-                                        </a>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        @endif
-
-        {{-- Recent Stock Activity Ledger --}}
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h2 class="section-title">Recent Stock Activity</h2>
-                <a href="{{ route('stock.index') }}" class="small text-decoration-none">View All Stock &rarr;</a>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th>Product</th>
-                            <th>Action</th>
-                            <th class="text-end">Quantity</th>
-                            <th>Staff</th>
-                            <th>Time</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($recentActivity as $activity)
-                            @php
-                                $badgeColor = match($activity->transaction_type) {
-                                    'STOCK_IN' => 'success',
-                                    'SALE' => 'primary',
-                                    'CUSTOMER_RETURN' => 'info',
-                                    'EXCHANGE_IN' => 'success',
-                                    'EXCHANGE_OUT' => 'warning',
-                                    'DAMAGE_LOSS' => 'danger',
-                                    default => 'secondary'
-                                };
-                                $isPositive = in_array($activity->transaction_type, ['STOCK_IN', 'CUSTOMER_RETURN', 'EXCHANGE_IN']);
-                            @endphp
-                            <tr>
-                                <td>
-                                    <div class="fw-semibold text-dark">{{ $activity->inventoryItem?->item_name ?? 'Item' }}</div>
-                                    @if($activity->inventoryItem?->sku)
-                                        <small class="text-muted">{{ $activity->inventoryItem->sku }}</small>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="badge text-bg-{{ $badgeColor }}">
-                                        {{ str($activity->transaction_type)->replace('_', ' ') }}
-                                    </span>
-                                </td>
-                                <td class="text-end stock-number text-{{ $isPositive ? 'success' : 'danger' }}">
-                                    {{ $isPositive ? '+' : '-' }}{{ number_format($activity->quantity, 2) }}
-                                </td>
-                                <td><small class="text-secondary">{{ $activity->creator?->name ?? 'System' }}</small></td>
-                                <td class="text-secondary small">{{ $activity->created_at->diffForHumans() }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5">
-                                    <div class="empty-state py-4">
-                                        <i class="bi bi-clock-history"></i>
-                                        <p class="mb-0">No stock activity recorded for this shop yet.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small">
+                <tr>
+                    <th class="ps-3" style="width: 35%;">Product Item</th>
+                    <th style="width: 20%;">Movement Type</th>
+                    <th class="text-end" style="width: 15%;">Quantity</th>
+                    <th style="width: 15%;">Staff User</th>
+                    <th class="text-end pe-3" style="width: 15%;">Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($recentActivity as $activity)
+                    @php
+                        $badgeColor = match($activity->transaction_type) {
+                            'STOCK_IN' => 'success',
+                            'SALE' => 'primary',
+                            'CUSTOMER_RETURN' => 'info',
+                            'EXCHANGE_IN' => 'success',
+                            'EXCHANGE_OUT' => 'warning',
+                            'DAMAGE_LOSS' => 'danger',
+                            default => 'secondary'
+                        };
+                        $isPositive = in_array($activity->transaction_type, ['STOCK_IN', 'CUSTOMER_RETURN', 'EXCHANGE_IN']);
+                    @endphp
+                    <tr>
+                        <td class="ps-3">
+                            <div class="fw-semibold text-dark">{{ $activity->inventoryItem?->item_name ?? 'Product' }}</div>
+                            @if($activity->inventoryItem?->sku)
+                                <code class="small text-secondary">{{ $activity->inventoryItem->sku }}</code>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="badge text-bg-{{ $badgeColor }} text-uppercase">
+                                {{ str($activity->transaction_type)->replace('_', ' ') }}
+                            </span>
+                        </td>
+                        <td class="text-end fw-bold text-{{ $isPositive ? 'success' : 'danger' }}">
+                            {{ $isPositive ? '+' : '-' }}{{ number_format($activity->quantity, 2) }}
+                        </td>
+                        <td>
+                            <span class="small text-secondary">{{ $activity->creator?->name ?? 'System' }}</span>
+                        </td>
+                        <td class="text-end pe-3 text-secondary small">
+                            {{ $activity->created_at->diffForHumans() }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            <i class="bi bi-clock-history fs-3 d-block mb-2"></i>
+                            No recent stock transactions recorded for this store.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 </div>
+
+<style>
+.dashboard-kpi-card {
+    display: block;
+    height: 100%;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.dashboard-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(15, 31, 61, 0.08) !important;
+    border-color: #cbd5e1;
+}
+.dashboard-kpi-card .kpi-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+}
+.dashboard-kpi-card .kpi-value {
+    font-size: 20px;
+    font-weight: 700;
+    margin-top: 3px;
+    line-height: 1.2;
+}
+.dashboard-kpi-card .kpi-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.module-launchpad-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 140px;
+    border-radius: var(--radius) !important;
+    padding: 22px 20px;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.module-launchpad-card:hover {
+    transform: translateY(-4px);
+}
+.module-launchpad-card .icon-tile {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(15, 31, 61, 0.08);
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+    transition: transform 0.2s ease;
+}
+.module-launchpad-card:hover .icon-tile {
+    transform: scale(1.08);
+}
+.module-launchpad-card .module-title {
+    font-size: 19px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+.module-launchpad-card .module-arrow {
+    opacity: 0.65;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.module-launchpad-card:hover .module-arrow {
+    opacity: 1;
+    transform: translate(2px, -2px);
+}
+
+/* Theme Color Variants for Highlighting */
+.module-launchpad-card.card-purchase {
+    background: linear-gradient(145deg, #f0f7ff 0%, #e0effe 100%);
+    border: 1.5px solid #bfdbfe !important;
+    color: #1e40af;
+}
+.module-launchpad-card.card-purchase:hover {
+    box-shadow: 0 12px 28px rgba(37, 99, 235, 0.16) !important;
+    border-color: #93c5fd !important;
+}
+.module-launchpad-card.card-purchase .icon-tile {
+    color: #1d4ed8;
+}
+
+.module-launchpad-card.card-sale {
+    background: linear-gradient(145deg, #f0fdf4 0%, #dcfce7 100%);
+    border: 1.5px solid #bbf7d0 !important;
+    color: #166534;
+}
+.module-launchpad-card.card-sale:hover {
+    box-shadow: 0 12px 28px rgba(22, 163, 74, 0.16) !important;
+    border-color: #86efac !important;
+}
+.module-launchpad-card.card-sale .icon-tile {
+    color: #15803d;
+}
+
+.module-launchpad-card.card-finance {
+    background: linear-gradient(145deg, #faf5ff 0%, #f3e8ff 100%);
+    border: 1.5px solid #e9d5ff !important;
+    color: #6b21a8;
+}
+.module-launchpad-card.card-finance:hover {
+    box-shadow: 0 12px 28px rgba(126, 34, 206, 0.16) !important;
+    border-color: #d8b4fe !important;
+}
+.module-launchpad-card.card-finance .icon-tile {
+    color: #7e22ce;
+}
+
+.module-launchpad-card.card-hr {
+    background: linear-gradient(145deg, #fff7ed 0%, #ffedd5 100%);
+    border: 1.5px solid #fed7aa !important;
+    color: #9a3412;
+}
+.module-launchpad-card.card-hr:hover {
+    box-shadow: 0 12px 28px rgba(234, 88, 12, 0.16) !important;
+    border-color: #fdba74 !important;
+}
+.module-launchpad-card.card-hr .icon-tile {
+    color: #c2410c;
+}
+</style>
 @endsection
-
-@push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
-<script>
-Chart.defaults.font.family = 'Inter, sans-serif';
-Chart.defaults.color = '#667085';
-const grid = { color: '#edf0f4' };
-
-@if($movement->isNotEmpty())
-const mEl = document.getElementById('movementChart');
-if (mEl) {
-    new Chart(mEl, {
-        type: 'line',
-        data: {
-            labels: @json($movement->pluck('movement_date')),
-            datasets: [
-                {
-                    label: 'Stock In',
-                    data: @json($movement->pluck('stock_in')),
-                    borderColor: '#16a34a',
-                    backgroundColor: 'rgba(22, 163, 74, .08)',
-                    fill: true,
-                    tension: .35
-                },
-                {
-                    label: 'Sales',
-                    data: @json($movement->pluck('sold')),
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, .08)',
-                    fill: true,
-                    tension: .35
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { grid: { display: false } },
-                y: { beginAtZero: true, grid }
-            },
-            plugins: {
-                legend: { labels: { usePointStyle: true, boxWidth: 7 } }
-            }
-        }
-    });
-}
-@endif
-
-@if($byCategory->isNotEmpty() && $byCategory->sum('total') > 0)
-const cEl = document.getElementById('categoryChart');
-if (cEl) {
-    new Chart(cEl, {
-        type: 'doughnut',
-        data: {
-            labels: @json($byCategory->pluck('label')),
-            datasets: [{
-                data: @json($byCategory->pluck('total')),
-                backgroundColor: ['#2563eb', '#16a34a', '#d97706', '#7c3aed', '#0891b2', '#dc2626'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '68%',
-            plugins: {
-                legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 7, padding: 14 } }
-            }
-        }
-    });
-}
-@endif
-
-@if($byBrand->isNotEmpty() && $byBrand->sum('total') > 0)
-const bEl = document.getElementById('brandChart');
-if (bEl) {
-    new Chart(bEl, {
-        type: 'bar',
-        data: {
-            labels: @json($byBrand->pluck('label')),
-            datasets: [{
-                data: @json($byBrand->pluck('total')),
-                backgroundColor: '#4f79dd',
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            indexAxis: 'y',
-            scales: {
-                x: { beginAtZero: true, grid },
-                y: { grid: { display: false } }
-            },
-            plugins: { legend: { display: false } }
-        }
-    });
-}
-@endif
-</script>
-@endpush

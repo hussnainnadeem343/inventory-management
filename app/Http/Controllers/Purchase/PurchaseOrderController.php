@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Purchase;
 
 use App\Http\Controllers\Controller;
 use App\Models\InventoryItem;
+use App\Models\Inventory\Warehouse;
 use App\Models\Purchase\PurchaseOrder;
 use App\Models\Purchase\PurchaseOrderItem;
+use App\Models\Purchase\PurchaseRequisition;
 use App\Models\Purchase\Supplier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,7 +55,22 @@ class PurchaseOrderController extends Controller
             ->orderBy('item_name')
             ->get(['id', 'item_name', 'sku', 'purchase_price', 'selling_price', 'quantity', 'sold_quantity']);
 
-        return view('purchase.orders.create', compact('suppliers', 'products', 'shopId'));
+        $warehouses = Warehouse::forShop($shopId)->where('status', 'active')->orderBy('name')->get(['id', 'name', 'code']);
+
+        $requisitionId = $request->query('requisition_id');
+        $selectedRequisition = null;
+        if ($requisitionId) {
+            $selectedRequisition = PurchaseRequisition::with(['items.inventoryItem'])->forShop($shopId)->find($requisitionId);
+        }
+
+        $approvedRequisitions = PurchaseRequisition::forShop($shopId)
+            ->whereIn('status', [PurchaseRequisition::STATUS_APPROVED, PurchaseRequisition::STATUS_PENDING])
+            ->with(['items'])
+            ->latest('id')
+            ->limit(50)
+            ->get(['id', 'pr_number', 'requisition_date', 'status', 'department']);
+
+        return view('purchase.orders.create', compact('suppliers', 'products', 'warehouses', 'approvedRequisitions', 'selectedRequisition', 'shopId'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -63,27 +80,53 @@ class PurchaseOrderController extends Controller
 
         $validated = $request->validate([
             'supplier_id' => ['required', 'exists:suppliers,id'],
+            'purchase_requisition_id' => ['nullable', 'exists:purchase_requisitions,id'],
             'order_date' => ['required', 'date'],
             'expected_delivery_date' => ['nullable', 'date', 'after_or_equal:order_date'],
+            'payment_terms' => ['nullable', 'string', 'max:100'],
+            'delivery_station' => ['nullable', 'string', 'max:150'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.inventory_item_id' => ['required', 'exists:inventory_items,id'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
+            'items.*.discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'items.*.tax_percent' => ['nullable', 'numeric', 'min:0'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'tax_percent' => ['nullable', 'numeric', 'min:0'],
             'tax_amount' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
         ]);
 
         $subtotal = 0;
+        $totalLineDiscount = 0;
+        $totalLineTax = 0;
+
         foreach ($validated['items'] as $item) {
-            $subtotal += ((float) $item['quantity']) * ((float) $item['unit_cost']);
+            $qty = (float) $item['quantity'];
+            $cost = (float) $item['unit_cost'];
+            $lineSub = $qty * $cost;
+            $lineDisc = (float) ($item['discount_amount'] ?? 0);
+            $lineTaxPct = (float) ($item['tax_percent'] ?? 0);
+            $lineTax = ($lineSub - $lineDisc) * ($lineTaxPct / 100);
+
+            $subtotal += $lineSub;
+            $totalLineDiscount += $lineDisc;
+            $totalLineTax += $lineTax;
         }
 
-        $discount = (float) ($validated['discount_amount'] ?? 0);
-        $tax = (float) ($validated['tax_amount'] ?? 0);
+        $overallDiscount = (float) ($validated['discount_amount'] ?? 0);
+        $discount = max($overallDiscount, $totalLineDiscount);
+
+        $taxRatio = (float) ($validated['tax_percent'] ?? 0);
+        if ($taxRatio > 0 && $totalLineTax <= 0) {
+            $tax = ($subtotal - $discount) * ($taxRatio / 100);
+        } else {
+            $tax = $totalLineTax > 0 ? $totalLineTax : (float) ($validated['tax_amount'] ?? 0);
+        }
+
         $grandTotal = max(0, $subtotal - $discount + $tax);
 
-        $po = DB::transaction(function () use ($user, $shopId, $validated, $subtotal, $discount, $tax, $grandTotal) {
+        $po = DB::transaction(function () use ($user, $shopId, $validated, $subtotal, $discount, $taxRatio, $tax, $grandTotal) {
             $prefix = 'PO-' . now()->format('Ym') . '-';
             $count = PurchaseOrder::where('po_number', 'like', "{$prefix}%")->count() + 1;
             $poNumber = $prefix . str_pad((string) $count, 4, '0', STR_PAD_LEFT);
@@ -91,12 +134,16 @@ class PurchaseOrderController extends Controller
             $order = PurchaseOrder::create([
                 'shop_id' => $shopId,
                 'supplier_id' => $validated['supplier_id'],
+                'purchase_requisition_id' => $validated['purchase_requisition_id'] ?? null,
                 'po_number' => $poNumber,
                 'order_date' => $validated['order_date'],
                 'expected_delivery_date' => $validated['expected_delivery_date'] ?? null,
+                'payment_terms' => $validated['payment_terms'] ?? null,
+                'delivery_station' => $validated['delivery_station'] ?? null,
                 'status' => PurchaseOrder::STATUS_APPROVED, // default to approved for easy workflow
                 'subtotal' => $subtotal,
                 'discount_amount' => $discount,
+                'tax_percent' => $taxRatio,
                 'tax_amount' => $tax,
                 'grand_total' => $grandTotal,
                 'notes' => $validated['notes'] ?? null,
@@ -106,14 +153,30 @@ class PurchaseOrderController extends Controller
             foreach ($validated['items'] as $item) {
                 $qty = (float) $item['quantity'];
                 $cost = (float) $item['unit_cost'];
+                $lineSub = $qty * $cost;
+                $lineDisc = (float) ($item['discount_amount'] ?? 0);
+                $lineTaxPct = (float) ($item['tax_percent'] ?? $taxRatio);
+                $lineTax = ($lineSub - $lineDisc) * ($lineTaxPct / 100);
+
                 PurchaseOrderItem::create([
                     'purchase_order_id' => $order->id,
                     'inventory_item_id' => $item['inventory_item_id'],
                     'quantity' => $qty,
                     'received_quantity' => 0,
                     'unit_cost' => $cost,
-                    'subtotal' => $qty * $cost,
+                    'discount_amount' => $lineDisc,
+                    'tax_percent' => $lineTaxPct,
+                    'tax_amount' => $lineTax,
+                    'subtotal' => ($lineSub - $lineDisc) + $lineTax,
                 ]);
+            }
+
+            // If PR is linked, mark it as ordered
+            if (!empty($validated['purchase_requisition_id'])) {
+                $pr = PurchaseRequisition::find($validated['purchase_requisition_id']);
+                if ($pr && $pr->status !== 'ordered') {
+                    $pr->update(['status' => 'ordered']);
+                }
             }
 
             return $order;
