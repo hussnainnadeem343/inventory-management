@@ -15,7 +15,7 @@
 
 <div class="card p-3 mb-3">
     <form method="get" class="row g-2 align-items-end">
-        <div class="col-lg-5 col-md-6">
+        <div class="col-lg-4 col-md-5">
             <label class="form-label">Search</label>
             <input class="form-control" name="search" value="{{ $search }}" placeholder="PO number or supplier name...">
         </div>
@@ -23,16 +23,20 @@
             <label class="form-label">Status</label>
             <select class="form-select" name="status">
                 <option value="">All Statuses</option>
-                <option value="draft" @selected($status === 'draft')>Draft</option>
+                <option value="pending_approval" @selected($status === 'pending_approval')>Pending Approval</option>
                 <option value="approved" @selected($status === 'approved')>Approved</option>
                 <option value="partially_received" @selected($status === 'partially_received')>Partially Received</option>
                 <option value="received" @selected($status === 'received')>Fully Received</option>
+                <option value="draft" @selected($status === 'draft')>Draft</option>
                 <option value="cancelled" @selected($status === 'cancelled')>Cancelled</option>
             </select>
         </div>
-        <div class="col-lg-4 d-flex gap-2">
+        <div class="col-auto d-flex gap-2">
             <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i> Search</button>
             <a class="btn btn-outline-secondary" href="{{ route('purchases.orders.index') }}">Reset</a>
+        </div>
+        <div class="col-auto ms-auto">
+            <x-per-page-select :paginator="$orders" />
         </div>
     </form>
 </div>
@@ -48,7 +52,7 @@
                     <th>Items</th>
                     <th>Grand Total</th>
                     <th>Status</th>
-                    <th class="text-end">Actions</th>
+                    <th class="text-end pe-3">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -73,9 +77,10 @@
                         <td>
                             @php
                                 $badgeClass = match($po->status) {
+                                    'pending_approval' => 'bg-warning-subtle text-warning',
                                     'draft' => 'bg-secondary-subtle text-secondary',
                                     'approved' => 'bg-primary-subtle text-primary',
-                                    'partially_received' => 'bg-warning-subtle text-warning',
+                                    'partially_received' => 'bg-info-subtle text-info',
                                     'received' => 'bg-success-subtle text-success',
                                     'cancelled' => 'bg-danger-subtle text-danger',
                                     default => 'bg-light text-dark',
@@ -83,15 +88,58 @@
                             @endphp
                             <span class="badge {{ $badgeClass }}">{{ ucfirst(str_replace('_', ' ', $po->status)) }}</span>
                         </td>
-                        <td class="text-end">
-                            <div class="btn-group btn-group-sm">
-                                <a class="btn btn-outline-secondary" href="{{ route('purchases.orders.show', $po) }}" title="View Order">
+                        <td class="text-end pe-3">
+                            <div class="d-inline-flex gap-1 align-items-center">
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ route('purchases.orders.show', $po) }}" title="View Order">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                @if(in_array($po->status, ['approved', 'partially_received']) && auth()->user()->hasPermission('purchases.grn'))
-                                    <a class="btn btn-outline-success" href="{{ route('purchases.grn.create') }}?purchase_order_id={{ $po->id }}" title="Receive Goods (GRN)">
-                                        <i class="bi bi-box-arrow-in-down me-1"></i> Receive
+
+                                {{-- Permission-based Approval --}}
+                                @if(($po->isPending() || $po->status === 'draft') && (auth()->user()->isSuperAdmin() || auth()->user()->isShopAdmin() || auth()->user()->hasPermission('purchases.orders.approve')))
+                                    <form method="post" action="{{ route('purchases.orders.approve', $po) }}" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-success" title="Approve Purchase Order">
+                                            <i class="bi bi-check-circle me-1"></i> Approve
+                                        </button>
+                                    </form>
+                                @endif
+
+                                {{-- IGP and GRN Actions --}}
+                                @if($po->isApproved())
+                                    <a class="btn btn-sm btn-outline-info" href="{{ route('purchases.igp.create') }}?purchase_order_id={{ $po->id }}" title="Create Inward Gate Pass (IGP)">
+                                        <i class="bi bi-door-open me-1"></i> IGP
                                     </a>
+                                    <a class="btn btn-sm btn-outline-success" href="{{ route('purchases.grn.create') }}?purchase_order_id={{ $po->id }}" title="Create Goods Received Note (GRN)">
+                                        <i class="bi bi-box-arrow-in-down me-1"></i> GRN
+                                    </a>
+                                @else
+                                    <button class="btn btn-sm btn-outline-secondary opacity-50" disabled title="IGP disabled: Purchase Order must be approved first">
+                                        <i class="bi bi-door-open me-1"></i> IGP
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary opacity-50" disabled title="GRN disabled: Purchase Order must be approved first">
+                                        <i class="bi bi-box-arrow-in-down me-1"></i> GRN
+                                    </button>
+                                @endif
+
+                                {{-- Edit and Delete --}}
+                                @if($po->canBeEditedOrDeleted())
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ route('purchases.orders.edit', $po) }}" title="Edit Purchase Order">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="post" action="{{ route('purchases.orders.destroy', $po) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete PO {{ $po->po_number }}?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Purchase Order">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                @else
+                                    <button class="btn btn-sm btn-outline-secondary opacity-50" disabled title="Cannot edit or delete: IGP or GRN already generated">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary opacity-50" disabled title="Cannot edit or delete: IGP or GRN already generated">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 @endif
                             </div>
                         </td>
@@ -107,10 +155,6 @@
             </tbody>
         </table>
     </div>
-    @if($orders->hasPages())
-        <div class="p-3 border-top">
-            {{ $orders->links() }}
-        </div>
-    @endif
+    <x-table-pagination :paginator="$orders" />
 </div>
 @endsection

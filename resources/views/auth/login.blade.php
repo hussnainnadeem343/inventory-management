@@ -46,8 +46,8 @@
         }
 
         .auth-brand-logo {
-            width: 42px;
-            height: 42px;
+            width: 48px;
+            height: 48px;
             border-radius: 11px;
             object-fit: cover;
             border: 1px solid rgba(226, 232, 240, 0.8);
@@ -83,7 +83,7 @@
                 0 20px 45px -10px rgba(15, 23, 42, 0.07),
                 0 2px 10px rgba(0, 0, 0, 0.02);
             padding: 38px 34px;
-            max-width: 440px;
+            max-width: 500px;
             width: 100%;
             margin-left: auto;
         }
@@ -204,12 +204,12 @@
 </head>
 <body>
 <div class="auth-page">
-    <!-- <header>
+    <header>
         <a href="{{ route('login') }}" class="auth-brand-nav">
             <img src="{{ asset('images/branding/denfin-icon.png') }}" alt="DenFin" class="auth-brand-logo">
             <span class="auth-brand-text">DenFin <span>ERP</span></span>
         </a>
-    </header> -->
+    </header>
 
     <!-- Main Spacious Hero Section -->
     <main class="auth-hero-container">
@@ -219,6 +219,7 @@
                 <div class="mb-4">
                     <span class="fw-semibold fs-5 d-block mb-1" style="color: #475569;">Welcome back to</span>
                     <h1 class="display-5 fw-bold text-dark mb-3" style="letter-spacing: -0.03em;">
+                        <!-- <img src="{{ asset('images/branding/denfin-icon.png') }}" alt="DenFin" class="auth-brand-logo"> -->
                         DenFin <span class="text-primary">ERP</span>
                     </h1>
                     <p class="fs-6 mb-0" style="color: #475569; font-weight: 500; max-width: 460px; line-height: 1.55;">

@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
         <h4 class="mb-0 fw-bold">Purchase Requisitions (PR)</h4>
-        <small class="text-secondary">Stage 1: Internal department demands & stock requests</small>
+        <!-- <small class="text-secondary">Stage 1: Internal department demands & stock requests</small> -->
     </div>
     @if(auth()->user()->hasPermission('purchases.requisitions') || auth()->user()->isShopAdmin() || auth()->user()->isSuperAdmin())
         <a class="btn btn-primary" href="{{ route('purchases.requisitions.create') }}">
@@ -36,6 +36,9 @@
                 @if($search || $status)
                     <a href="{{ route('purchases.requisitions.index') }}" class="btn btn-sm btn-link text-decoration-none text-muted">Clear</a>
                 @endif
+            </div>
+            <div class="col-auto ms-auto">
+                <x-per-page-select :paginator="$requisitions" />
             </div>
         </form>
     </div>
@@ -97,9 +100,33 @@
                         <td><span class="badge bg-light text-dark border">{{ $pr->items->count() }} items</span></td>
                         <td><small class="text-secondary">{{ $pr->requester?->name ?? 'Staff' }}</small></td>
                         <td class="text-end pe-3">
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('purchases.requisitions.show', $pr) }}">
-                                <i class="bi bi-eye me-1"></i> View
-                            </a>
+                            <div class="d-inline-flex gap-1 align-items-center">
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ route('purchases.requisitions.show', $pr) }}" title="View Requisition">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                @if($pr->canBeEditedOrDeleted())
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ route('purchases.requisitions.edit', $pr) }}" title="Edit Requisition">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="post" action="{{ route('purchases.requisitions.destroy', $pr) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete Requisition {{ $pr->pr_number }}?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Requisition">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                @else
+                                    @php
+                                        $disabledReason = $pr->isRejected() ? 'Requisition has been rejected' : 'Purchase Order already created';
+                                    @endphp
+                                    <button class="btn btn-sm btn-outline-secondary opacity-50" disabled title="Cannot edit: {{ $disabledReason }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary opacity-50" disabled title="Cannot delete: {{ $disabledReason }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @empty
@@ -113,10 +140,6 @@
             </tbody>
         </table>
     </div>
-    @if($requisitions->hasPages())
-        <div class="card-footer bg-white border-0 py-3">
-            {{ $requisitions->links() }}
-        </div>
-    @endif
+    <x-table-pagination :paginator="$requisitions" />
 </div>
 @endsection

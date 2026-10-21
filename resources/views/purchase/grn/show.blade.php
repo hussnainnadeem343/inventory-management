@@ -163,9 +163,7 @@
                         <th class="ps-3">Expense Head</th>
                         <th>Account</th>
                         <th>Comments</th>
-                        <th class="text-end">Qty</th>
-                        <th class="text-end">Rate</th>
-                        <th class="text-end pe-3">Debit Amount</th>
+                        <th class="text-end pe-3">Amount (Rs.)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -174,15 +172,13 @@
                             <td class="ps-3 fw-semibold">{{ $exp->expense_type }}</td>
                             <td>{{ $exp->account ? $exp->account->name : 'N/A' }}</td>
                             <td>{{ $exp->comments ?? '-' }}</td>
-                            <td class="text-end">{{ number_format($exp->quantity, 2) }}</td>
-                            <td class="text-end">Rs. {{ number_format($exp->rate, 2) }}</td>
                             <td class="text-end pe-3 fw-bold">Rs. {{ number_format($exp->debit > 0 ? $exp->debit : ($exp->rate * $exp->quantity), 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
                 <tfoot class="table-light">
                     <tr>
-                        <td colspan="5" class="text-end fw-bold">Total Landed Costs:</td>
+                        <td colspan="3" class="text-end fw-bold">Total Landed Expenses:</td>
                         <td class="text-end pe-3 fw-bold text-primary">Rs. {{ number_format($grn->landed_expenses_total, 2) }}</td>
                     </tr>
                 </tfoot>

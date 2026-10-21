@@ -26,6 +26,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     require __DIR__ . '/finance.php';
     require __DIR__ . '/hr.php';
 
+    // Reports Module Hub (Launchpad)
+    Route::get('/reports', \App\Http\Controllers\ReportsHubController::class)->name('reports.index');
+
     // Reports
     Route::middleware('permission:reports.sales')->group(function () {
         Route::get('/reports/sales', [ReportController::class, 'sales'])->name('reports.sales');
@@ -36,6 +39,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::middleware('permission:reports.expiry')->group(function () {
         Route::get('/reports/expiry', [ReportController::class, 'expiry'])->name('reports.expiry');
     });
+
+    // Management Module Hub (Launchpad)
+    Route::get('/management', \App\Http\Controllers\ManagementHubController::class)->name('management.index');
 
     // Users & Roles Management
     Route::middleware('permission:users.view,users.manage')->group(function () {

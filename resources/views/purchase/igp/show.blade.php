@@ -46,6 +46,18 @@
                     <button class="btn btn-sm btn-outline-secondary" onclick="window.print()">
                         <i class="bi bi-printer me-1"></i> Print Pass
                     </button>
+                    @if($igp->canBeEditedOrDeleted())
+                        <a href="{{ route('purchases.igp.edit', $igp) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil me-1"></i> Edit
+                        </a>
+                        <form method="post" action="{{ route('purchases.igp.destroy', $igp) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete IGP {{ $igp->igp_number }}?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash me-1"></i> Delete
+                            </button>
+                        </form>
+                    @endif
                     @if($igp->status === 'pending_inspection')
                         <a href="{{ route('purchases.grn.create', ['inward_gate_pass_id' => $igp->id]) }}" class="btn btn-sm btn-primary">
                             <i class="bi bi-box-arrow-in-down me-1"></i> Proceed to GRN Inward
@@ -122,7 +134,8 @@
                                     <th>Product</th>
                                     <th>SKU</th>
                                     <th class="text-end">Packages</th>
-                                    <th class="text-end">Declared Qty</th>
+                                    <th class="text-end">Vendor Qty</th>
+                                    <th class="text-end">Received Qty</th>
                                     <th class="text-end text-danger">Rejected Qty</th>
                                     <th class="text-end text-primary">Net Inward Qty</th>
                                     <th class="pe-3">Cargo Notes</th>
@@ -135,6 +148,7 @@
                                         <td class="fw-semibold">{{ $line->inventoryItem->item_name }}</td>
                                         <td><code>{{ $line->inventoryItem->sku }}</code></td>
                                         <td class="text-end">{{ number_format($line->packages_count, 0) }}</td>
+                                        <td class="text-end">{{ number_format($line->vendor_quantity ?? $line->declared_quantity, 2) }} {{ $line->inventoryItem->unit }}</td>
                                         <td class="text-end">{{ number_format($line->declared_quantity, 2) }} {{ $line->inventoryItem->unit }}</td>
                                         <td class="text-end text-danger">{{ $line->rejected_quantity > 0 ? number_format($line->rejected_quantity, 2) : '0.00' }}</td>
                                         <td class="text-end fw-bold text-primary">{{ number_format($line->net_accepted_quantity, 2) }} {{ $line->inventoryItem->unit }}</td>

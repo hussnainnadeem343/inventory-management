@@ -16,6 +16,7 @@ class PurchaseOrder extends Model
     use HasFactory, SoftDeletes;
 
     public const STATUS_DRAFT = 'draft';
+    public const STATUS_PENDING = 'pending_approval';
     public const STATUS_APPROVED = 'approved';
     public const STATUS_PARTIALLY_RECEIVED = 'partially_received';
     public const STATUS_RECEIVED = 'received';
@@ -29,8 +30,12 @@ class PurchaseOrder extends Model
         'order_date',
         'expected_delivery_date',
         'payment_terms',
+        'payment_mode',
+        'payment_term_custom',
         'delivery_station',
         'status',
+        'approved_by',
+        'approved_at',
         'subtotal',
         'discount_amount',
         'tax_percent',
@@ -45,6 +50,7 @@ class PurchaseOrder extends Model
         return [
             'order_date' => 'date',
             'expected_delivery_date' => 'date',
+            'approved_at' => 'datetime',
             'subtotal' => 'decimal:2',
             'discount_amount' => 'decimal:2',
             'tax_percent' => 'decimal:2',
@@ -80,6 +86,11 @@ class PurchaseOrder extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(PurchaseOrderItem::class);
@@ -98,5 +109,28 @@ class PurchaseOrder extends Model
     public function invoices(): HasMany
     {
         return $this->hasMany(PurchaseInvoice::class);
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isApproved(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_APPROVED,
+            self::STATUS_PARTIALLY_RECEIVED,
+            self::STATUS_RECEIVED,
+        ], true);
+    }
+
+    public function canBeEditedOrDeleted(): bool
+    {
+        if ($this->relationLoaded('inwardGatePasses') && $this->relationLoaded('goodsReceivedNotes') && $this->relationLoaded('invoices')) {
+            return $this->inwardGatePasses->isEmpty() && $this->goodsReceivedNotes->isEmpty() && $this->invoices->isEmpty();
+        }
+
+        return !$this->inwardGatePasses()->exists() && !$this->goodsReceivedNotes()->exists() && !$this->invoices()->exists();
     }
 }

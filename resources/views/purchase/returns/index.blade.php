@@ -28,6 +28,9 @@
                     <a href="{{ route('purchases.returns.index') }}" class="btn btn-sm btn-link text-decoration-none text-muted">Clear</a>
                 @endif
             </div>
+            <div class="col-auto ms-auto">
+                <x-per-page-select :paginator="$returns" />
+            </div>
         </form>
     </div>
 </div>
@@ -85,10 +88,8 @@
             </tbody>
         </table>
     </div>
-    @if($returns->hasPages())
-        <div class="card-footer bg-white border-0 py-3">
-            {{ $returns->links() }}
-        </div>
-    @endif
+    <div class="card-footer bg-white border-top-0 py-3">
+        <x-table-pagination :paginator="$returns" />
+    </div>
 </div>
 @endsection

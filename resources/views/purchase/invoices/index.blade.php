@@ -36,6 +36,9 @@
                     <a href="{{ route('purchases.invoices.index') }}" class="btn btn-sm btn-link text-decoration-none text-muted">Clear</a>
                 @endif
             </div>
+            <div class="col-auto ms-auto">
+                <x-per-page-select :paginator="$invoices" />
+            </div>
         </form>
     </div>
 </div>
@@ -117,10 +120,8 @@
             </tbody>
         </table>
     </div>
-    @if($invoices->hasPages())
-        <div class="card-footer bg-white border-0 py-3">
-            {{ $invoices->links() }}
-        </div>
-    @endif
+    <div class="card-footer bg-white border-top-0 py-3">
+        <x-table-pagination :paginator="$invoices" />
+    </div>
 </div>
 @endsection

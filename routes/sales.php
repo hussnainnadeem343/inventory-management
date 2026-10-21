@@ -1,7 +1,11 @@
 <?php
 
 use App\Http\Controllers\Sales\SaleController;
+use App\Http\Controllers\Sales\SalesHubController;
 use Illuminate\Support\Facades\Route;
+
+// Sales & POS Module Hub (Launchpad)
+Route::get('/sales-hub', SalesHubController::class)->name('sales.hub');
 
 // POS & Multi-Item Sales
 Route::middleware('permission:pos.access')->group(function () {

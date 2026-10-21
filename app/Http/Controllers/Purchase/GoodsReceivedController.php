@@ -18,10 +18,13 @@ use App\Models\Purchase\Supplier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\View\View;
 
 class GoodsReceivedController extends Controller
 {
+    use HasPagination;
+
     public function index(Request $request): View
     {
         $user = $request->user();
@@ -41,7 +44,7 @@ class GoodsReceivedController extends Controller
             });
         }
 
-        $grns = $query->latest('id')->paginate(15)->withQueryString();
+        $grns = $this->paginateWithPerPage($query->latest('id'), $request, default: 10);
 
         return view('purchase.grn.index', compact('grns', 'search', 'shopId'));
     }
@@ -90,7 +93,8 @@ class GoodsReceivedController extends Controller
             ->get(['id', 'igp_number', 'supplier_id', 'purchase_order_id', 'vehicle_number', 'igp_date']);
 
         $warehouses = Warehouse::forShop($shopId)->where('status', 'active')->get(['id', 'name']);
-        $expenseAccounts = Account::forShop($shopId)->orderBy('code')->get(['id', 'code', 'name']);
+        $expenseAccounts = Account::forShop($shopId)->where('account_head_id', 5)->orderBy('code')->get(['id', 'code', 'name']);
+        $transportModes = \App\Models\Purchase\PurchaseTransportMode::forShop($shopId)->where('is_active', true)->orderBy('name')->get();
 
         return view('purchase.grn.create', compact(
             'suppliers',
@@ -101,6 +105,7 @@ class GoodsReceivedController extends Controller
             'selectedIgp',
             'warehouses',
             'expenseAccounts',
+            'transportModes',
             'shopId'
         ));
     }
@@ -113,7 +118,7 @@ class GoodsReceivedController extends Controller
         // Clean blank expenses if present
         if ($request->has('expenses')) {
             $filteredExpenses = array_values(array_filter((array) $request->input('expenses'), function ($exp) {
-                return (!empty($exp['debit']) && (float) $exp['debit'] > 0) || (!empty($exp['rate']) && (float) $exp['rate'] > 0);
+                return (!empty($exp['amount']) && (float) $exp['amount'] > 0) || (!empty($exp['debit']) && (float) $exp['debit'] > 0) || (!empty($exp['rate']) && (float) $exp['rate'] > 0);
             }));
             $request->merge(['expenses' => $filteredExpenses]);
         }
@@ -140,6 +145,7 @@ class GoodsReceivedController extends Controller
             'expenses.*.account_id' => ['nullable'],
             'expenses.*.expense_type' => ['nullable', 'string', 'max:100'],
             'expenses.*.comments' => ['nullable', 'string', 'max:255'],
+            'expenses.*.amount' => ['nullable', 'numeric'],
             'expenses.*.quantity' => ['nullable', 'numeric'],
             'expenses.*.rate' => ['nullable', 'numeric'],
             'expenses.*.debit' => ['nullable', 'numeric'],
@@ -175,10 +181,8 @@ class GoodsReceivedController extends Controller
             $landedExpensesTotal = 0;
             if (!empty($validated['expenses'])) {
                 foreach ($validated['expenses'] as $exp) {
-                    $debit = (float) ($exp['debit'] ?? 0);
-                    $rate = (float) ($exp['rate'] ?? 0);
-                    $qty = (float) ($exp['quantity'] ?? 1);
-                    $landedExpensesTotal += $debit > 0 ? $debit : ($rate * $qty);
+                    $amt = (float) ($exp['amount'] ?? $exp['debit'] ?? ($exp['rate'] ?? 0));
+                    $landedExpensesTotal += $amt;
                 }
             }
 
@@ -279,7 +283,8 @@ class GoodsReceivedController extends Controller
             // Record Landed Expenses
             if (!empty($validated['expenses'])) {
                 foreach ($validated['expenses'] as $exp) {
-                    if (empty($exp['expense_type']) && empty($exp['debit']) && empty($exp['rate'])) {
+                    $amt = (float) ($exp['amount'] ?? $exp['debit'] ?? ($exp['rate'] ?? 0));
+                    if (empty($exp['expense_type']) && $amt <= 0) {
                         continue;
                     }
                     GoodsReceivedExpense::create([
@@ -288,9 +293,9 @@ class GoodsReceivedController extends Controller
                         'expense_type' => $exp['expense_type'] ?? 'Freight',
                         'comments' => $exp['comments'] ?? null,
                         'quantity' => (float) ($exp['quantity'] ?? 1),
-                        'rate' => (float) ($exp['rate'] ?? 0),
-                        'debit' => (float) ($exp['debit'] ?? 0),
-                        'credit' => (float) ($exp['credit'] ?? 0),
+                        'rate' => $amt,
+                        'debit' => $amt,
+                        'credit' => 0,
                     ]);
                 }
             }

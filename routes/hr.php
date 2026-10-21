@@ -3,11 +3,14 @@
 use App\Http\Controllers\HR\AttendanceController;
 use App\Http\Controllers\HR\DepartmentController;
 use App\Http\Controllers\HR\EmployeeController;
+use App\Http\Controllers\HR\HrHubController;
 use App\Http\Controllers\HR\PayrollController;
 use Illuminate\Support\Facades\Route;
 
 // HR & Payroll Module Routes
 Route::prefix('hr')->name('hr.')->group(function () {
+    // 0. HR Module Hub (Launchpad)
+    Route::get('/', HrHubController::class)->name('index');
     // Departments & Designations
     Route::middleware('permission:hr.employees')->group(function () {
         Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');

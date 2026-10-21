@@ -3,10 +3,14 @@
 use App\Http\Controllers\Inventory\BrandController;
 use App\Http\Controllers\Inventory\CategoryController;
 use App\Http\Controllers\Inventory\InventoryController;
+use App\Http\Controllers\Inventory\InventoryHubController;
 use App\Http\Controllers\Inventory\ProductController;
 use App\Http\Controllers\Inventory\ProductImportController;
 use App\Http\Controllers\Inventory\StockController;
 use Illuminate\Support\Facades\Route;
+
+// Inventory & Warehouses Module Hub (Launchpad)
+Route::get('/inventory-hub', InventoryHubController::class)->name('inventory.hub');
 
 // Products Module
 Route::middleware('permission:products.import')->group(function () {

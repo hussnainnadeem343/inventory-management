@@ -2,20 +2,22 @@
 @section('title', 'Log Inward Gate Pass')
 @section('content')
 <div class="row justify-content-center">
-    <div class="col-lg-11">
+    <div class="col-lg-12">
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
                 <div>
                     <h5 class="mb-0 fw-bold">Inward Gate Pass (IGP)</h5>
                     <small class="text-secondary">Stage 3: Physical gate security check-in for arriving carrier & transport</small>
                 </div>
-                <a href="{{ route('purchases.igp.index') }}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-arrow-left me-1"></i> Back to Gate Passes
-                </a>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('purchases.igp.index') }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Gate Passes
+                    </a>
+                </div>
             </div>
 
             <div class="card-body p-4">
-                <form method="post" action="{{ route('purchases.igp.store') }}">
+                <form method="post" action="{{ route('purchases.igp.store') }}" id="igpForm">
                     @csrf
 
                     <div class="row g-3 mb-4">
@@ -34,16 +36,16 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">Purchase Order (Optional)</label>
+                            <label class="form-label fw-semibold">Purchase Order (Select to Load Items)</label>
                             <select class="form-select" name="purchase_order_id" id="poSelect">
-                                <option value="">Select Linked PO (Optional - or Direct Gate Entry)</option>
+                                <option value="">Select Linked PO (Or Direct Gate Entry)</option>
                                 @foreach($pendingOrders as $po)
                                     <option value="{{ $po->id }}" @selected(old('purchase_order_id', $selectedPo?->id) == $po->id) data-supplier="{{ $po->supplier_id }}">
                                         {{ $po->po_number }} - {{ $po->supplier->name }} (Rs. {{ number_format($po->grand_total, 2) }})
                                     </option>
                                 @endforeach
                             </select>
-                            <small class="text-muted">Shows pending POs for the selected supplier. Optional for direct delivery.</small>
+                            <small class="text-muted text-primary"><i class="bi bi-info-circle me-1"></i>Selecting a PO will automatically load all ordered products and quantities into the table.</small>
                         </div>
 
                         <div class="col-md-4">
@@ -57,12 +59,21 @@
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Received Via <span class="text-danger">*</span></label>
+                            <div class="d-flex justify-content-between">
+                                <label class="form-label fw-semibold">Received Via <span class="text-danger">*</span></label>
+                                <a href="{{ route('purchases.transport_modes.index') }}" target="_blank" class="small text-decoration-none">Manage Modes</a>
+                            </div>
                             <select class="form-select" name="received_via" required>
-                                <option value="Road / Truck" @selected(old('received_via') === 'Road / Truck')>Road / Truck</option>
-                                <option value="Suzuki / Pickup" @selected(old('received_via') === 'Suzuki / Pickup')>Suzuki / Pickup</option>
-                                <option value="Courier / Cargo" @selected(old('received_via') === 'Courier / Cargo')>Courier / Cargo Service</option>
-                                <option value="By Hand" @selected(old('received_via') === 'By Hand')>By Hand / Person</option>
+                                @if(isset($transportModes) && $transportModes->isNotEmpty())
+                                    @foreach($transportModes as $tm)
+                                        <option value="{{ $tm->name }}" @selected(old('received_via') === $tm->name)>{{ $tm->name }}</option>
+                                    @endforeach
+                                @else
+                                    <option value="Road / Truck" @selected(old('received_via') === 'Road / Truck')>Road / Truck</option>
+                                    <option value="Suzuki / Pickup" @selected(old('received_via') === 'Suzuki / Pickup')>Suzuki / Pickup</option>
+                                    <option value="Courier / Cargo" @selected(old('received_via') === 'Courier / Cargo')>Courier / Cargo Service</option>
+                                    <option value="By Hand" @selected(old('received_via') === 'By Hand')>By Hand / Person</option>
+                                @endif
                             </select>
                         </div>
 
@@ -92,10 +103,10 @@
                         </div>
                     </div>
 
-                    {{-- Arrived Packages Table with Point 7 Rejected Qty --}}
+                    {{-- Arrived Packages Table --}}
                     <div class="card border mb-4">
                         <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
-                            <span class="fw-semibold small text-uppercase">Declared Delivery Cargo & Gate Inspection</span>
+                            <span class="fw-semibold small text-uppercase">Arrived Delivery Cargo & Gate Inspection</span>
                             <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddIgpRow">
                                 <i class="bi bi-plus-circle me-1"></i> Add Item Line
                             </button>
@@ -104,12 +115,13 @@
                             <table class="table align-middle mb-0" id="igpItemsTable">
                                 <thead class="small text-secondary bg-white">
                                     <tr>
-                                        <th style="width: 32%;">Product <span class="text-danger">*</span></th>
-                                        <th style="width: 15%;">Packages (Cartons/Bags)</th>
-                                        <th style="width: 15%;">Declared Qty <span class="text-danger">*</span></th>
-                                        <th style="width: 15%;">Rejected Qty (Gate)</th>
-                                        <th style="width: 13%;">Net Inward Qty</th>
-                                        <th style="width: 15%;">Remarks</th>
+                                        <th style="width: 28%;">Product <span class="text-danger">*</span></th>
+                                        <th style="width: 12%;">Packages</th>
+                                        <th style="width: 14%;">Vendor Qty</th>
+                                        <th style="width: 14%;">Received Qty <span class="text-danger">*</span></th>
+                                        <th style="width: 12%;">Rejected Qty (Gate)</th>
+                                        <th style="width: 10%;">Net Inward Qty</th>
+                                        <th style="width: 12%;">Remarks</th>
                                         <th style="width: 5%;" class="text-center">Action</th>
                                     </tr>
                                 </thead>
@@ -118,26 +130,32 @@
                                         @foreach($selectedPo->items as $idx => $poLine)
                                             @php
                                                 $pendingToReceive = max(0, $poLine->quantity - $poLine->received_quantity);
+                                                $lineQty = $pendingToReceive > 0 ? $pendingToReceive : $poLine->quantity;
                                             @endphp
                                             <tr class="igp-row">
                                                 <td>
-                                                    <select class="form-select form-select-sm" name="items[{{ $idx }}][inventory_item_id]" required>
-                                                        <option value="{{ $poLine->inventory_item_id }}" selected>
-                                                            {{ $poLine->inventoryItem->item_name }} (PO: {{ $poLine->quantity }})
-                                                        </option>
+                                                    <select class="form-select form-select-sm igp-product-select" name="items[{{ $idx }}][inventory_item_id]" required>
+                                                        @foreach($products as $prod)
+                                                            <option value="{{ $prod->id }}" @selected($prod->id == $poLine->inventory_item_id)>
+                                                                {{ $prod->item_name }} ({{ $prod->sku }})
+                                                            </option>
+                                                        @endforeach
                                                     </select>
                                                 </td>
                                                 <td>
                                                     <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end auto-clear-zero" name="items[{{ $idx }}][packages_count]" value="1" placeholder="1.00">
                                                 </td>
                                                 <td>
-                                                    <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end declared-qty auto-clear-zero" name="items[{{ $idx }}][declared_quantity]" value="{{ $pendingToReceive > 0 ? $pendingToReceive : $poLine->quantity }}" required placeholder="0.00">
+                                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end vendor-qty auto-clear-zero" name="items[{{ $idx }}][vendor_quantity]" value="{{ $lineQty }}" placeholder="0.00">
+                                                </td>
+                                                <td>
+                                                    <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end declared-qty auto-clear-zero" name="items[{{ $idx }}][declared_quantity]" value="{{ $lineQty }}" required placeholder="0.00">
                                                 </td>
                                                 <td>
                                                     <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end rejected-qty auto-clear-zero" name="items[{{ $idx }}][rejected_quantity]" value="0.00" placeholder="0.00">
                                                 </td>
                                                 <td>
-                                                    <input type="text" class="form-control form-control-sm text-end bg-light fw-bold net-inward-qty" value="{{ number_format($pendingToReceive > 0 ? $pendingToReceive : $poLine->quantity, 2) }}" readonly>
+                                                    <input type="text" class="form-control form-control-sm text-end bg-light fw-bold net-inward-qty" value="{{ number_format($lineQty, 2) }}" readonly>
                                                 </td>
                                                 <td>
                                                     <input type="text" class="form-control form-control-sm" name="items[{{ $idx }}][remarks]" placeholder="Condition notes">
@@ -152,7 +170,7 @@
                                     @else
                                         <tr class="igp-row">
                                             <td>
-                                                <select class="form-select form-select-sm" name="items[0][inventory_item_id]" required>
+                                                <select class="form-select form-select-sm igp-product-select" name="items[0][inventory_item_id]" required>
                                                     <option value="">Select Product</option>
                                                     @foreach($products as $prod)
                                                         <option value="{{ $prod->id }}">{{ $prod->item_name }} ({{ $prod->sku }})</option>
@@ -161,6 +179,9 @@
                                             </td>
                                             <td>
                                                 <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end auto-clear-zero" name="items[0][packages_count]" value="1" placeholder="1.00">
+                                            </td>
+                                            <td>
+                                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end vendor-qty auto-clear-zero" name="items[0][vendor_quantity]" value="1" placeholder="0.00">
                                             </td>
                                             <td>
                                                 <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end declared-qty auto-clear-zero" name="items[0][declared_quantity]" value="1" required placeholder="0.00">
@@ -203,15 +224,16 @@
     </div>
 </div>
 
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    let rowIndex = {{ $selectedPo ? $selectedPo->items->count() : 1 }};
+    const productsData = @json($products);
+    let rowIndex = {{ $selectedPo && $selectedPo->items->isNotEmpty() ? $selectedPo->items->count() : 1 }};
     const body = document.getElementById('igpItemsBody');
     const btnAdd = document.getElementById('btnAddIgpRow');
     const supplierSelect = document.getElementById('supplierSelect');
     const poSelect = document.getElementById('poSelect');
 
-    // Point 6: Dynamic Supplier to PO Filtering
     function filterPOsBySupplier() {
         if (!supplierSelect || !poSelect) return;
         const selectedSupplier = supplierSelect.value;
@@ -230,29 +252,42 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // Reset if selected PO does not belong to new supplier
         const currentOpt = poSelect.options[poSelect.selectedIndex];
         if (currentOpt && currentOpt.value && selectedSupplier && currentOpt.getAttribute('data-supplier') !== selectedSupplier) {
             poSelect.value = '';
         }
     }
 
-    if (supplierSelect && poSelect) {
-        supplierSelect.addEventListener('change', filterPOsBySupplier);
+    // Auto-load PO items dynamically on change
+    if (poSelect) {
         poSelect.addEventListener('change', function () {
-            const selectedOpt = poSelect.options[poSelect.selectedIndex];
-            if (selectedOpt && selectedOpt.value) {
-                const poSupplier = selectedOpt.getAttribute('data-supplier');
-                if (poSupplier && supplierSelect.value !== poSupplier) {
-                    supplierSelect.value = poSupplier;
-                    filterPOsBySupplier();
-                }
-            }
+            const poId = this.value;
+            if (!poId) return;
+
+            fetch(`/purchases/orders/${poId}/items-json`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.supplier_id && supplierSelect) {
+                        supplierSelect.value = data.supplier_id;
+                    }
+                    if (data.items && data.items.length > 0) {
+                        body.innerHTML = '';
+                        rowIndex = 0;
+                        data.items.forEach(it => {
+                            const pendingQty = it.pending_quantity > 0 ? it.pending_quantity : it.ordered_quantity;
+                            createIgpRow(it.inventory_item_id, 1, pendingQty, pendingQty, 0, '');
+                        });
+                        updateRemoveButtons();
+                    }
+                })
+                .catch(err => console.error('Error fetching PO items:', err));
         });
-        filterPOsBySupplier();
     }
 
-    // Point 4: Auto-clear 0.00 helper
+    if (supplierSelect) {
+        supplierSelect.addEventListener('change', filterPOsBySupplier);
+    }
+
     function setupAutoClear(el) {
         el.addEventListener('focus', function () {
             if (this.value === '0.00' || this.value === '0' || this.value === '0.0') {
@@ -304,33 +339,61 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function createIgpRow(selectedId = '', pkgs = 1, vendorQty = 1, declaredQty = 1, rejectedQty = 0, remarks = '') {
+        const tr = document.createElement('tr');
+        tr.className = 'igp-row';
+
+        let optionsHtml = '<option value="">Select Product</option>';
+        productsData.forEach(p => {
+            const isSelected = p.id == selectedId ? 'selected' : '';
+            optionsHtml += `<option value="${p.id}" ${isSelected}>${p.item_name} (${p.sku})</option>`;
+        });
+
+        tr.innerHTML = `
+            <td>
+                <select class="form-select form-select-sm igp-product-select" name="items[${rowIndex}][inventory_item_id]" required>
+                    ${optionsHtml}
+                </select>
+            </td>
+            <td>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end auto-clear-zero" name="items[${rowIndex}][packages_count]" value="${pkgs}" placeholder="1.00">
+            </td>
+            <td>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end vendor-qty auto-clear-zero" name="items[${rowIndex}][vendor_quantity]" value="${vendorQty}" placeholder="0.00">
+            </td>
+            <td>
+                <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end declared-qty auto-clear-zero" name="items[${rowIndex}][declared_quantity]" value="${declaredQty}" required placeholder="0.00">
+            </td>
+            <td>
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end rejected-qty auto-clear-zero" name="items[${rowIndex}][rejected_quantity]" value="${rejectedQty}" placeholder="0.00">
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm text-end bg-light fw-bold net-inward-qty" value="${(declaredQty - rejectedQty).toFixed(2)}" readonly>
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm" name="items[${rowIndex}][remarks]" value="${remarks}" placeholder="Condition notes">
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+
+        body.appendChild(tr);
+        attachListeners(tr);
+        rowIndex++;
+    }
+
     body.querySelectorAll('.igp-row').forEach(attachListeners);
 
     btnAdd.addEventListener('click', function () {
-        const firstRow = body.querySelector('.igp-row');
-        const clone = firstRow.cloneNode(true);
-
-        clone.querySelectorAll('input').forEach(i => {
-            if (i.classList.contains('rejected-qty')) i.value = '0.00';
-            else if (i.classList.contains('declared-qty')) i.value = '1.00';
-            else if (i.classList.contains('net-inward-qty')) i.value = '1.00';
-            else i.value = '';
-        });
-
-        const select = clone.querySelector('select');
-        if (select) select.selectedIndex = 0;
-
-        clone.querySelector('select').name = `items[${rowIndex}][inventory_item_id]`;
-        clone.querySelector('input[name*="[packages_count]"]').name = `items[${rowIndex}][packages_count]`;
-        clone.querySelector('input[name*="[declared_quantity]"]').name = `items[${rowIndex}][declared_quantity]`;
-        clone.querySelector('input[name*="[rejected_quantity]"]').name = `items[${rowIndex}][rejected_quantity]`;
-        clone.querySelector('input[name*="[remarks]"]').name = `items[${rowIndex}][remarks]`;
-
-        attachListeners(clone);
-        body.appendChild(clone);
-        rowIndex++;
+        createIgpRow('', 1, 1, 1, 0, '');
         updateRemoveButtons();
     });
+
+    filterPOsBySupplier();
 });
 </script>
+@endpush
 @endsection

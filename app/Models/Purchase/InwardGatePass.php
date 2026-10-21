@@ -80,4 +80,13 @@ class InwardGatePass extends Model
     {
         return $this->hasMany(GoodsReceivedNote::class);
     }
+
+    public function canBeEditedOrDeleted(): bool
+    {
+        if ($this->relationLoaded('goodsReceivedNotes')) {
+            return $this->goodsReceivedNotes->isEmpty();
+        }
+
+        return !$this->goodsReceivedNotes()->exists();
+    }
 }

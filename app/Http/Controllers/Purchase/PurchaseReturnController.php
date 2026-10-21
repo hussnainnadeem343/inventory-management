@@ -12,6 +12,7 @@ use App\Models\Purchase\PurchaseReturn;
 use App\Models\Purchase\PurchaseReturnItem;
 use App\Models\Purchase\Supplier;
 use App\Services\Finance\JournalEntryService;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,8 @@ use Illuminate\View\View;
 
 class PurchaseReturnController extends Controller
 {
+    use HasPagination;
+
     public function index(Request $request): View
     {
         $user = $request->user();
@@ -37,7 +40,7 @@ class PurchaseReturnController extends Controller
             });
         }
 
-        $returns = $query->latest('id')->paginate(15)->withQueryString();
+        $returns = $this->paginateWithPerPage($query->latest('id'), $request, default: 10);
 
         return view('purchase.returns.index', compact('returns', 'search', 'shopId'));
     }

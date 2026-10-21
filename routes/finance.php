@@ -3,12 +3,15 @@
 use App\Http\Controllers\Finance\AccountController;
 use App\Http\Controllers\Finance\ExpenseController;
 use App\Http\Controllers\Finance\FinancialReportController;
+use App\Http\Controllers\Finance\FinanceHubController;
 use App\Http\Controllers\Finance\JournalEntryController;
 use App\Http\Controllers\Finance\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 // Finance & Accounts Module Routes
 Route::prefix('finance')->name('finance.')->group(function () {
+    // 0. Finance Module Hub (Launchpad)
+    Route::get('/', FinanceHubController::class)->name('index');
     // Chart of Accounts & Ledgers
     Route::middleware('permission:accounts.view')->group(function () {
         Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.index');

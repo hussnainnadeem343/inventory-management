@@ -16,10 +16,13 @@ use App\Services\Finance\JournalEntryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Concerns\HasPagination;
 use Illuminate\View\View;
 
 class PurchaseInvoiceController extends Controller
 {
+    use HasPagination;
+
     public function index(Request $request): View
     {
         $user = $request->user();
@@ -44,7 +47,7 @@ class PurchaseInvoiceController extends Controller
             });
         }
 
-        $invoices = $query->latest('id')->paginate(15)->withQueryString();
+        $invoices = $this->paginateWithPerPage($query->latest('id'), $request, default: 10);
 
         return view('purchase.invoices.index', compact('invoices', 'paymentStatus', 'search', 'shopId'));
     }
@@ -106,7 +109,9 @@ class PurchaseInvoiceController extends Controller
         // Clean out default blank expense and commission rows from the form
         if ($request->has('expenses')) {
             $filteredExpenses = array_values(array_filter((array) $request->input('expenses'), function ($exp) {
-                $hasAmount = (!empty($exp['debit']) && (float) $exp['debit'] > 0) || (!empty($exp['rate']) && (float) $exp['rate'] > 0);
+                $hasAmount = (!empty($exp['debit']) && (float) $exp['debit'] > 0)
+                    || (!empty($exp['amount']) && (float) $exp['amount'] > 0)
+                    || (!empty($exp['rate']) && (float) $exp['rate'] > 0);
                 $hasType = !empty($exp['expense_type']) && $exp['expense_type'] !== 'Freight';
                 return !empty($exp['account_id']) || $hasAmount || $hasType;
             }));
@@ -149,6 +154,7 @@ class PurchaseInvoiceController extends Controller
             'expenses.*.comments' => ['nullable', 'string', 'max:255'],
             'expenses.*.quantity' => ['nullable', 'numeric'],
             'expenses.*.rate' => ['nullable', 'numeric'],
+            'expenses.*.amount' => ['nullable', 'numeric'],
             'expenses.*.debit' => ['nullable', 'numeric'],
             'expenses.*.credit' => ['nullable', 'numeric'],
             'commissions' => ['nullable', 'array'],
@@ -189,7 +195,7 @@ class PurchaseInvoiceController extends Controller
             if (!empty($validated['expenses'])) {
                 foreach ($validated['expenses'] as $exp) {
                     $cat = $exp['category'] ?? 'inventory';
-                    $debit = (float) ($exp['debit'] ?? 0);
+                    $debit = (float) ($exp['debit'] ?? $exp['amount'] ?? 0);
                     $rate = (float) ($exp['rate'] ?? 0);
                     $qty = (float) ($exp['quantity'] ?? 1);
                     $amount = $debit > 0 ? $debit : ($rate * $qty);
@@ -265,7 +271,9 @@ class PurchaseInvoiceController extends Controller
             // Save Expenses
             if (!empty($validated['expenses'])) {
                 foreach ($validated['expenses'] as $exp) {
-                    if (empty($exp['expense_type']) && empty($exp['debit']) && empty($exp['rate'])) {
+                    $debit = (float) ($exp['debit'] ?? $exp['amount'] ?? 0);
+                    $rate = (float) ($exp['rate'] ?? 0);
+                    if (empty($exp['expense_type']) && $debit <= 0 && $rate <= 0) {
                         continue;
                     }
                     PurchaseInvoiceExpense::create([
@@ -275,8 +283,8 @@ class PurchaseInvoiceController extends Controller
                         'expense_type' => $exp['expense_type'] ?? 'Freight',
                         'comments' => $exp['comments'] ?? null,
                         'quantity' => (float) ($exp['quantity'] ?? 1),
-                        'rate' => (float) ($exp['rate'] ?? 0),
-                        'debit' => (float) ($exp['debit'] ?? 0),
+                        'rate' => $rate > 0 ? $rate : $debit,
+                        'debit' => $debit,
                         'credit' => (float) ($exp['credit'] ?? 0),
                     ]);
                 }

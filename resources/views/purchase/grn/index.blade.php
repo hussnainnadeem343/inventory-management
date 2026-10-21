@@ -15,13 +15,16 @@
 
 <div class="card p-3 mb-3">
     <form method="get" class="row g-2 align-items-end">
-        <div class="col-lg-6 col-md-8">
+        <div class="col-lg-5 col-md-6">
             <label class="form-label">Search</label>
             <input class="form-control" name="search" value="{{ $search }}" placeholder="GRN number, supplier name, invoice no...">
         </div>
-        <div class="col-lg-6 d-flex gap-2">
+        <div class="col-auto d-flex gap-2">
             <button class="btn btn-primary" type="submit"><i class="bi bi-search me-1"></i> Search</button>
             <a class="btn btn-outline-secondary" href="{{ route('purchases.grn.index') }}">Reset</a>
+        </div>
+        <div class="col-auto ms-auto">
+            <x-per-page-select :paginator="$grns" />
         </div>
     </form>
 </div>
@@ -85,10 +88,6 @@
             </tbody>
         </table>
     </div>
-    @if($grns->hasPages())
-        <div class="p-3 border-top">
-            {{ $grns->links() }}
-        </div>
-    @endif
+    <x-table-pagination :paginator="$grns" />
 </div>
 @endsection

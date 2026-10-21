@@ -15,6 +15,7 @@ class InwardGatePassItem extends Model
         'inward_gate_pass_id',
         'inventory_item_id',
         'packages_count',
+        'vendor_quantity',
         'declared_quantity',
         'rejected_quantity',
         'remarks',
@@ -24,6 +25,7 @@ class InwardGatePassItem extends Model
     {
         return [
             'packages_count' => 'decimal:2',
+            'vendor_quantity' => 'decimal:2',
             'declared_quantity' => 'decimal:2',
             'rejected_quantity' => 'decimal:2',
         ];

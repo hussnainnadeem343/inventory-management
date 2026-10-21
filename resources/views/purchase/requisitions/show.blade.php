@@ -25,9 +25,7 @@
     </div>
 </div>
 
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-        <div class="card shadow-sm border-0 mb-4">
+<div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
                     <h5 class="mb-0 fw-bold">{{ $requisition->pr_number }}</h5>
@@ -52,6 +50,29 @@
                     <button class="btn btn-outline-dark btn-sm" onclick="window.print()">
                         <i class="bi bi-printer me-1"></i> Print PR
                     </button>
+
+                    @if($requisition->canBeEditedOrDeleted())
+                        <a href="{{ route('purchases.requisitions.edit', $requisition) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-pencil me-1"></i> Edit
+                        </a>
+                        <form method="post" action="{{ route('purchases.requisitions.destroy', $requisition) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete Requisition {{ $requisition->pr_number }}?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash me-1"></i> Delete
+                            </button>
+                        </form>
+                    @else
+                        @php
+                            $disabledReason = $requisition->isRejected() ? 'Requisition has been rejected' : 'Purchase Order already created';
+                        @endphp
+                        <button class="btn btn-outline-secondary btn-sm opacity-50" disabled title="Cannot edit: {{ $disabledReason }}">
+                            <i class="bi bi-pencil me-1"></i> Edit
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm opacity-50" disabled title="Cannot delete: {{ $disabledReason }}">
+                            <i class="bi bi-trash me-1"></i> Delete
+                        </button>
+                    @endif
 
                     {{-- Admin Approval Buttons --}}
                     @if($requisition->isPending() && (auth()->user()->isShopAdmin() || auth()->user()->isSuperAdmin()))
@@ -132,37 +153,32 @@
                         <table class="table align-middle mb-0">
                             <thead class="small text-secondary bg-white">
                                 <tr>
-                                    <th class="ps-3">#</th>
-                                    <th>Product</th>
-                                    <th>SKU</th>
-                                    <th class="text-end">Required Qty</th>
-                                    <th class="text-end">Est. Unit Cost</th>
-                                    <th class="text-end">Est. Subtotal</th>
-                                    <th class="pe-3">Remarks</th>
+                                    <th class="ps-3" style="width: 5%;">#</th>
+                                    <th style="width: 45%;">Product</th>
+                                    <th style="width: 20%;">SKU</th>
+                                    <th class="text-end" style="width: 15%;">Required Qty</th>
+                                    <th class="pe-3" style="width: 15%;">Remarks</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @php $estGrandTotal = 0; @endphp
+                                @php $totalQty = 0; @endphp
                                 @foreach($requisition->items as $idx => $line)
                                     @php
-                                        $estSub = (float) $line->quantity * (float) ($line->estimated_unit_cost ?? 0);
-                                        $estGrandTotal += $estSub;
+                                        $totalQty += (float) $line->quantity;
                                     @endphp
                                     <tr>
                                         <td class="ps-3 text-secondary">{{ $idx + 1 }}</td>
                                         <td class="fw-semibold">{{ $line->inventoryItem->item_name }}</td>
                                         <td><code>{{ $line->inventoryItem->sku }}</code></td>
                                         <td class="text-end fw-bold">{{ number_format($line->quantity, 2) }} {{ $line->inventoryItem->unit }}</td>
-                                        <td class="text-end">Rs. {{ number_format($line->estimated_unit_cost ?? 0, 2) }}</td>
-                                        <td class="text-end fw-semibold">Rs. {{ number_format($estSub, 2) }}</td>
                                         <td class="pe-3 text-secondary small">{{ $line->description ?? '-' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                             <tfoot class="bg-light fw-bold">
                                 <tr>
-                                    <td colspan="5" class="text-end ps-3">Estimated Grand Total:</td>
-                                    <td class="text-end">Rs. {{ number_format($estGrandTotal, 2) }}</td>
+                                    <td colspan="3" class="text-end ps-3">Total Required Quantity:</td>
+                                    <td class="text-end text-primary">{{ number_format($totalQty, 2) }}</td>
                                     <td></td>
                                 </tr>
                             </tfoot>
@@ -213,9 +229,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
 {{-- Reject Modal --}}
 <div class="modal fade" id="rejectModal" tabindex="-1">

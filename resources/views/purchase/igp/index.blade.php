@@ -36,6 +36,9 @@
                     <a href="{{ route('purchases.igp.index') }}" class="btn btn-sm btn-link text-decoration-none text-muted">Clear</a>
                 @endif
             </div>
+            <div class="col-auto ms-auto">
+                <x-per-page-select :paginator="$passes" />
+            </div>
         </form>
     </div>
 </div>
@@ -90,13 +93,32 @@
                             @endif
                         </td>
                         <td class="text-end pe-3">
-                            <div class="btn-group btn-group-sm">
-                                <a class="btn btn-outline-secondary" href="{{ route('purchases.igp.show', $pass) }}">
+                            <div class="d-inline-flex gap-1 align-items-center">
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ route('purchases.igp.show', $pass) }}" title="View Gate Pass">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                @if($pass->canBeEditedOrDeleted())
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ route('purchases.igp.edit', $pass) }}" title="Edit Gate Pass">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form method="post" action="{{ route('purchases.igp.destroy', $pass) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete IGP {{ $pass->igp_number }}?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Gate Pass">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                @else
+                                    <button class="btn btn-sm btn-outline-secondary opacity-50" disabled title="Cannot edit or delete: GRN already created">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary opacity-50" disabled title="Cannot edit or delete: GRN already created">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                @endif
                                 @if($pass->status === 'pending_inspection')
-                                    <a class="btn btn-primary" href="{{ route('purchases.grn.create', ['inward_gate_pass_id' => $pass->id]) }}" title="Generate GRN from this Gate Pass">
-                                        <i class="bi bi-box-arrow-in-down me-1"></i> Receive GRN
+                                    <a class="btn btn-sm btn-success" href="{{ route('purchases.grn.create', ['inward_gate_pass_id' => $pass->id]) }}" title="Generate GRN from this Gate Pass">
+                                        <i class="bi bi-box-arrow-in-down me-1"></i> GRN
                                     </a>
                                 @endif
                             </div>
@@ -113,10 +135,6 @@
             </tbody>
         </table>
     </div>
-    @if($passes->hasPages())
-        <div class="card-footer bg-white border-0 py-3">
-            {{ $passes->links() }}
-        </div>
-    @endif
+    <x-table-pagination :paginator="$passes" />
 </div>
 @endsection

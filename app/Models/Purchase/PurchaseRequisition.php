@@ -94,6 +94,24 @@ class PurchaseRequisition extends Model
         return $this->status === self::STATUS_APPROVED;
     }
 
+    public function isRejected(): bool
+    {
+        return $this->status === self::STATUS_REJECTED;
+    }
+
+    public function canBeEditedOrDeleted(): bool
+    {
+        if ($this->status === self::STATUS_REJECTED) {
+            return false;
+        }
+
+        if ($this->relationLoaded('purchaseOrders')) {
+            return $this->purchaseOrders->isEmpty();
+        }
+
+        return !$this->purchaseOrders()->exists();
+    }
+
     public function getRequisitionNumberAttribute(): string
     {
         return $this->pr_number ?? '';

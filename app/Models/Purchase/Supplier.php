@@ -21,6 +21,10 @@ class Supplier extends Model
         'company_name',
         'phone',
         'email',
+        'ntn',
+        'strn',
+        'license_number',
+        'liability_account_id',
         'address',
         'opening_balance',
         'current_balance',
@@ -56,6 +60,11 @@ class Supplier extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function liabilityAccount(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Finance\Account::class, 'liability_account_id');
     }
 
     public function purchaseOrders(): HasMany

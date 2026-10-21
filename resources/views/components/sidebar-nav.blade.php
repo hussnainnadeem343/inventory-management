@@ -199,6 +199,11 @@
                             <i class="bi bi-arrow-return-left"></i><span>Purchase Returns</span>
                         </a>
                     @endif
+                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canPurchases)
+                        <a class="{{ request()->routeIs('purchases.transport_modes.*') ? 'active' : '' }}" href="{{ route('purchases.transport_modes.index') }}">
+                            <i class="bi bi-signpost-split"></i><span>Receive Via Modes</span>
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

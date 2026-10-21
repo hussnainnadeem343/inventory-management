@@ -135,59 +135,123 @@
     </div>
 </div>
 
-{{-- ROW 2: Four Clickable Module Launchpad Boxes (Taller, Highlighted with Background Color, Clean Labels) --}}
+{{-- ROW 2: Clickable Module Launchpad Boxes (Style A, Same-Tab Navigation, Permission-Gated) --}}
+@php
+    $dashUser = auth()->user();
+    $canPurchases = $dashUser->isSuperAdmin() || $dashUser->isShopAdmin() || $dashUser->hasAnyPermission('purchases.view', 'purchases.create', 'purchases.requisitions', 'purchases.igp', 'purchases.grn', 'purchases.invoices', 'purchases.return');
+    $canSales = $dashUser->isSuperAdmin() || $dashUser->isShopAdmin() || $dashUser->hasAnyPermission('pos.access', 'sales.view_invoices', 'products.view');
+    $canInventory = $dashUser->isSuperAdmin() || $dashUser->isShopAdmin() || $dashUser->hasAnyPermission('stock.view', 'catalog.manage', 'products.view');
+    $canFinance = $dashUser->isSuperAdmin() || $dashUser->isShopAdmin() || $dashUser->hasAnyPermission('accounts.view', 'accounts.vouchers', 'accounts.reports', 'accounts.manage');
+    $canHr = $dashUser->isSuperAdmin() || $dashUser->isShopAdmin() || $dashUser->hasAnyPermission('hr.employees', 'hr.attendance', 'hr.payroll');
+    $canMgmt = $dashUser->isSuperAdmin() || $dashUser->isShopAdmin() || $dashUser->hasAnyPermission('users.view', 'users.manage', 'roles.manage', 'catalog.manage');
+    $canReports = $dashUser->isSuperAdmin() || $dashUser->isShopAdmin() || $dashUser->hasAnyPermission('reports.sales', 'reports.stock_movement', 'reports.expiry', 'accounts.reports');
+@endphp
+
 <div class="row g-3 mb-4">
     {{-- Module 1: Purchase --}}
-    <div class="col-sm-6 col-xl-3">
-        <a href="{{ route('purchases.orders.index') }}" class="module-launchpad-card card-purchase shadow-sm h-100">
-            <div class="d-flex align-items-center justify-content-between mb-auto">
-                <div class="icon-tile">
-                    <i class="bi bi-truck"></i>
+    @if($canPurchases)
+        <div class="col-sm-6 col-md-4 col-xl-3">
+            <a href="{{ route('purchases.index') }}" class="module-launchpad-card card-purchase shadow-sm h-100">
+                <div class="d-flex align-items-center justify-content-between mb-auto">
+                    <div class="icon-tile">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
                 </div>
-                <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
-            </div>
-            <div class="module-title mt-4">Purchase</div>
-        </a>
-    </div>
+                <div class="module-title mt-4">Purchase</div>
+            </a>
+        </div>
+    @endif
 
-    {{-- Module 2: Sale --}}
-    <div class="col-sm-6 col-xl-3">
-        <a href="{{ route('sales.index') }}" class="module-launchpad-card card-sale shadow-sm h-100">
-            <div class="d-flex align-items-center justify-content-between mb-auto">
-                <div class="icon-tile">
-                    <i class="bi bi-cart3"></i>
+    {{-- Module 2: Sale & POS --}}
+    @if($canSales)
+        <div class="col-sm-6 col-md-4 col-xl-3">
+            <a href="{{ route('sales.hub') }}" class="module-launchpad-card card-sale shadow-sm h-100">
+                <div class="d-flex align-items-center justify-content-between mb-auto">
+                    <div class="icon-tile">
+                        <i class="bi bi-cart3"></i>
+                    </div>
+                    <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
                 </div>
-                <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
-            </div>
-            <div class="module-title mt-4">Sale</div>
-        </a>
-    </div>
+                <div class="module-title mt-4">Sales &amp; POS</div>
+            </a>
+        </div>
+    @endif
 
-    {{-- Module 3: Finance --}}
-    <div class="col-sm-6 col-xl-3">
-        <a href="{{ route('finance.accounts.index') }}" class="module-launchpad-card card-finance shadow-sm h-100">
-            <div class="d-flex align-items-center justify-content-between mb-auto">
-                <div class="icon-tile">
-                    <i class="bi bi-diagram-3"></i>
+    {{-- Module 3: Inventory & Stock --}}
+    @if($canInventory)
+        <div class="col-sm-6 col-md-4 col-xl-3">
+            <a href="{{ route('inventory.hub') }}" class="module-launchpad-card card-inventory shadow-sm h-100">
+                <div class="d-flex align-items-center justify-content-between mb-auto">
+                    <div class="icon-tile">
+                        <i class="bi bi-boxes"></i>
+                    </div>
+                    <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
                 </div>
-                <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
-            </div>
-            <div class="module-title mt-4">Finance</div>
-        </a>
-    </div>
+                <div class="module-title mt-4">Inventory</div>
+            </a>
+        </div>
+    @endif
 
-    {{-- Module 4: HR --}}
-    <div class="col-sm-6 col-xl-3">
-        <a href="{{ route('hr.employees.index') }}" class="module-launchpad-card card-hr shadow-sm h-100">
-            <div class="d-flex align-items-center justify-content-between mb-auto">
-                <div class="icon-tile">
-                    <i class="bi bi-people"></i>
+    {{-- Module 4: Finance --}}
+    @if($canFinance)
+        <div class="col-sm-6 col-md-4 col-xl-3">
+            <a href="{{ route('finance.index') }}" class="module-launchpad-card card-finance shadow-sm h-100">
+                <div class="d-flex align-items-center justify-content-between mb-auto">
+                    <div class="icon-tile">
+                        <i class="bi bi-diagram-3"></i>
+                    </div>
+                    <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
                 </div>
-                <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
-            </div>
-            <div class="module-title mt-4">HR &amp; Payroll</div>
-        </a>
-    </div>
+                <div class="module-title mt-4">Finance</div>
+            </a>
+        </div>
+    @endif
+
+    {{-- Module 5: HR --}}
+    @if($canHr)
+        <div class="col-sm-6 col-md-4 col-xl-3">
+            <a href="{{ route('hr.index') }}" class="module-launchpad-card card-hr shadow-sm h-100">
+                <div class="d-flex align-items-center justify-content-between mb-auto">
+                    <div class="icon-tile">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
+                </div>
+                <div class="module-title mt-4">HR &amp; Payroll</div>
+            </a>
+        </div>
+    @endif
+
+    {{-- Module 6: Management --}}
+    @if($canMgmt)
+        <div class="col-sm-6 col-md-4 col-xl-3">
+            <a href="{{ route('management.index') }}" class="module-launchpad-card card-mgmt shadow-sm h-100">
+                <div class="d-flex align-items-center justify-content-between mb-auto">
+                    <div class="icon-tile">
+                        <i class="bi bi-gear-wide-connected"></i>
+                    </div>
+                    <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
+                </div>
+                <div class="module-title mt-4">Management</div>
+            </a>
+        </div>
+    @endif
+
+    {{-- Module 7: Reports --}}
+    @if($canReports)
+        <div class="col-sm-6 col-md-4 col-xl-3">
+            <a href="{{ route('reports.index') }}" class="module-launchpad-card card-reports shadow-sm h-100">
+                <div class="d-flex align-items-center justify-content-between mb-auto">
+                    <div class="icon-tile">
+                        <i class="bi bi-file-earmark-bar-graph"></i>
+                    </div>
+                    <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
+                </div>
+                <div class="module-title mt-4">Reports</div>
+            </a>
+        </div>
+    @endif
 </div>
 
 {{-- ROW 3: Recent Stock Activity Ledger (Strictly top 5 records) --}}
@@ -389,6 +453,45 @@
 }
 .module-launchpad-card.card-hr .icon-tile {
     color: #c2410c;
+}
+
+.module-launchpad-card.card-inventory {
+    background: linear-gradient(145deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1.5px solid #bae6fd !important;
+    color: #0369a1;
+}
+.module-launchpad-card.card-inventory:hover {
+    box-shadow: 0 12px 28px rgba(2, 132, 199, 0.16) !important;
+    border-color: #7dd3fc !important;
+}
+.module-launchpad-card.card-inventory .icon-tile {
+    color: #0284c7;
+}
+
+.module-launchpad-card.card-mgmt {
+    background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1.5px solid #cbd5e1 !important;
+    color: #334155;
+}
+.module-launchpad-card.card-mgmt:hover {
+    box-shadow: 0 12px 28px rgba(71, 85, 105, 0.16) !important;
+    border-color: #94a3b8 !important;
+}
+.module-launchpad-card.card-mgmt .icon-tile {
+    color: #475569;
+}
+
+.module-launchpad-card.card-reports {
+    background: linear-gradient(145deg, #fdf2f8 0%, #fce7f3 100%);
+    border: 1.5px solid #fbcfe8 !important;
+    color: #be185d;
+}
+.module-launchpad-card.card-reports:hover {
+    box-shadow: 0 12px 28px rgba(219, 39, 119, 0.16) !important;
+    border-color: #f472b6 !important;
+}
+.module-launchpad-card.card-reports .icon-tile {
+    color: #db2777;
 }
 </style>
 @endsection

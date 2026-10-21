@@ -13,6 +13,9 @@
             <a href="{{ route('purchases.grn.index') }}" class="btn btn-outline-secondary">
                 <i class="bi bi-x-lg me-1"></i> Cancel
             </a>
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#loadPoModal">
+                <i class="bi bi-file-earmark-text me-1"></i> Load PO
+            </button>
             <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#loadIgpModal">
                 <i class="bi bi-upload me-1"></i> Load IGP
             </button>
@@ -30,6 +33,13 @@
             <a href="{{ route('purchases.grn.create') }}" class="btn btn-sm btn-outline-primary">Clear IGP</a>
         </div>
         <input type="hidden" name="inward_gate_pass_id" value="{{ $selectedIgp->id }}">
+    @elseif($selectedPo)
+        <div class="alert alert-primary py-2 mb-3 d-flex justify-content-between align-items-center">
+            <span>
+                <i class="bi bi-file-earmark-text me-1"></i> Loaded from Purchase Order: <strong>{{ $selectedPo->po_number }}</strong> (Supplier: {{ $selectedPo->supplier->name ?? 'N/A' }}, Total: Rs. {{ number_format($selectedPo->grand_total, 2) }})
+            </span>
+            <a href="{{ route('purchases.grn.create') }}" class="btn btn-sm btn-outline-primary">Clear PO</a>
+        </div>
     @endif
 
     {{-- Top Meta Fields (Matching Screenshots 4 & 5) --}}
@@ -76,10 +86,19 @@
                 <div class="col-md-3">
                     <label class="form-label fw-semibold small mb-1">Received Via</label>
                     <select class="form-select form-select-sm" name="received_via">
-                        <option value="Road / Truck" @selected(old('received_via', $selectedIgp?->received_via) === 'Road / Truck')>Road / Truck</option>
-                        <option value="Suzuki / Pickup" @selected(old('received_via', $selectedIgp?->received_via) === 'Suzuki / Pickup')>Suzuki / Pickup</option>
-                        <option value="Courier / Cargo" @selected(old('received_via', $selectedIgp?->received_via) === 'Courier / Cargo')>Courier / Cargo Service</option>
-                        <option value="By Hand" @selected(old('received_via', $selectedIgp?->received_via) === 'By Hand')>By Hand</option>
+                        <option value="">Select Transport Mode</option>
+                        @if(isset($transportModes) && $transportModes->isNotEmpty())
+                            @foreach($transportModes as $tm)
+                                <option value="{{ $tm->name }}" @selected(old('received_via', $selectedIgp?->received_via) === $tm->name)>
+                                    {{ $tm->name }}
+                                </option>
+                            @endforeach
+                        @else
+                            <option value="Road / Truck" @selected(old('received_via', $selectedIgp?->received_via) === 'Road / Truck')>Road / Truck</option>
+                            <option value="Suzuki / Pickup" @selected(old('received_via', $selectedIgp?->received_via) === 'Suzuki / Pickup')>Suzuki / Pickup</option>
+                            <option value="Courier / Cargo" @selected(old('received_via', $selectedIgp?->received_via) === 'Courier / Cargo')>Courier / Cargo Service</option>
+                            <option value="By Hand" @selected(old('received_via', $selectedIgp?->received_via) === 'By Hand')>By Hand</option>
+                        @endif
                     </select>
                 </div>
 
@@ -268,13 +287,10 @@
                         <table class="table table-bordered table-sm align-middle mb-0" id="grnExpensesTable">
                             <thead class="bg-primary text-white small" style="background-color: #1e3a8a !important;">
                                 <tr>
-                                    <th style="width: 25%;">Account</th>
-                                    <th style="width: 20%;">Comments</th>
-                                    <th style="width: 15%;">Expense Type</th>
-                                    <th style="width: 10%;" class="text-end">Qty</th>
-                                    <th style="width: 10%;" class="text-end">Rate</th>
-                                    <th style="width: 10%;" class="text-end">Debit (Rs.)</th>
-                                    <th style="width: 7%;" class="text-end">Credit (Rs.)</th>
+                                    <th style="width: 30%;">Expense Account <span class="text-danger">*</span></th>
+                                    <th style="width: 20%;">Expense Type</th>
+                                    <th style="width: 32%;">Comments / Description</th>
+                                    <th style="width: 15%;" class="text-end">Amount (Rs.) <span class="text-danger">*</span></th>
                                     <th style="width: 3%;" class="text-center">Action</th>
                                 </tr>
                             </thead>
@@ -289,9 +305,6 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <input type="text" class="form-control form-control-sm" name="expenses[0][comments]" placeholder="e.g. Bilty freight charges">
-                                    </td>
-                                    <td>
                                         <select class="form-select form-select-sm" name="expenses[0][expense_type]">
                                             <option value="Freight">Freight / Carriage Inward</option>
                                             <option value="Loading">Loading Charges</option>
@@ -301,16 +314,10 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <input type="number" step="0.01" class="form-control form-control-sm text-end exp-qty" name="expenses[0][quantity]" value="1">
+                                        <input type="text" class="form-control form-control-sm" name="expenses[0][comments]" placeholder="e.g. Bilty freight charges">
                                     </td>
                                     <td>
-                                        <input type="number" step="0.01" class="form-control form-control-sm text-end exp-rate" name="expenses[0][rate]" value="0">
-                                    </td>
-                                    <td>
-                                        <input type="number" step="0.01" class="form-control form-control-sm text-end exp-debit" name="expenses[0][debit]" value="0">
-                                    </td>
-                                    <td>
-                                        <input type="number" step="0.01" class="form-control form-control-sm text-end exp-credit" name="expenses[0][credit]" value="0">
+                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end exp-amount auto-clear-zero" name="expenses[0][amount]" value="0" placeholder="0.00">
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-remove-exp">
@@ -321,19 +328,9 @@
                             </tbody>
                             <tfoot class="bg-light fw-bold small">
                                 <tr>
-                                    <td colspan="5" class="text-end">Total Debit:</td>
-                                    <td class="text-end" id="expTotalDebit">0.00</td>
-                                    <td colspan="2"></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="5" class="text-end">Total Credit:</td>
-                                    <td class="text-end" id="expTotalCredit">0.00</td>
-                                    <td colspan="2"></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="5" class="text-end">Net Total Landed Expenses:</td>
-                                    <td class="text-end text-primary" id="expNetTotal">0.00</td>
-                                    <td colspan="2"></td>
+                                    <td colspan="3" class="text-end">Total Landed Expenses (Rs.):</td>
+                                    <td class="text-end text-primary fw-bold" id="expNetTotal">Rs. 0.00</td>
+                                    <td></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -359,6 +356,54 @@
         </div>
     </div>
 </form>
+
+{{-- Load PO Modal --}}
+<div class="modal fade" id="loadPoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="bi bi-file-earmark-text me-2"></i> Select Purchase Order (PO) to Load</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light small">
+                            <tr>
+                                <th class="ps-3">PO #</th>
+                                <th>Date</th>
+                                <th>Supplier</th>
+                                <th>Total</th>
+                                <th class="text-end pe-3">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($pendingOrders as $ppo)
+                                <tr class="po-modal-row" data-supplier="{{ $ppo->supplier_id }}">
+                                    <td class="ps-3 fw-bold">{{ $ppo->po_number }}</td>
+                                    <td>{{ $ppo->order_date ? \Carbon\Carbon::parse($ppo->order_date)->format('d M, Y') : 'N/A' }}</td>
+                                    <td>{{ $ppo->supplier->name ?? 'N/A' }}</td>
+                                    <td>Rs. {{ number_format($ppo->grand_total, 2) }}</td>
+                                    <td class="text-end pe-3">
+                                        <a href="{{ route('purchases.grn.create', ['purchase_order_id' => $ppo->id]) }}" class="btn btn-sm btn-primary">
+                                            Load into GRN
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        No pending/approved Purchase Orders found.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {{-- Load IGP Modal --}}
 <div class="modal fade" id="loadIgpModal" tabindex="-1">
@@ -498,21 +543,14 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('totalQtySum').textContent = sumQty.toFixed(2);
 
         // Calculate expenses
-        let totalDebit = 0;
-        let totalCredit = 0;
+        let totalExpenses = 0;
         expBody.querySelectorAll('.grn-exp-row').forEach(r => {
-            const debit = parseFloat(r.querySelector('.exp-debit')?.value) || 0;
-            const credit = parseFloat(r.querySelector('.exp-credit')?.value) || 0;
-            const rate = parseFloat(r.querySelector('.exp-rate')?.value) || 0;
-            const qty = parseFloat(r.querySelector('.exp-qty')?.value) || 1;
-
-            totalDebit += debit > 0 ? debit : (rate * qty);
-            totalCredit += credit;
+            const amt = parseFloat(r.querySelector('.exp-amount')?.value) || 0;
+            totalExpenses += amt;
         });
 
-        document.getElementById('expTotalDebit').textContent = 'Rs. ' + totalDebit.toFixed(2);
-        document.getElementById('expTotalCredit').textContent = 'Rs. ' + totalCredit.toFixed(2);
-        document.getElementById('expNetTotal').textContent = 'Rs. ' + (totalDebit - totalCredit).toFixed(2);
+        const expNet = document.getElementById('expNetTotal');
+        if (expNet) expNet.textContent = 'Rs. ' + totalExpenses.toFixed(2);
     }
 
     function attachProdListeners(row) {
@@ -558,15 +596,10 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function attachExpListeners(row) {
-        const debit = row.querySelector('.exp-debit');
-        const credit = row.querySelector('.exp-credit');
-        const rate = row.querySelector('.exp-rate');
-        const qty = row.querySelector('.exp-qty');
+        const amt = row.querySelector('.exp-amount');
         const btnRemove = row.querySelector('.btn-remove-exp');
 
-        [debit, credit, rate, qty].forEach(input => {
-            if (input) input.addEventListener('input', updateTotals);
-        });
+        if (amt) amt.addEventListener('input', updateTotals);
 
         if (btnRemove) {
             btnRemove.addEventListener('click', function () {
@@ -604,6 +637,7 @@ document.addEventListener('DOMContentLoaded', function () {
         clone.querySelector('input[name*="[expiry_date]"]').name = `items[${prodIndex}][expiry_date]`;
 
         attachProdListeners(clone);
+        clone.querySelectorAll('.auto-clear-zero').forEach(setupAutoClear);
         prodBody.appendChild(clone);
         prodIndex++;
         updateProdSr();
@@ -615,25 +649,98 @@ document.addEventListener('DOMContentLoaded', function () {
         const clone = firstRow.cloneNode(true);
 
         clone.querySelectorAll('input').forEach(i => {
-            if (i.classList.contains('exp-qty')) i.value = '1';
-            else if (i.classList.contains('exp-rate') || i.classList.contains('exp-debit') || i.classList.contains('exp-credit')) i.value = '0';
+            if (i.classList.contains('exp-amount')) i.value = '0';
             else i.value = '';
         });
         clone.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
 
         clone.querySelector('select[name*="[account_id]"]').name = `expenses[${expIndex}][account_id]`;
-        clone.querySelector('input[name*="[comments]"]').name = `expenses[${expIndex}][comments]`;
         clone.querySelector('select[name*="[expense_type]"]').name = `expenses[${expIndex}][expense_type]`;
-        clone.querySelector('.exp-qty').name = `expenses[${expIndex}][quantity]`;
-        clone.querySelector('.exp-rate').name = `expenses[${expIndex}][rate]`;
-        clone.querySelector('.exp-debit').name = `expenses[${expIndex}][debit]`;
-        clone.querySelector('.exp-credit').name = `expenses[${expIndex}][credit]`;
+        clone.querySelector('input[name*="[comments]"]').name = `expenses[${expIndex}][comments]`;
+        clone.querySelector('.exp-amount').name = `expenses[${expIndex}][amount]`;
 
         attachExpListeners(clone);
+        clone.querySelectorAll('.auto-clear-zero').forEach(setupAutoClear);
         expBody.appendChild(clone);
         expIndex++;
         updateTotals();
     });
+
+    // Dynamic PO Loading on selection
+    if (poSelect) {
+        poSelect.addEventListener('change', function () {
+            const poId = this.value;
+            if (!poId) return;
+
+            fetch(`/purchases/orders/${poId}/items-json`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data || !data.items || data.items.length === 0) return;
+
+                    if (data.supplier_id && supplierSelect) {
+                        supplierSelect.value = data.supplier_id;
+                    }
+
+                    prodBody.innerHTML = '';
+                    prodIndex = 0;
+
+                    data.items.forEach((item, idx) => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'grn-prod-row';
+                        const pendingQty = Math.max(0, parseFloat(item.quantity) - parseFloat(item.received_quantity || 0));
+                        const defaultQty = pendingQty > 0 ? pendingQty : parseFloat(item.quantity);
+                        const unitCost = parseFloat(item.unit_cost || 0);
+
+                        tr.innerHTML = `
+                            <td class="text-center row-sr fw-semibold">${idx + 1}</td>
+                            <td>
+                                <select class="form-select form-select-sm grn-prod-select" name="items[${idx}][inventory_item_id]" required>
+                                    <option value="${item.inventory_item_id}" data-uom="${item.unit || 'PCS'}" data-cost="${unitCost}" selected>
+                                        ${item.item_name} (${item.sku})
+                                    </option>
+                                </select>
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm" name="items[${idx}][warehouse_id]">
+                                    <option value="">Default</option>
+                                    @foreach($warehouses as $wh)
+                                        <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+                                    @endforeach
+                                </select>
+                            </td>
+                            <td class="text-center uom-label fw-bold">${item.unit || 'PCS'}</td>
+                            <td>
+                                <input type="number" step="0.01" min="0.01" class="form-control form-control-sm text-end qty-total auto-clear-zero" name="items[${idx}][total_delivered]" value="${defaultQty}" required placeholder="1.00">
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end qty-rejected text-danger auto-clear-zero" name="items[${idx}][rejected_quantity]" value="0" placeholder="0.00">
+                            </td>
+                            <td>
+                                <input type="number" step="0.01" min="0" class="form-control form-control-sm text-end qty-accepted fw-bold text-success auto-clear-zero" name="items[${idx}][quantity]" value="${defaultQty}" required placeholder="1.00">
+                                <input type="hidden" class="unit-cost" name="items[${idx}][unit_cost]" value="${unitCost}">
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm mb-1" name="items[${idx}][batch_number]" placeholder="Batch # (Auto)">
+                                <input type="date" class="form-control form-control-sm" name="items[${idx}][expiry_date]">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        prodBody.appendChild(tr);
+                        attachProdListeners(tr);
+                        tr.querySelectorAll('.auto-clear-zero').forEach(setupAutoClear);
+                        prodIndex++;
+                    });
+
+                    updateProdSr();
+                    updateTotals();
+                })
+                .catch(err => console.error('Error fetching PO items:', err));
+        });
+    }
 });
 </script>
 @endsection

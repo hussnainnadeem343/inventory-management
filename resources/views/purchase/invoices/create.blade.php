@@ -322,35 +322,78 @@
                                 </tr>
                             </thead>
                             <tbody id="invExpBody">
-                                <tr class="invexp-row">
-                                    <td>
-                                        <select class="form-select form-select-sm" name="expenses[0][account_id]">
-                                            <option value="">Select Expense Account</option>
-                                            @foreach($expenseAccounts as $acc)
-                                                <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
-                                            @endforeach
-                                        </select>
-                                        <input type="hidden" name="expenses[0][category]" value="inventory">
-                                    </td>
-                                    <td>
-                                        <input type="text" class="form-control form-control-sm" name="expenses[0][comments]" placeholder="Comments">
-                                    </td>
-                                    <td>
-                                        <select class="form-select form-select-sm" name="expenses[0][expense_type]">
-                                            <option value="Freight">Freight Inward</option>
-                                            <option value="Carriage">Carriage</option>
-                                            <option value="Unloading">Unloading / Mazdoori</option>
-                                            <option value="Customs">Customs Duty</option>
-                                        </select>
-                                    </td>
-                                    <td><input type="number" step="0.01" class="form-control form-control-sm text-end ie-qty" name="expenses[0][quantity]" value="1"></td>
-                                    <td><input type="number" step="0.01" class="form-control form-control-sm text-end ie-rate" name="expenses[0][rate]" value="0"></td>
-                                    <td><input type="number" step="0.01" class="form-control form-control-sm text-end ie-debit" name="expenses[0][debit]" value="0"></td>
-                                    <td><input type="number" step="0.01" class="form-control form-control-sm text-end ie-credit" name="expenses[0][credit]" value="0"></td>
-                                    <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-invexp"><i class="bi bi-trash"></i></button>
-                                    </td>
-                                </tr>
+                                @if($selectedGrn && $selectedGrn->expenses->isNotEmpty())
+                                    @foreach($selectedGrn->expenses as $eIdx => $gExp)
+                                        @php
+                                            $expAmt = (float) ($gExp->debit > 0 ? $gExp->debit : ($gExp->rate * ($gExp->quantity ?: 1)));
+                                        @endphp
+                                        <tr class="invexp-row">
+                                            <td>
+                                                <select class="form-select form-select-sm" name="expenses[{{ $eIdx }}][account_id]">
+                                                    <option value="">Select Expense Account</option>
+                                                    @foreach($expenseAccounts as $acc)
+                                                        <option value="{{ $acc->id }}" @selected($gExp->account_id == $acc->id)>{{ $acc->code }} - {{ $acc->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                                <input type="hidden" name="expenses[{{ $eIdx }}][category]" value="inventory">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm" name="expenses[{{ $eIdx }}][comments]" value="{{ $gExp->comments }}" placeholder="Comments">
+                                            </td>
+                                            <td>
+                                                <select class="form-select form-select-sm" name="expenses[{{ $eIdx }}][expense_type]">
+                                                    <option value="Freight" @selected($gExp->expense_type === 'Freight')>Freight Inward</option>
+                                                    <option value="Carriage" @selected($gExp->expense_type === 'Carriage')>Carriage</option>
+                                                    <option value="Loading" @selected($gExp->expense_type === 'Loading')>Loading Charges</option>
+                                                    <option value="Unloading" @selected($gExp->expense_type === 'Unloading')>Unloading / Mazdoori</option>
+                                                    <option value="Octroi" @selected($gExp->expense_type === 'Octroi')>Octroi / Toll Tax</option>
+                                                    <option value="Customs" @selected($gExp->expense_type === 'Customs')>Customs Duty</option>
+                                                    <option value="Other" @selected($gExp->expense_type === 'Other')>Other Landed Expense</option>
+                                                </select>
+                                            </td>
+                                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end ie-qty auto-clear-zero" name="expenses[{{ $eIdx }}][quantity]" value="{{ $gExp->quantity ?? 1 }}"></td>
+                                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end ie-rate auto-clear-zero" name="expenses[{{ $eIdx }}][rate]" value="{{ $gExp->rate ?? $expAmt }}"></td>
+                                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end ie-debit auto-clear-zero" name="expenses[{{ $eIdx }}][debit]" value="{{ $expAmt }}"></td>
+                                            <td><input type="number" step="0.01" class="form-control form-control-sm text-end ie-credit auto-clear-zero" name="expenses[{{ $eIdx }}][credit]" value="0"></td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-invexp"><i class="bi bi-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @else
+                                    <tr class="invexp-row">
+                                        <td>
+                                            <select class="form-select form-select-sm" name="expenses[0][account_id]">
+                                                <option value="">Select Expense Account</option>
+                                                @foreach($expenseAccounts as $acc)
+                                                    <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <input type="hidden" name="expenses[0][category]" value="inventory">
+                                        </td>
+                                        <td>
+                                            <input type="text" class="form-control form-control-sm" name="expenses[0][comments]" placeholder="Comments">
+                                        </td>
+                                        <td>
+                                            <select class="form-select form-select-sm" name="expenses[0][expense_type]">
+                                                <option value="Freight">Freight Inward</option>
+                                                <option value="Carriage">Carriage</option>
+                                                <option value="Loading">Loading Charges</option>
+                                                <option value="Unloading">Unloading / Mazdoori</option>
+                                                <option value="Octroi">Octroi / Toll Tax</option>
+                                                <option value="Customs">Customs Duty</option>
+                                                <option value="Other">Other Landed Expense</option>
+                                            </select>
+                                        </td>
+                                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end ie-qty auto-clear-zero" name="expenses[0][quantity]" value="1"></td>
+                                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end ie-rate auto-clear-zero" name="expenses[0][rate]" value="0"></td>
+                                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end ie-debit auto-clear-zero" name="expenses[0][debit]" value="0"></td>
+                                        <td><input type="number" step="0.01" class="form-control form-control-sm text-end ie-credit auto-clear-zero" name="expenses[0][credit]" value="0"></td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-outline-danger btn-remove-invexp" disabled><i class="bi bi-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                @endif
                             </tbody>
                             <tfoot class="bg-light fw-bold small">
                                 <tr>
@@ -660,7 +703,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     let piProdIndex = {{ ($selectedGrn && $selectedGrn->items->isNotEmpty()) ? $selectedGrn->items->count() : 1 }};
-    let invExpIndex = 1;
+    let invExpIndex = {{ ($selectedGrn && $selectedGrn->expenses->isNotEmpty()) ? $selectedGrn->expenses->count() : 1 }};
     let otherExpIndex = 101;
     let commIndex = 1;
 
@@ -878,7 +921,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const clone = first.cloneNode(true);
         clone.querySelectorAll('input').forEach(i => i.value = i.classList.contains('ie-qty') ? '1' : '0');
         clone.querySelector('input[type="text"]').value = '';
-        clone.querySelector('select').selectedIndex = 0;
+        clone.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+        clone.querySelector('button')?.removeAttribute('disabled');
 
         clone.querySelector('select[name*="[account_id]"]').name = `expenses[${invExpIndex}][account_id]`;
         clone.querySelector('input[name*="[category]"]').name = `expenses[${invExpIndex}][category]`;
@@ -892,6 +936,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('invExpBody').appendChild(clone);
         invExpIndex++;
         attachExpListeners('invExpTable', 'invexp-row');
+        clone.querySelectorAll('.ie-qty, .ie-rate, .ie-debit, .ie-credit').forEach(setupAutoClear);
         calculatePiTotals();
     });
 
@@ -901,7 +946,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const clone = first.cloneNode(true);
         clone.querySelectorAll('input').forEach(i => i.value = i.classList.contains('oe-qty') ? '1' : '0');
         clone.querySelector('input[type="text"]').value = '';
-        clone.querySelector('select').selectedIndex = 0;
+        clone.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+        clone.querySelector('button')?.removeAttribute('disabled');
 
         clone.querySelector('select[name*="[account_id]"]').name = `expenses[${otherExpIndex}][account_id]`;
         clone.querySelector('input[name*="[category]"]').name = `expenses[${otherExpIndex}][category]`;
@@ -915,6 +961,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('otherExpBody').appendChild(clone);
         otherExpIndex++;
         attachExpListeners('otherExpTable', 'otherexp-row');
+        clone.querySelectorAll('.oe-qty, .oe-rate, .oe-debit, .oe-credit').forEach(setupAutoClear);
         calculatePiTotals();
     });
 

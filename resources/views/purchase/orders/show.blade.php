@@ -31,9 +31,10 @@
             <h4 class="mb-0 fw-bold">{{ $order->po_number }}</h4>
             @php
                 $badgeClass = match($order->status) {
+                    'pending_approval' => 'bg-warning-subtle text-warning',
                     'draft' => 'bg-secondary-subtle text-secondary',
                     'approved' => 'bg-primary-subtle text-primary',
-                    'partially_received' => 'bg-warning-subtle text-warning',
+                    'partially_received' => 'bg-info-subtle text-info',
                     'received' => 'bg-success-subtle text-success',
                     'cancelled' => 'bg-danger-subtle text-danger',
                     default => 'bg-light text-dark',
@@ -52,8 +53,23 @@
             <i class="bi bi-printer me-1"></i> Print PO
         </button>
 
-        @if($order->status === 'draft' && auth()->user()->hasPermission('purchases.create'))
-            <form method="post" action="{{ route('purchases.orders.approve', $order) }}">
+        {{-- Edit and Delete buttons (enabled if no IGP/GRN) --}}
+        @if($order->canBeEditedOrDeleted())
+            <a href="{{ route('purchases.orders.edit', $order) }}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-1"></i> Edit
+            </a>
+            <form method="post" action="{{ route('purchases.orders.destroy', $order) }}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete PO {{ $order->po_number }}?');">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-outline-danger">
+                    <i class="bi bi-trash me-1"></i> Delete
+                </button>
+            </form>
+        @endif
+
+        {{-- Approval --}}
+        @if(($order->isPending() || $order->status === 'draft') && (auth()->user()->isSuperAdmin() || auth()->user()->isShopAdmin() || auth()->user()->hasPermission('purchases.orders.approve')))
+            <form method="post" action="{{ route('purchases.orders.approve', $order) }}" class="d-inline">
                 @csrf
                 <button type="submit" class="btn btn-success">
                     <i class="bi bi-check-lg me-1"></i> Approve PO
@@ -61,7 +77,11 @@
             </form>
         @endif
 
-        @if(in_array($order->status, ['approved', 'partially_received']) && auth()->user()->hasPermission('purchases.grn'))
+        {{-- IGP & GRN buttons (enabled if approved) --}}
+        @if($order->isApproved())
+            <a href="{{ route('purchases.igp.create') }}?purchase_order_id={{ $order->id }}" class="btn btn-info text-white">
+                <i class="bi bi-door-open me-1"></i> Create IGP
+            </a>
             <a href="{{ route('purchases.grn.create') }}?purchase_order_id={{ $order->id }}" class="btn btn-primary">
                 <i class="bi bi-box-arrow-in-down me-1"></i> Inward Goods (GRN)
             </a>
@@ -89,6 +109,12 @@
             @endif
             <div><strong>Phone:</strong> {{ $order->supplier->phone ?? 'N/A' }}</div>
             <div><strong>Address:</strong> {{ $order->supplier->address ?? 'N/A' }}</div>
+            @if($order->supplier->ntn)
+                <div><strong>NTN:</strong> {{ $order->supplier->ntn }}</div>
+            @endif
+            @if($order->supplier->strn)
+                <div><strong>STRN:</strong> {{ $order->supplier->strn }}</div>
+            @endif
         </div>
     </div>
 
@@ -101,14 +127,16 @@
                 <div class="col-6"><strong>Order Date:</strong> {{ $order->order_date->format('d M Y') }}</div>
                 <div class="col-6"><strong>Expected Delivery:</strong> {{ $order->expected_delivery_date ? $order->expected_delivery_date->format('d M Y') : 'Immediate' }}</div>
                 <div class="col-6"><strong>Created By:</strong> {{ $order->creator ? $order->creator->name : 'System' }}</div>
-                @if($order->purchaseRequisition)
-                    <div class="col-6"><strong>Requisition Ref:</strong> <span class="badge bg-info-subtle text-info">{{ $order->purchaseRequisition->pr_number }}</span></div>
-                @endif
+                <div class="col-6"><strong>Payment Mode:</strong> <span class="badge bg-light text-dark border">{{ ucfirst($order->payment_mode ?? 'bank') }}</span></div>
+                <div class="col-6"><strong>Payment Terms:</strong> {{ $order->payment_terms === 'Other' && $order->payment_term_custom ? $order->payment_term_custom : ($order->payment_terms ?? 'Net 30') }}</div>
                 @if($order->delivery_station)
                     <div class="col-6"><strong>Delivery Station:</strong> {{ $order->delivery_station }}</div>
                 @endif
-                @if($order->payment_terms)
-                    <div class="col-6"><strong>Payment Terms:</strong> {{ $order->payment_terms }}</div>
+                @if($order->purchaseRequisition)
+                    <div class="col-6"><strong>Requisition Ref:</strong> <span class="badge bg-info-subtle text-info">{{ $order->purchaseRequisition->pr_number }}</span></div>
+                @endif
+                @if($order->approved_by)
+                    <div class="col-6"><strong>Approved By:</strong> <span class="text-success fw-semibold">{{ $order->approver?->name }}</span> ({{ $order->approved_at?->format('d M Y') }})</div>
                 @endif
             </div>
         </div>
@@ -129,6 +157,8 @@
                     <th>Received Qty</th>
                     <th>Remaining Qty</th>
                     <th>Unit Cost</th>
+                    <th>Disc. (Rs.)</th>
+                    <th>VAT (%)</th>
                     <th class="text-end">Subtotal</th>
                 </tr>
             </thead>
@@ -154,35 +184,75 @@
                             </span>
                         </td>
                         <td>Rs. {{ number_format($item->unit_cost, 2) }}</td>
+                        <td>{{ (float)$item->discount_amount > 0 ? 'Rs. ' . number_format($item->discount_amount, 2) : '-' }}</td>
+                        <td>{{ (float)$item->tax_percent > 0 ? number_format($item->tax_percent, 1) . '%' : '-' }}</td>
                         <td class="text-end fw-bold">Rs. {{ number_format($item->subtotal, 2) }}</td>
                     </tr>
                 @endforeach
             </tbody>
             <tfoot class="table-light">
                 <tr>
-                    <td colspan="5" class="text-end">Subtotal:</td>
+                    <td colspan="7" class="text-end">Subtotal:</td>
                     <td class="text-end fw-bold">Rs. {{ number_format($order->subtotal, 2) }}</td>
                 </tr>
                 @if($order->discount_amount > 0)
                     <tr>
-                        <td colspan="5" class="text-end text-danger">Discount:</td>
+                        <td colspan="7" class="text-end text-danger">Discount:</td>
                         <td class="text-end fw-bold text-danger">- Rs. {{ number_format($order->discount_amount, 2) }}</td>
                     </tr>
                 @endif
                 @if($order->tax_amount > 0)
                     <tr>
-                        <td colspan="5" class="text-end">Tax / GST:</td>
+                        <td colspan="7" class="text-end">Tax / VAT / GST:</td>
                         <td class="text-end fw-bold">+ Rs. {{ number_format($order->tax_amount, 2) }}</td>
                     </tr>
                 @endif
                 <tr class="table-active">
-                    <td colspan="5" class="text-end fw-bold fs-6">Grand Total:</td>
+                    <td colspan="7" class="text-end fw-bold fs-6">Grand Total:</td>
                     <td class="text-end fw-bold text-primary fs-6">Rs. {{ number_format($order->grand_total, 2) }}</td>
                 </tr>
             </tfoot>
         </table>
     </div>
 </div>
+
+@if($order->inwardGatePasses->isNotEmpty())
+    <div class="card shadow-sm mb-4 d-print-none">
+        <div class="card-header bg-white py-3">
+            <h6 class="mb-0 fw-bold"><i class="bi bi-door-open me-1 text-info"></i> Related Inward Gate Passes (IGP)</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>IGP #</th>
+                        <th>Date & Time</th>
+                        <th>Challan / Bilty #</th>
+                        <th>Vehicle #</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($order->inwardGatePasses as $igp)
+                        <tr>
+                            <td><span class="fw-bold">{{ $igp->igp_number }}</span></td>
+                            <td>{{ $igp->inward_date->format('d M Y, h:i A') }}</td>
+                            <td>{{ $igp->challan_no ?? '—' }}</td>
+                            <td>{{ $igp->vehicle_no ?? '—' }}</td>
+                            <td><span class="badge bg-secondary-subtle text-secondary">{{ ucfirst($igp->status) }}</span></td>
+                            <td>
+                                <a href="{{ route('purchases.igp.show', $igp) }}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye me-1"></i> View IGP
+                                </a>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+@endif
 
 @if($order->goodsReceivedNotes->isNotEmpty())
     <div class="card shadow-sm mb-4 d-print-none">

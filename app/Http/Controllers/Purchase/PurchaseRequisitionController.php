@@ -15,8 +15,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
+use App\Http\Controllers\Concerns\HasPagination;
+
 class PurchaseRequisitionController extends Controller
 {
+    use HasPagination;
+
     public function index(Request $request): View
     {
         $user = $request->user();
@@ -25,7 +29,7 @@ class PurchaseRequisitionController extends Controller
         $search = trim((string) $request->query('search'));
 
         $query = PurchaseRequisition::query()
-            ->with(['requester', 'approver', 'warehouse', 'items.inventoryItem'])
+            ->with(['requester', 'approver', 'warehouse', 'items.inventoryItem', 'purchaseOrders'])
             ->forShop($shopId);
 
         if ($status) {
@@ -40,7 +44,7 @@ class PurchaseRequisitionController extends Controller
             });
         }
 
-        $requisitions = $query->latest('id')->paginate(15)->withQueryString();
+        $requisitions = $this->paginateWithPerPage($query->latest('id'), $request, default: 10);
 
         return view('purchase.requisitions.index', compact('requisitions', 'status', 'search', 'shopId'));
     }
@@ -75,7 +79,6 @@ class PurchaseRequisitionController extends Controller
             'items' => ['required', 'array', 'min:1'],
             'items.*.inventory_item_id' => ['required', 'exists:inventory_items,id'],
             'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
-            'items.*.estimated_unit_cost' => ['nullable', 'numeric', 'min:0'],
             'items.*.description' => ['nullable', 'string', 'max:255'],
         ]);
 
@@ -102,7 +105,7 @@ class PurchaseRequisitionController extends Controller
                     'purchase_requisition_id' => $requisition->id,
                     'inventory_item_id' => $item['inventory_item_id'],
                     'quantity' => (float) $item['quantity'],
-                    'estimated_unit_cost' => !empty($item['estimated_unit_cost']) ? (float) $item['estimated_unit_cost'] : null,
+                    'estimated_unit_cost' => null,
                     'description' => $item['description'] ?? null,
                 ]);
             }
@@ -111,6 +114,88 @@ class PurchaseRequisitionController extends Controller
         });
 
         return redirect()->route('purchases.requisitions.show', $pr)->with('success', "Requisition {$pr->pr_number} created successfully.");
+    }
+
+    public function edit(PurchaseRequisition $requisition): View|RedirectResponse
+    {
+        if (!$requisition->canBeEditedOrDeleted()) {
+            $reason = $requisition->isRejected() ? 'it has been rejected' : 'Purchase Order has already been generated';
+            return back()->with('error', "Cannot edit Requisition {$requisition->pr_number} because {$reason}.");
+        }
+
+        $user = auth()->user();
+        $shopId = $requisition->shop_id ?? ($user->isSuperAdmin() ? null : $user->shop_id);
+
+        $products = InventoryItem::where('status', 'active')
+            ->when($shopId, fn ($q) => $q->where('shop_id', $shopId))
+            ->orderBy('item_name')
+            ->get(['id', 'item_name', 'sku', 'unit', 'purchase_price', 'quantity']);
+
+        $warehouses = Warehouse::forShop($shopId)->where('status', 'active')->get(['id', 'name']);
+        $requisition->load('items.inventoryItem');
+
+        return view('purchase.requisitions.edit', compact('requisition', 'products', 'warehouses', 'shopId'));
+    }
+
+    public function update(Request $request, PurchaseRequisition $requisition): RedirectResponse
+    {
+        if (!$requisition->canBeEditedOrDeleted()) {
+            $reason = $requisition->isRejected() ? 'it has been rejected' : 'Purchase Order has already been generated';
+            return back()->with('error', "Cannot edit Requisition {$requisition->pr_number} because {$reason}.");
+        }
+
+        $validated = $request->validate([
+            'requisition_date' => ['required', 'date'],
+            'required_by_date' => ['nullable', 'date'],
+            'department' => ['nullable', 'string', 'max:100'],
+            'warehouse_id' => ['nullable', 'exists:warehouses,id'],
+            'priority' => ['required', 'in:low,medium,high,urgent'],
+            'notes' => ['nullable', 'string'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.inventory_item_id' => ['required', 'exists:inventory_items,id'],
+            'items.*.quantity' => ['required', 'numeric', 'min:0.01'],
+            'items.*.description' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        DB::transaction(function () use ($requisition, $validated) {
+            $requisition->update([
+                'requisition_date' => $validated['requisition_date'],
+                'required_by_date' => $validated['required_by_date'] ?? null,
+                'department' => $validated['department'] ?? null,
+                'warehouse_id' => $validated['warehouse_id'] ?? null,
+                'priority' => $validated['priority'],
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
+            $requisition->items()->delete();
+
+            foreach ($validated['items'] as $item) {
+                PurchaseRequisitionItem::create([
+                    'purchase_requisition_id' => $requisition->id,
+                    'inventory_item_id' => $item['inventory_item_id'],
+                    'quantity' => (float) $item['quantity'],
+                    'estimated_unit_cost' => null,
+                    'description' => $item['description'] ?? null,
+                ]);
+            }
+        });
+
+        return redirect()->route('purchases.requisitions.show', $requisition)->with('success', "Requisition {$requisition->pr_number} updated successfully.");
+    }
+
+    public function destroy(PurchaseRequisition $requisition): RedirectResponse
+    {
+        if (!$requisition->canBeEditedOrDeleted()) {
+            $reason = $requisition->isRejected() ? 'it has been rejected' : 'Purchase Order has already been generated';
+            return back()->with('error', "Cannot delete Requisition {$requisition->pr_number} because {$reason}.");
+        }
+
+        DB::transaction(function () use ($requisition) {
+            $requisition->items()->delete();
+            $requisition->delete();
+        });
+
+        return redirect()->route('purchases.requisitions.index')->with('success', "Requisition {$requisition->pr_number} deleted successfully.");
     }
 
     public function show(PurchaseRequisition $requisition): View
@@ -173,7 +258,7 @@ class PurchaseRequisitionController extends Controller
                 'order_date' => now()->format('Y-m-d'),
                 'expected_delivery_date' => $requisition->required_by_date ?? now()->addDays(7)->format('Y-m-d'),
                 'delivery_station' => $requisition->department ?? 'Main Store',
-                'status' => PurchaseOrder::STATUS_DRAFT,
+                'status' => PurchaseOrder::STATUS_PENDING,
                 'subtotal' => 0,
                 'grand_total' => 0,
                 'notes' => "Generated from Purchase Requisition {$requisition->pr_number}. " . ($requisition->notes ?? ''),
@@ -181,7 +266,7 @@ class PurchaseRequisitionController extends Controller
             ]);
 
             foreach ($requisition->items as $line) {
-                $cost = (float) ($line->estimated_unit_cost ?? $line->inventoryItem->purchase_price ?? 0);
+                $cost = (float) ($line->inventoryItem->purchase_price ?? 0);
                 $lineTotal = (float) $line->quantity * $cost;
                 $subtotal += $lineTotal;
 

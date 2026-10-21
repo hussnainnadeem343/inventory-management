@@ -6,15 +6,21 @@ use App\Http\Controllers\Purchase\PurchaseInvoiceController;
 use App\Http\Controllers\Purchase\PurchaseOrderController;
 use App\Http\Controllers\Purchase\PurchaseRequisitionController;
 use App\Http\Controllers\Purchase\PurchaseReturnController;
+use App\Http\Controllers\Purchase\PurchaseTransportModeController;
+use App\Http\Controllers\Purchase\PurchaseHubController;
 use App\Http\Controllers\Purchase\SupplierController;
 use Illuminate\Support\Facades\Route;
 
 // Complete 6-Stage Enterprise Purchase & Procurement Module Routes
 Route::prefix('purchases')->name('purchases.')->group(function () {
+    // 0. Purchase Module Hub (Launchpad)
+    Route::get('/', PurchaseHubController::class)->name('index');
     // 1. Suppliers Management
     Route::middleware('permission:purchases.create')->group(function () {
         Route::get('/suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');
         Route::post('/suppliers', [SupplierController::class, 'store'])->name('suppliers.store');
+        Route::get('/suppliers/import/template', [SupplierController::class, 'downloadTemplate'])->name('suppliers.template');
+        Route::post('/suppliers/import', [SupplierController::class, 'import'])->name('suppliers.import');
         Route::get('/suppliers/{supplier}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
         Route::put('/suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
     });
@@ -32,6 +38,9 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
     Route::middleware('permission:purchases.requisitions')->group(function () {
         Route::get('/requisitions/create', [PurchaseRequisitionController::class, 'create'])->name('requisitions.create');
         Route::post('/requisitions', [PurchaseRequisitionController::class, 'store'])->name('requisitions.store');
+        Route::get('/requisitions/{requisition}/edit', [PurchaseRequisitionController::class, 'edit'])->name('requisitions.edit');
+        Route::put('/requisitions/{requisition}', [PurchaseRequisitionController::class, 'update'])->name('requisitions.update');
+        Route::delete('/requisitions/{requisition}', [PurchaseRequisitionController::class, 'destroy'])->name('requisitions.destroy');
         Route::post('/requisitions/{requisition}/approve', [PurchaseRequisitionController::class, 'approve'])->name('requisitions.approve');
         Route::post('/requisitions/{requisition}/reject', [PurchaseRequisitionController::class, 'reject'])->name('requisitions.reject');
         Route::post('/requisitions/{requisition}/convert-po', [PurchaseRequisitionController::class, 'convertToPo'])->name('requisitions.convert_po');
@@ -46,6 +55,9 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
     Route::middleware('permission:purchases.create')->group(function () {
         Route::get('/orders/create', [PurchaseOrderController::class, 'create'])->name('orders.create');
         Route::post('/orders', [PurchaseOrderController::class, 'store'])->name('orders.store');
+        Route::get('/orders/{order}/edit', [PurchaseOrderController::class, 'edit'])->name('orders.edit');
+        Route::put('/orders/{order}', [PurchaseOrderController::class, 'update'])->name('orders.update');
+        Route::delete('/orders/{order}', [PurchaseOrderController::class, 'destroy'])->name('orders.destroy');
         Route::post('/orders/{order}/approve', [PurchaseOrderController::class, 'approve'])->name('orders.approve');
         Route::post('/orders/{order}/cancel', [PurchaseOrderController::class, 'cancel'])->name('orders.cancel');
     });
@@ -53,12 +65,16 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
     Route::middleware('permission:purchases.view')->group(function () {
         Route::get('/orders', [PurchaseOrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/{order}', [PurchaseOrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/{order}/items-json', [PurchaseOrderController::class, 'itemsJson'])->name('orders.items_json');
     });
 
     // 4. Stage 3: Inward Gate Pass (IGP)
     Route::middleware('permission:purchases.igp')->group(function () {
         Route::get('/igp/create', [InwardGatePassController::class, 'create'])->name('igp.create');
         Route::post('/igp', [InwardGatePassController::class, 'store'])->name('igp.store');
+        Route::get('/igp/{igp}/edit', [InwardGatePassController::class, 'edit'])->name('igp.edit');
+        Route::put('/igp/{igp}', [InwardGatePassController::class, 'update'])->name('igp.update');
+        Route::delete('/igp/{igp}', [InwardGatePassController::class, 'destroy'])->name('igp.destroy');
     });
 
     Route::middleware('permission:purchases.view')->group(function () {
@@ -97,5 +113,13 @@ Route::prefix('purchases')->name('purchases.')->group(function () {
     Route::middleware('permission:purchases.view')->group(function () {
         Route::get('/returns', [PurchaseReturnController::class, 'index'])->name('returns.index');
         Route::get('/returns/{return}', [PurchaseReturnController::class, 'show'])->name('returns.show');
+    });
+
+    // 8. Receive Via (Transport Modes)
+    Route::middleware('permission:purchases.view')->group(function () {
+        Route::get('/transport-modes', [PurchaseTransportModeController::class, 'index'])->name('transport_modes.index');
+        Route::post('/transport-modes', [PurchaseTransportModeController::class, 'store'])->name('transport_modes.store');
+        Route::put('/transport-modes/{transportMode}', [PurchaseTransportModeController::class, 'update'])->name('transport_modes.update');
+        Route::delete('/transport-modes/{transportMode}', [PurchaseTransportModeController::class, 'destroy'])->name('transport_modes.destroy');
     });
 });

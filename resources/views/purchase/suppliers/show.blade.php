@@ -22,31 +22,51 @@
 </div>
 
 <div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card p-3 border-0 shadow-sm bg-white">
-            <small class="text-secondary fw-semibold">CURRENT PAYABLE BALANCE</small>
+    <div class="col-md-3">
+        <div class="card p-3 border-0 shadow-sm bg-white h-100">
+            <small class="text-secondary fw-semibold">CURRENT PAYABLE</small>
             <h3 class="fw-bold my-1 {{ $supplier->current_balance > 0 ? 'text-danger' : 'text-success' }}">
                 Rs. {{ number_format($supplier->current_balance, 2) }}
             </h3>
             <small class="text-muted">Opening: Rs. {{ number_format($supplier->opening_balance, 2) }}</small>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card p-3 border-0 shadow-sm bg-white">
+    <div class="col-md-3">
+        <div class="card p-3 border-0 shadow-sm bg-white h-100">
             <small class="text-secondary fw-semibold">CONTACT INFORMATION</small>
-            <div class="mt-2">
+            <div class="mt-2 small">
                 <div><i class="bi bi-telephone text-secondary me-2"></i>{{ $supplier->phone ?? 'N/A' }}</div>
                 <div><i class="bi bi-envelope text-secondary me-2"></i>{{ $supplier->email ?? 'N/A' }}</div>
+                <div><i class="bi bi-geo-alt text-secondary me-2"></i>{{ $supplier->address ?? 'N/A' }}</div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card p-3 border-0 shadow-sm bg-white">
-            <small class="text-secondary fw-semibold">ADDRESS & STATUS</small>
-            <div class="mt-2">
-                <div><i class="bi bi-geo-alt text-secondary me-2"></i>{{ $supplier->address ?? 'N/A' }}</div>
-                <div class="mt-1">
-                    Status: 
+    <div class="col-md-3">
+        <div class="card p-3 border-0 shadow-sm bg-white h-100">
+            <small class="text-secondary fw-semibold">TAX &amp; LICENCE</small>
+            <div class="mt-2 small">
+                <div><span class="text-muted">NTN:</span> <strong>{{ $supplier->ntn ?? 'N/A' }}</strong></div>
+                <div><span class="text-muted">STRN:</span> <strong>{{ $supplier->strn ?? 'N/A' }}</strong></div>
+                <div><span class="text-muted">Licence:</span> <strong>{{ $supplier->license_number ?? 'N/A' }}</strong></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 border-0 shadow-sm bg-white h-100">
+            <small class="text-secondary fw-semibold">ACCOUNT &amp; STATUS</small>
+            <div class="mt-2 small">
+                <div class="mb-1">
+                    <span class="text-muted">Liability:</span>
+                    @if($supplier->liabilityAccount)
+                        <span class="badge bg-info-subtle text-info border">
+                            {{ $supplier->liabilityAccount->code }} - {{ $supplier->liabilityAccount->name }}
+                        </span>
+                    @else
+                        <span class="badge bg-light text-dark border">Default Accounts Payable</span>
+                    @endif
+                </div>
+                <div>
+                    <span class="text-muted">Status:</span>
                     @if($supplier->status === 'active')
                         <span class="badge bg-success-subtle text-success">Active</span>
                     @else

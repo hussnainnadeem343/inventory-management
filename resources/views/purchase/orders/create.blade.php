@@ -58,7 +58,7 @@
                             <input type="date" class="form-control" name="expected_delivery_date" value="{{ old('expected_delivery_date') }}">
                         </div>
 
-                        <!-- Hybrid Station (Point 9) -->
+                        <!-- Receiving Station -->
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Receiving Station / Warehouse</label>
                             <div class="input-group">
@@ -71,19 +71,30 @@
                                 </select>
                                 <input type="text" class="form-control" name="delivery_station" id="stationCustomInput" value="{{ old('delivery_station', auth()->user()->shop ? auth()->user()->shop->name : 'Main Store') }}" placeholder="Or type station manually">
                             </div>
-                            <small class="text-muted">Choose from predefined godowns or type a manual station name.</small>
+                        </div>
+
+                        <!-- Payment Mode -->
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Payment Mode <span class="text-danger">*</span></label>
+                            <select class="form-select" name="payment_mode" required>
+                                <option value="bank" @selected(old('payment_mode', 'bank') === 'bank')>Bank</option>
+                                <option value="cash" @selected(old('payment_mode') === 'cash')>Cash</option>
+                                <option value="cheque" @selected(old('payment_mode') === 'cheque')>Cheque</option>
+                            </select>
                         </div>
 
                         <!-- Payment Terms -->
-                        <div class="col-md-6">
+                        <div class="col-md-3">
                             <label class="form-label fw-semibold">Payment Terms</label>
-                            <select class="form-select" name="payment_terms">
-                                <option value="Net 30" @selected(old('payment_terms') === 'Net 30')>Net 30 Days</option>
+                            <select class="form-select" name="payment_terms" id="paymentTermsSelect">
+                                <option value="Net 30" @selected(old('payment_terms', 'Net 30') === 'Net 30')>Net 30 Days</option>
                                 <option value="Net 15" @selected(old('payment_terms') === 'Net 15')>Net 15 Days</option>
                                 <option value="COD" @selected(old('payment_terms') === 'COD')>Cash on Delivery (COD)</option>
                                 <option value="Advance" @selected(old('payment_terms') === 'Advance')>Advance Payment</option>
                                 <option value="Net 60" @selected(old('payment_terms') === 'Net 60')>Net 60 Days</option>
+                                <option value="Other" @selected(old('payment_terms') === 'Other')>Other</option>
                             </select>
+                            <input type="text" class="form-control form-control-sm mt-1" name="payment_term_custom" id="paymentTermCustom" value="{{ old('payment_term_custom') }}" placeholder="Specify custom term..." style="{{ old('payment_terms') === 'Other' ? '' : 'display: none;' }}">
                         </div>
                     </div>
                 </div>
@@ -105,7 +116,7 @@
                                 <th style="width: 15%;">Quantity</th>
                                 <th style="width: 15%;">Unit Cost (Rs.)</th>
                                 <th style="width: 12%;">Discount (Rs.)</th>
-                                <th style="width: 10%;">Tax (%)</th>
+                                <th style="width: 10%;">VAT (%)</th>
                                 <th style="width: 13%;" class="text-end">Subtotal</th>
                                 <th style="width: 5%;"></th>
                             </tr>
@@ -244,6 +255,20 @@
         });
     }
 
+    // Payment Terms Other option toggle
+    const paymentTerms = document.getElementById('paymentTermsSelect');
+    const paymentTermCustom = document.getElementById('paymentTermCustom');
+    if (paymentTerms && paymentTermCustom) {
+        paymentTerms.addEventListener('change', function () {
+            if (this.value === 'Other') {
+                paymentTermCustom.style.display = 'block';
+                paymentTermCustom.focus();
+            } else {
+                paymentTermCustom.style.display = 'none';
+            }
+        });
+    }
+
     // Point 4: Auto-clear 0.00 helper
     function setupAutoClear(el) {
         el.addEventListener('focus', function () {
@@ -287,7 +312,7 @@
                 <input type="number" step="0.01" min="0" class="form-control form-control-sm line-disc-input auto-clear-zero" name="items[${rowIndex}][discount_amount]" value="${disc}" placeholder="0.00">
             </td>
             <td>
-                <input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm line-tax-input auto-clear-zero" name="items[${rowIndex}][tax_percent]" value="${taxPct}" placeholder="0%">
+                <input type="number" step="0.01" min="0" max="100" class="form-control form-control-sm line-vat-input auto-clear-zero" name="items[${rowIndex}][tax_percent]" value="${taxPct}" placeholder="0%">
             </td>
             <td class="fw-semibold text-end line-subtotal">Rs. 0.00</td>
             <td class="text-center">
@@ -301,9 +326,9 @@
         const qtyIn = tr.querySelector('.qty-input');
         const costIn = tr.querySelector('.cost-input');
         const discIn = tr.querySelector('.line-disc-input');
-        const taxIn = tr.querySelector('.line-tax-input');
+        const vatIn = tr.querySelector('.line-vat-input');
 
-        [qtyIn, costIn, discIn, taxIn].forEach(setupAutoClear);
+        [qtyIn, costIn, discIn, vatIn].forEach(setupAutoClear);
 
         select.addEventListener('change', function() {
             const opt = select.options[select.selectedIndex];
@@ -313,7 +338,7 @@
             recalc();
         });
 
-        [qtyIn, costIn, discIn, taxIn].forEach(input => {
+        [qtyIn, costIn, discIn, vatIn].forEach(input => {
             input.addEventListener('input', recalc);
         });
 
@@ -357,7 +382,7 @@
     function recalc() {
         let subtotal = 0;
         let lineDiscountTotal = 0;
-        let lineTaxTotal = 0;
+        let totalLineVat = 0;
 
         const activePresetRate = getActiveTaxRate();
 
@@ -365,22 +390,18 @@
             const qty = parseFloat(tr.querySelector('.qty-input').value) || 0;
             const cost = parseFloat(tr.querySelector('.cost-input').value) || 0;
             const lineDisc = parseFloat(tr.querySelector('.line-disc-input').value) || 0;
-            let lineTaxPct = parseFloat(tr.querySelector('.line-tax-input').value);
-
-            if (isNaN(lineTaxPct) || lineTaxPct === 0) {
-                lineTaxPct = activePresetRate;
-            }
+            const lineVatPct = parseFloat(tr.querySelector('.line-vat-input').value) || 0;
 
             const rawLine = qty * cost;
             const lineAfterDisc = Math.max(0, rawLine - lineDisc);
-            const lineTaxAmount = lineAfterDisc * (lineTaxPct / 100);
-            const lineTotal = lineAfterDisc + lineTaxAmount;
+            const lineVatAmount = lineAfterDisc * (lineVatPct / 100);
+            const lineTotal = lineAfterDisc + lineVatAmount;
 
             tr.querySelector('.line-subtotal').textContent = 'Rs. ' + lineTotal.toFixed(2);
 
             subtotal += rawLine;
             lineDiscountTotal += lineDisc;
-            lineTaxTotal += lineTaxAmount;
+            totalLineVat += lineVatAmount;
         });
 
         const overallDiscountInput = document.getElementById('discountInput');
@@ -390,19 +411,12 @@
             overallDiscountInput.value = lineDiscountTotal.toFixed(2);
         }
 
-        // Auto-calculate tax if tax ratio preset is selected
-        let tax = 0;
-        if (activePresetRate > 0 && lineTaxTotal <= 0) {
-            tax = Math.max(0, subtotal - discount) * (activePresetRate / 100);
-            taxInput.value = tax.toFixed(2);
-        } else if (lineTaxTotal > 0) {
-            tax = lineTaxTotal;
-            taxInput.value = tax.toFixed(2);
-        } else {
-            tax = parseFloat(taxInput.value) || 0;
-        }
+        // Auto-calculate tax: Item VAT + Overall Ratio Rate
+        const taxFromRatio = activePresetRate > 0 ? Math.max(0, subtotal - discount) * (activePresetRate / 100) : 0;
+        const totalTax = totalLineVat + taxFromRatio;
+        taxInput.value = totalTax.toFixed(2);
 
-        const grandTotal = Math.max(0, subtotal - discount + tax);
+        const grandTotal = Math.max(0, subtotal - discount + totalTax);
 
         document.getElementById('displaySubtotal').textContent = 'Rs. ' + subtotal.toFixed(2);
         document.getElementById('displayGrandTotal').textContent = 'Rs. ' + grandTotal.toFixed(2);
