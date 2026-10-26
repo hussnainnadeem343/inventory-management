@@ -338,4 +338,75 @@ class MultiShopSystemTest extends TestCase
             ->assertSee('Shop Alpha')
             ->assertSee('Alpha Specific Gadget');
     }
+
+    public function test_multiple_shops_can_have_categories_and_brands_with_identical_names(): void
+    {
+        $shop1 = Shop::create(['name' => 'Shop 1 Cosmetics', 'code' => 'SH1', 'status' => 'active']);
+        $shop2 = Shop::create(['name' => 'Shop 2 Lube Station', 'code' => 'SH2', 'status' => 'active']);
+
+        $admin1 = User::factory()->create(['shop_id' => $shop1->id, 'role' => 'shop_admin', 'status' => 'active']);
+        $admin2 = User::factory()->create(['shop_id' => $shop2->id, 'role' => 'shop_admin', 'status' => 'active']);
+
+        // Shop 1 creates category 'Oil' and brand 'Castrol'
+        $catRes1 = $this->actingAs($admin1)->post('/categories', [
+            'name' => 'Oil',
+            'description' => 'Body & Massage Oils',
+            'status' => 'active',
+        ]);
+        $catRes1->assertRedirect();
+
+        $brandRes1 = $this->actingAs($admin1)->post('/brands', [
+            'name' => 'Castrol',
+            'description' => 'Brand description',
+            'status' => 'active',
+        ]);
+        $brandRes1->assertRedirect();
+
+        // Shop 2 creates category 'Oil' and brand 'Castrol' without unique collision
+        $catRes2 = $this->actingAs($admin2)->post('/categories', [
+            'name' => 'Oil',
+            'description' => 'Engine & Lube Oils',
+            'status' => 'active',
+        ]);
+        $catRes2->assertRedirect();
+
+        $brandRes2 = $this->actingAs($admin2)->post('/brands', [
+            'name' => 'Castrol',
+            'description' => 'Motor lubricants',
+            'status' => 'active',
+        ]);
+        $brandRes2->assertRedirect();
+
+        $this->assertDatabaseHas('categories', ['shop_id' => $shop1->id, 'name' => 'Oil']);
+        $this->assertDatabaseHas('categories', ['shop_id' => $shop2->id, 'name' => 'Oil']);
+
+        $this->assertDatabaseHas('brands', ['shop_id' => $shop1->id, 'name' => 'Castrol']);
+        $this->assertDatabaseHas('brands', ['shop_id' => $shop2->id, 'name' => 'Castrol']);
+
+        // Attempting to create duplicate category 'Oil' in the SAME shop (Shop 1) is blocked by validation
+        $duplicateInShop1 = $this->actingAs($admin1)->post('/categories', [
+            'name' => 'Oil',
+            'status' => 'active',
+        ]);
+        $duplicateInShop1->assertSessionHasErrors('name');
+
+        // Super Admin creating for Shop 2 via explicit shop_id also blocked if duplicate in Shop 2
+        $superAdmin = $this->superAdmin();
+        $superDupShop2 = $this->actingAs($superAdmin)->post('/categories', [
+            'shop_id' => $shop2->id,
+            'name' => 'Oil',
+            'status' => 'active',
+        ]);
+        $superDupShop2->assertSessionHasErrors('name');
+
+        // But Super Admin creating for a new Shop 3 succeeds with 'Oil'
+        $shop3 = Shop::create(['name' => 'Shop 3 Auto Spares', 'code' => 'SH3', 'status' => 'active']);
+        $superShop3 = $this->actingAs($superAdmin)->post('/categories', [
+            'shop_id' => $shop3->id,
+            'name' => 'Oil',
+            'status' => 'active',
+        ]);
+        $superShop3->assertRedirect();
+        $this->assertDatabaseHas('categories', ['shop_id' => $shop3->id, 'name' => 'Oil']);
+    }
 }

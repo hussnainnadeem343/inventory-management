@@ -27,7 +27,10 @@ class InventoryItem extends Model
         'sold_quantity',
         'alert_quantity',
         'pack_size',
+        'liters',
         'unit',
+        'product_type',
+        'is_loose',
         'purchase_price',
         'selling_price',
         'supplier',
@@ -51,6 +54,8 @@ class InventoryItem extends Model
             'sold_quantity' => 'decimal:2',
             'alert_quantity' => 'decimal:2',
             'pack_size' => 'decimal:3',
+            'liters' => 'decimal:2',
+            'is_loose' => 'boolean',
             'purchase_price' => 'decimal:2',
             'selling_price' => 'decimal:2',
         ];
@@ -65,6 +70,14 @@ class InventoryItem extends Model
         $size = $this->pack_size === null ? '' : rtrim(rtrim(number_format((float) $this->pack_size, 3, '.', ''), '0'), '.');
 
         return $size.$this->unit;
+    }
+
+    public function getLitersAttribute($value): ?float
+    {
+        if ($value !== null && $value !== '') {
+            return (float) $value;
+        }
+        return $this->pack_size ? (float) $this->pack_size : null;
     }
 
     public function getTotalStockAttribute(): float
@@ -99,6 +112,44 @@ class InventoryItem extends Model
         }
 
         return 'valid';
+    }
+
+    public function isLoose(): bool
+    {
+        return (bool) $this->is_loose || $this->product_type === 'loose';
+    }
+
+    public function isDrum(): bool
+    {
+        return $this->product_type === 'drum' || str_contains(strtoupper($this->unit ?? ''), 'DRUM');
+    }
+
+    public function scopeLoose(Builder $query): Builder
+    {
+        return $query->where(function ($q) {
+            $q->where('is_loose', true)->orWhere('product_type', 'loose');
+        });
+    }
+
+    public function scopeDrum(Builder $query): Builder
+    {
+        return $query->where(function ($q) {
+            $q->where('product_type', 'drum')
+              ->orWhere('unit', 'DRUM')
+              ->orWhere('item_name', 'like', '%drum%');
+        });
+    }
+
+    public function scopeStandard(Builder $query): Builder
+    {
+        return $query->where(function ($q) {
+            $q->where(function ($lq) {
+                $lq->where('is_loose', false)->orWhereNull('is_loose');
+            })->where(function ($sq) {
+                $sq->whereNull('product_type')
+                   ->orWhere('product_type', '!=', 'loose');
+            });
+        });
     }
 
     public function scopeForShop(Builder $query, ?int $shopId = null): Builder

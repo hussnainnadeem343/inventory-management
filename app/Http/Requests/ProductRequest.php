@@ -16,6 +16,27 @@ class ProductRequest extends FormRequest
         return $user && ($user->isSuperAdmin() || $user->isShopAdmin());
     }
 
+    protected function prepareForValidation(): void
+    {
+        $productType = $this->input('product_type', 'standard');
+        $isLoose = $this->boolean('is_loose') || $productType === 'loose';
+        $liters = $this->input('liters');
+        $packSize = $this->input('pack_size');
+
+        if ($liters !== null && $packSize === null) {
+            $packSize = $liters;
+        } elseif ($packSize !== null && $liters === null) {
+            $liters = $packSize;
+        }
+
+        $this->merge([
+            'product_type' => $isLoose ? 'loose' : ($productType ?: 'standard'),
+            'is_loose' => $isLoose,
+            'liters' => $liters,
+            'pack_size' => $packSize,
+        ]);
+    }
+
     public function rules(): array
     {
         $product = $this->route('product');
@@ -50,7 +71,13 @@ class ProductRequest extends FormRequest
 
             'pack_size' => ['nullable', 'numeric', 'gt:0'],
 
+            'liters' => ['nullable', 'numeric', 'min:0'],
+
             'unit' => ['nullable', 'string', 'max:20'],
+
+            'product_type' => ['nullable', 'string', Rule::in(['standard', 'loose', 'drum', 'packaged'])],
+
+            'is_loose' => ['nullable', 'boolean'],
 
             'expiry_date' => ['nullable', 'date'],
 

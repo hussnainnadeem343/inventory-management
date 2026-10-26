@@ -41,16 +41,28 @@ class BrandController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('brands.form', ['brand' => new Brand]);
+        $user = $request->user();
+        $shops = $user->isSuperAdmin() ? Shop::where('status', 'active')->orderBy('name')->get() : collect();
+        $selectedShopId = $user->shop_id ?? session('dashboard_shop_id') ?? $shops->first()?->id;
+
+        return view('brands.form', [
+            'brand' => new Brand(['shop_id' => $selectedShopId]),
+            'shops' => $shops,
+            'selectedShopId' => $selectedShopId,
+        ]);
     }
 
     public function store(BrandRequest $request): RedirectResponse
     {
-        $brand = new Brand($request->validated());
-        $brand->shop_id = $request->user()->shop_id ?? $request->input('shop_id', 1);
-        $brand->created_by = $request->user()->id;
+        $validated = $request->validated();
+        $user = $request->user();
+        $shopId = $user->shop_id ?? ($validated['shop_id'] ?? session('dashboard_shop_id') ?? Shop::where('status', 'active')->first()?->id ?? 1);
+
+        $brand = new Brand($validated);
+        $brand->shop_id = $shopId;
+        $brand->created_by = $user->id;
         $brand->save();
 
         return redirect()->route('brands.index')->with('success', 'Brand added successfully.');
@@ -59,15 +71,26 @@ class BrandController extends Controller
     public function edit(Request $request, Brand $brand): View
     {
         $this->authorizeBrandManagement($request, $brand);
+        $user = $request->user();
+        $shops = $user->isSuperAdmin() ? Shop::where('status', 'active')->orderBy('name')->get() : collect();
 
-        return view('brands.form', compact('brand'));
+        return view('brands.form', [
+            'brand' => $brand,
+            'shops' => $shops,
+            'selectedShopId' => $brand->shop_id,
+        ]);
     }
 
     public function update(BrandRequest $request, Brand $brand): RedirectResponse
     {
         $this->authorizeBrandManagement($request, $brand);
 
-        $brand->update($request->validated());
+        $validated = $request->validated();
+        if ($request->user()->isSuperAdmin() && isset($validated['shop_id'])) {
+            $brand->shop_id = $validated['shop_id'];
+        }
+
+        $brand->update($validated);
 
         return redirect()->route('brands.index')->with('success', 'Brand updated successfully.');
     }

@@ -41,16 +41,28 @@ class CategoryController extends Controller
         ]);
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('categories.form', ['category' => new Category]);
+        $user = $request->user();
+        $shops = $user->isSuperAdmin() ? Shop::where('status', 'active')->orderBy('name')->get() : collect();
+        $selectedShopId = $user->shop_id ?? session('dashboard_shop_id') ?? $shops->first()?->id;
+
+        return view('categories.form', [
+            'category' => new Category(['shop_id' => $selectedShopId]),
+            'shops' => $shops,
+            'selectedShopId' => $selectedShopId,
+        ]);
     }
 
     public function store(CategoryRequest $request): RedirectResponse
     {
-        $category = new Category($request->validated());
-        $category->shop_id = $request->user()->shop_id ?? $request->input('shop_id', 1);
-        $category->created_by = $request->user()->id;
+        $validated = $request->validated();
+        $user = $request->user();
+        $shopId = $user->shop_id ?? ($validated['shop_id'] ?? session('dashboard_shop_id') ?? Shop::where('status', 'active')->first()?->id ?? 1);
+
+        $category = new Category($validated);
+        $category->shop_id = $shopId;
+        $category->created_by = $user->id;
         $category->save();
 
         return redirect()->route('categories.index')->with('success', 'Category added successfully.');
@@ -59,15 +71,26 @@ class CategoryController extends Controller
     public function edit(Request $request, Category $category): View
     {
         $this->authorizeCategoryManagement($request, $category);
+        $user = $request->user();
+        $shops = $user->isSuperAdmin() ? Shop::where('status', 'active')->orderBy('name')->get() : collect();
 
-        return view('categories.form', compact('category'));
+        return view('categories.form', [
+            'category' => $category,
+            'shops' => $shops,
+            'selectedShopId' => $category->shop_id,
+        ]);
     }
 
     public function update(CategoryRequest $request, Category $category): RedirectResponse
     {
         $this->authorizeCategoryManagement($request, $category);
 
-        $category->update($request->validated());
+        $validated = $request->validated();
+        if ($request->user()->isSuperAdmin() && isset($validated['shop_id'])) {
+            $category->shop_id = $validated['shop_id'];
+        }
+
+        $category->update($validated);
 
         return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
     }

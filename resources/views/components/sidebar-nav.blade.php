@@ -149,6 +149,88 @@
         </div>
     @endif
 
+    {{-- GROUP: AUTO LUBE STATION (Visible when active shop is Lube or Super Admin) --}}
+    @if($user->isLubeShop())
+        @php
+            $isLubeActive = request()->routeIs('lube.*');
+            $canLubePos = $user->hasPermission('lube.pos');
+            $canLubeAnalytics = $user->hasPermission('lube.analytics');
+            $canLubeServices = $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('lube.packages');
+            $canLubePackages = $user->hasPermission('lube.packages');
+            $canLubeVehicles = $user->hasPermission('lube.vehicles');
+            $canLubeReminders = $user->hasPermission('lube.reminders');
+            $canLubeTechnicians = $user->hasPermission('lube.technicians');
+            $canLubeCommissions = $user->hasPermission('lube.commissions');
+            $canLubeDecanting = $user->hasPermission('lube.decanting');
+        @endphp
+        <div class="nav-group-item">
+            <button class="nav-group-btn {{ $isLubeActive ? 'has-active' : '' }}" 
+                    type="button" 
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#{{ $prefix }}_lube" 
+                    aria-expanded="{{ $isLubeActive ? 'true' : 'false' }}"
+                    title="Auto Lube Station">
+                <span class="d-flex align-items-center gap-2">
+                    <i class="bi bi-speedometer2 nav-icon text-warning"></i>
+                    <span class="nav-text">Auto Lube Station</span>
+                </span>
+                <i class="bi bi-chevron-right nav-group-chevron"></i>
+            </button>
+            <div class="collapse {{ $isLubeActive ? 'show' : '' }}" id="{{ $prefix }}_lube">
+                <div class="nav-submenu">
+                    <a class="{{ request()->routeIs('lube.hub') ? 'active' : '' }}" href="{{ route('lube.hub') }}">
+                        <i class="bi bi-grid-1x2"></i><span>Lube Hub</span>
+                    </a>
+                    @if($canLubePos)
+                        <a class="{{ request()->routeIs('lube.pos') ? 'active' : '' }}" href="{{ route('lube.pos') }}">
+                            <i class="bi bi-cart3"></i><span>Lube Counter POS</span>
+                        </a>
+                    @endif
+                    @if($canLubeAnalytics)
+                        <a class="{{ request()->routeIs('lube.analytics') ? 'active' : '' }}" href="{{ route('lube.analytics') }}">
+                            <i class="bi bi-bar-chart-line"></i><span>Station Analytics</span>
+                        </a>
+                    @endif
+                    @if($canLubeServices)
+                        <a class="{{ request()->routeIs('lube.services.*') ? 'active' : '' }}" href="{{ route('lube.services.index') }}">
+                            <i class="bi bi-wrench-adjustable"></i><span>Labor &amp; Services</span>
+                        </a>
+                    @endif
+                    @if($canLubePackages)
+                        <a class="{{ request()->routeIs('lube.packages.*') ? 'active' : '' }}" href="{{ route('lube.packages.index') }}">
+                            <i class="bi bi-boxes"></i><span>Service Packages</span>
+                        </a>
+                    @endif
+                    @if($canLubeVehicles)
+                        <a class="{{ request()->routeIs('lube.vehicles.*') ? 'active' : '' }}" href="{{ route('lube.vehicles.index') }}">
+                            <i class="bi bi-car-front"></i><span>Vehicle History</span>
+                        </a>
+                    @endif
+                    @if($canLubeReminders)
+                        <a class="{{ request()->routeIs('lube.reminders.*') ? 'active' : '' }}" href="{{ route('lube.reminders.index') }}">
+                            <i class="bi bi-bell"></i><span>Oil Due Reminders</span>
+                        </a>
+                    @endif
+                    @if($canLubeTechnicians)
+                        <a class="{{ request()->routeIs('lube.technicians.*') ? 'active' : '' }}" href="{{ route('lube.technicians.index') }}">
+                            <i class="bi bi-people"></i><span>Pit Technicians</span>
+                        </a>
+                    @endif
+                    @if($canLubeCommissions)
+                        <a class="{{ request()->routeIs('lube.commissions.*') ? 'active' : '' }}" href="{{ route('lube.commissions.index') }}">
+                            <i class="bi bi-wallet2"></i><span>Mechanic Commissions</span>
+                        </a>
+                    @endif
+                    @if($canLubeDecanting)
+                        <a class="{{ request()->routeIs('lube.decanting.*') ? 'active' : '' }}" href="{{ route('lube.decanting.index') }}">
+                            <i class="bi bi-fuel-pump"></i><span>Drum Decanting</span>
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- GROUP 3: PURCHASE & PROCUREMENT --}}
     @if($hasPurchaseGroup)
         <div class="nav-group-item">

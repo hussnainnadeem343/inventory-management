@@ -24,8 +24,30 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label">Business Type</label>
-                        <input class="form-control @error('business_type') is-invalid @enderror" name="business_type" value="{{ old('business_type', $shop->business_type) }}" placeholder="e.g. Cosmetics, Shoes, Watches, General">
+                        <label class="form-label fw-semibold">Business Type <span class="text-danger">*</span></label>
+                        @php
+                            $currentType = old('business_type', $shop->business_type ?? 'General Retail');
+                            $presets = [
+                                'General Retail' => 'General Retail / Counter POS',
+                                'Lube (Oil Changing)' => 'Lube (Oil Changing) Station',
+                                'Cosmetics & Beauty' => 'Cosmetics & Beauty',
+                                'Pharmacy / Healthcare' => 'Pharmacy & Healthcare',
+                                'Auto Spare Parts' => 'Auto Spare Parts & Hardware',
+                                'Footwear & Apparel' => 'Footwear & Apparel',
+                                'Electronics & Mobile' => 'Electronics & Mobile',
+                            ];
+                            $isOther = !empty($currentType) && !array_key_exists($currentType, $presets) && !$shop->isLube();
+                        @endphp
+                        <select name="business_type" class="form-select @error('business_type') is-invalid @enderror" id="shopBusinessTypeSelect" onchange="if(this.value==='Other'){document.getElementById('customBusinessTypeWrap').classList.remove('d-none'); document.getElementById('customBusinessTypeInput').required=true; document.getElementById('customBusinessTypeInput').focus();}else{document.getElementById('customBusinessTypeWrap').classList.add('d-none'); document.getElementById('customBusinessTypeInput').required=false;}">
+                            @foreach($presets as $val => $lbl)
+                                <option value="{{ $val }}" @selected($currentType === $val || ($val === 'Lube (Oil Changing)' && $shop->isLube()))>{{ $lbl }}</option>
+                            @endforeach
+                            <option value="Other" @selected($isOther)>Other (Custom)...</option>
+                        </select>
+                        <div id="customBusinessTypeWrap" class="{{ $isOther ? '' : 'd-none' }} mt-2">
+                            <input type="text" id="customBusinessTypeInput" name="custom_business_type" class="form-control form-control-sm" placeholder="Please specify your custom business type" value="{{ old('custom_business_type', $isOther ? $currentType : '') }}">
+                        </div>
+                        <small class="text-muted d-block mt-1">Choosing <strong>Lube (Oil Changing)</strong> activates vehicle history, pit technicians, and auto lube counter POS.</small>
                         @error('business_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-6">

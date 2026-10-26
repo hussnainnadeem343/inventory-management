@@ -148,7 +148,22 @@
 @endphp
 
 <div class="row g-3 mb-4">
-    {{-- Module 1: Purchase --}}
+    {{-- Module 1: Auto Lube Station (1st Place for Lube Shops & Super Admin) --}}
+    @if(auth()->user()->isLubeShop())
+        <div class="col-sm-6 col-md-4 col-xl-3">
+            <a href="{{ route('lube.hub') }}" class="module-launchpad-card card-lube shadow-sm h-100">
+                <div class="d-flex align-items-center justify-content-between mb-auto">
+                    <div class="icon-tile">
+                        <i class="bi bi-speedometer2"></i>
+                    </div>
+                    <i class="bi bi-arrow-up-right module-arrow fs-5"></i>
+                </div>
+                <div class="module-title mt-4">Auto Lube Station</div>
+            </a>
+        </div>
+    @endif
+
+    {{-- Module 2: Purchase --}}
     @if($canPurchases)
         <div class="col-sm-6 col-md-4 col-xl-3">
             <a href="{{ route('purchases.index') }}" class="module-launchpad-card card-purchase shadow-sm h-100">
@@ -492,6 +507,19 @@
 }
 .module-launchpad-card.card-reports .icon-tile {
     color: #db2777;
+}
+
+.module-launchpad-card.card-lube {
+    background: linear-gradient(145deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1.5px solid #a7f3d0 !important;
+    color: #065f46;
+}
+.module-launchpad-card.card-lube:hover {
+    box-shadow: 0 12px 28px rgba(16, 185, 129, 0.18) !important;
+    border-color: #6ee7b7 !important;
+}
+.module-launchpad-card.card-lube .icon-tile {
+    color: #059669;
 }
 </style>
 @endsection

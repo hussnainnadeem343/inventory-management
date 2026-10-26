@@ -2,13 +2,16 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/dashboard');
+// Public SaaS Landing Page
+Route::get('/', [LandingPageController::class, 'index'])->name('landing');
+Route::post('/demo-request', [LandingPageController::class, 'storeInquiry'])->name('demo.request');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'create'])->name('login');
@@ -25,6 +28,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     require __DIR__ . '/purchase.php';
     require __DIR__ . '/finance.php';
     require __DIR__ . '/hr.php';
+    require __DIR__ . '/lube.php';
 
     // Reports Module Hub (Launchpad)
     Route::get('/reports', \App\Http\Controllers\ReportsHubController::class)->name('reports.index');

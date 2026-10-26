@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Shop;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,15 +26,25 @@ class CategoryRequest extends FormRequest
 
     public function rules(): array
     {
-        $shopId = $this->user()?->shop_id ?? $this->input('shop_id');
+        $user = $this->user();
+        $shopId = $user?->shop_id 
+            ?? $this->input('shop_id') 
+            ?? session('dashboard_shop_id') 
+            ?? ($this->route('category')?->shop_id) 
+            ?? Shop::where('status', 'active')->first()?->id 
+            ?? 1;
 
         return [
+            'shop_id' => [
+                'nullable',
+                Rule::exists('shops', 'id'),
+            ],
             'name' => [
                 'required',
                 'string',
                 'max:255',
                 Rule::unique('categories')
-                    ->where(fn ($query) => $shopId ? $query->where('shop_id', $shopId) : $query)
+                    ->where(fn ($query) => $query->where('shop_id', $shopId))
                     ->ignore($this->route('category')?->id),
             ],
             'description' => ['nullable', 'string'],

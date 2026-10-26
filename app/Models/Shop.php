@@ -51,6 +51,41 @@ class Shop extends Model
         return $this->hasMany(Sale::class);
     }
 
+    public function vehicles(): HasMany
+    {
+        return $this->hasMany(\App\Models\Lube\Vehicle::class);
+    }
+
+    public function pitTechnicians(): HasMany
+    {
+        return $this->hasMany(\App\Models\Lube\PitTechnician::class);
+    }
+
+    public function lubeServiceRecords(): HasMany
+    {
+        return $this->hasMany(\App\Models\Lube\LubeServiceRecord::class);
+    }
+
+    public function lubeServicePackages(): HasMany
+    {
+        return $this->hasMany(\App\Models\Lube\LubeServicePackage::class);
+    }
+
+    public function drumDecantings(): HasMany
+    {
+        return $this->hasMany(\App\Models\Lube\DrumDecanting::class);
+    }
+
+    public function laborServices(): HasMany
+    {
+        return $this->hasMany(\App\Models\Lube\LubeLaborService::class);
+    }
+
+    public function isLube(): bool
+    {
+        return str_contains(strtolower($this->business_type ?? ''), 'lube');
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';

@@ -12,6 +12,15 @@ class ShopRequest extends FormRequest
         return $this->user()?->isSuperAdmin() ?? false;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->input('business_type') === 'Other' && $this->filled('custom_business_type')) {
+            $this->merge([
+                'business_type' => $this->input('custom_business_type'),
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         $shopId = $this->route('shop')?->id;

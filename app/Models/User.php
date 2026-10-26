@@ -59,6 +59,19 @@ class User extends Authenticatable
         return $this->role === 'staff' || $this->role === 'user';
     }
 
+    public function isLubeShop(): bool
+    {
+        if ($this->isSuperAdmin()) {
+            $sessionShopId = session('dashboard_shop_id');
+            if ($sessionShopId) {
+                return Shop::find($sessionShopId)?->isLube() ?? false;
+            }
+            return true;
+        }
+
+        return $this->shop?->isLube() ?? false;
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';

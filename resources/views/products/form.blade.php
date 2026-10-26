@@ -29,7 +29,7 @@
 
                     <div class="col-md-8">
                         <label class="form-label">Item Name <span class="text-danger">*</span></label>
-                        <input class="form-control @error('item_name') is-invalid @enderror" name="item_name" value="{{ old('item_name', $product->item_name) }}" required placeholder="e.g. Matte Lipstick, Leather Loafers, Mineral Water">
+                        <input class="form-control @error('item_name') is-invalid @enderror" name="item_name" value="{{ old('item_name', $product->item_name) }}" required placeholder="Enter Item Name">
                         @error('item_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
@@ -90,9 +90,13 @@
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label">Variant / Pack Size</label>
-                        <input class="form-control @error('pack_size') is-invalid @enderror" type="number" step="0.001" min="0.001" name="pack_size" value="{{ old('pack_size', $product->pack_size) }}" placeholder="e.g. 50, 42, 500">
-                        @error('pack_size') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <label class="form-label fw-semibold" id="litersFieldLabel">Liters / Capacity (L)</label>
+                        <div class="input-group">
+                            <input class="form-control font-monospace @error('liters') is-invalid @enderror" type="number" step="any" min="0.001" name="liters" id="litersInput" value="{{ old('liters', $product->liters ?? $product->pack_size) }}" placeholder="e.g. 280 (for Drum) or 1 (for Loose)">
+                            <span class="input-group-text bg-light text-muted">Liters</span>
+                        </div>
+                        @error('liters') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
+                        <div class="form-text" id="litersHelpText">Drum: capacity (e.g. 280L, 520L). Loose: unit volume (e.g. 1L).</div>
                     </div>
 
                     <div class="col-md-4">
@@ -100,6 +104,28 @@
                         <input class="form-control @error('alert_quantity') is-invalid @enderror" type="number" step="1" min="0" name="alert_quantity" value="{{ old('alert_quantity', $product->alert_quantity ?? 5) }}">
                         @error('alert_quantity') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         <div class="form-text">Triggers yellow warning when stock reaches this limit.</div>
+                    </div>
+
+                    {{-- Product Classification / Loose Product Specification --}}
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Product Classification / Type</label>
+                        <select class="form-select @error('product_type') is-invalid @enderror" name="product_type" id="productTypeSelect">
+                            <option value="standard" @selected(old('product_type', $product->product_type ?? 'standard') === 'standard')>Standard / Packaged Item (Bottles, Parts, Filters)</option>
+                            <option value="loose" @selected(old('product_type', $product->product_type) === 'loose' || $product->is_loose)>Loose Product (Dispensed Liters / Oil from Drums)</option>
+                            <option value="drum" @selected(old('product_type', $product->product_type) === 'drum')>Bulk Drum (208L Barrel / Decanting Source)</option>
+                        </select>
+                        @error('product_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div class="form-text">Marking as <strong>Loose Product</strong> allows it to be targeted for Drum Decanting and POS Loose Oil dispensing.</div>
+                    </div>
+
+                    <div class="col-md-6 d-flex align-items-center">
+                        <div class="form-check p-3 border rounded-3 w-100 bg-light mt-1">
+                            <input class="form-check-input ms-0 me-2" type="checkbox" name="is_loose" id="isLooseCheck" value="1" @checked(old('is_loose', $product->is_loose || $product->product_type === 'loose'))>
+                            <label class="form-check-label fw-semibold text-dark" for="isLooseCheck">
+                                <i class="bi bi-droplet-half text-primary me-1"></i> Mark as Loose Product (Sold per Liter)
+                            </label>
+                            <small class="text-muted d-block ms-4" style="font-size: 11.5px;">Auto-filters in Auto Lube Station Loose Oil Counter &amp; Decanting.</small>
+                        </div>
                     </div>
 
                     <div class="col-12">
@@ -127,4 +153,64 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const typeSelect = document.getElementById('productTypeSelect');
+    const looseCheck = document.getElementById('isLooseCheck');
+    const unitSelect = document.querySelector('select[name="unit"]');
+    const litersLabel = document.getElementById('litersFieldLabel');
+    const litersInput = document.getElementById('litersInput');
+    const litersHelp = document.getElementById('litersHelpText');
+
+    function syncTypeUI() {
+        if (!typeSelect) return;
+        const val = typeSelect.value;
+        if (val === 'drum') {
+            if (looseCheck) looseCheck.checked = false;
+            if (unitSelect && (!unitSelect.value || unitSelect.value === 'PCS' || unitSelect.value === 'LITER')) {
+                unitSelect.value = 'DRUM';
+            }
+            if (litersLabel) litersLabel.innerHTML = '<i class="bi bi-fuel-pump text-primary me-1"></i> Drum Capacity (Liters) <span class="text-danger">*</span>';
+            if (litersInput) litersInput.placeholder = 'e.g. 280 or 520';
+            if (litersHelp) litersHelp.textContent = 'Total volume capacity of this drum (e.g. 280L, 520L). Auto-populates decanting usable liters.';
+        } else if (val === 'loose') {
+            if (looseCheck) looseCheck.checked = true;
+            if (unitSelect && (!unitSelect.value || unitSelect.value === 'PCS' || unitSelect.value === 'DRUM')) {
+                unitSelect.value = 'LITER';
+            }
+            if (litersLabel) litersLabel.innerHTML = '<i class="bi bi-droplet-half text-info me-1"></i> Loose Unit Volume (Liters) <span class="text-danger">*</span>';
+            if (litersInput) {
+                litersInput.placeholder = 'e.g. 1 or 2';
+                if (!litersInput.value) litersInput.value = '1';
+            }
+            if (litersHelp) litersHelp.textContent = 'Defined volume per loose unit (e.g. 1L). Decanting 250L into this product results in 250 available quantity.';
+        } else {
+            if (looseCheck) looseCheck.checked = false;
+            if (litersLabel) litersLabel.textContent = 'Variant / Pack Size in Liters';
+            if (litersInput) litersInput.placeholder = 'e.g. 4 (for 4L can)';
+            if (litersHelp) litersHelp.textContent = 'Optional pack volume in liters for standard packaged items.';
+        }
+    }
+
+    if (typeSelect) {
+        typeSelect.addEventListener('change', syncTypeUI);
+    }
+
+    if (looseCheck) {
+        looseCheck.addEventListener('change', function () {
+            if (this.checked) {
+                typeSelect.value = 'loose';
+            } else if (typeSelect.value === 'loose') {
+                typeSelect.value = 'standard';
+            }
+            syncTypeUI();
+        });
+    }
+
+    syncTypeUI();
+});
+</script>
+@endpush
 @endsection
