@@ -41,12 +41,17 @@ class ModuleHubsTest extends TestCase
         $resSales->assertSee('Sales &amp; POS Hub', false);
         $resSales->assertSee('POS Billing Terminal');
         $resSales->assertSee('Sales Invoices');
+        $resSales->assertDontSee('Products &amp; Catalog', false);
 
         // 3. Inventory Hub
         $resInv = $this->actingAs($admin)->get('/inventory-hub');
         $resInv->assertOk();
         $resInv->assertSee('Inventory &amp; Warehouses Hub', false);
+        $resInv->assertSee('Product Catalog');
         $resInv->assertSee('Stock Overview');
+        $resInv->assertSee('Brands');
+        $resInv->assertSee('Categories');
+        $resInv->assertSee('Units of Measure');
         $resInv->assertSee('Godowns / Stores');
 
         // 4. Finance Hub
@@ -69,6 +74,7 @@ class ModuleHubsTest extends TestCase
         $resMgmt->assertSee('Management &amp; Settings Hub', false);
         $resMgmt->assertSee('User Accounts');
         $resMgmt->assertSee('Roles &amp; Permissions', false);
+        $resMgmt->assertDontSee('Product Catalog');
 
         // 7. Reports Hub
         $resRep = $this->actingAs($admin)->get('/reports');
@@ -107,5 +113,22 @@ class ModuleHubsTest extends TestCase
         $resPurchaseAfter->assertSee('Requisitions (PR)');
         $resPurchaseAfter->assertDontSee('Purchase Orders (PO)');
         $resPurchaseAfter->assertDontSee('Purchase Invoices (PI)');
+    }
+
+    public function test_rearranged_screens_in_menu_and_role_screen(): void
+    {
+        $admin = $this->createAdmin();
+
+        // Check sidebar navigation rendering in dashboard
+        $resDash = $this->actingAs($admin)->get('/dashboard');
+        $resDash->assertOk();
+
+        // 1. In Role Creation Form, Inventory & Products module card groups Products, Stock, and Catalog
+        $resRole = $this->actingAs($admin)->get(route('roles.create'));
+        $resRole->assertOk();
+        $resRole->assertSee('Inventory &amp; Products', false);
+        $resRole->assertSee('View Products');
+        $resRole->assertSee('View Stock');
+        $resRole->assertSee('Manage Brands &amp; Categories', false);
     }
 }

@@ -18,11 +18,29 @@ class UserRequest extends FormRequest
             return true;
         }
 
+        if ($currentUser->isBusinessOwner()) {
+            $targetUser = $this->route('user');
+            if ($targetUser) {
+                $business = $currentUser->shop ? $currentUser->shop->getRootBusiness() : null;
+                $allowedIds = $business ? $business->getAllBranchIds() : [];
+
+                if ($targetUser->isSuperAdmin() || ($targetUser->isBusinessOwner() && ! $currentUser->is($targetUser))) {
+                    return false;
+                }
+
+                return in_array((int) $targetUser->shop_id, $allowedIds, true);
+            }
+
+            return true;
+        }
+
         if ($currentUser->isShopAdmin()) {
             $targetUser = $this->route('user');
             if ($targetUser) {
-                // Shop Admin can only manage staff belonging to their own shop
-                return $targetUser->shop_id === $currentUser->shop_id && ! $targetUser->isSuperAdmin();
+                // Shop Admin can only manage staff belonging to their own branch, never super admins or business owners
+                return (int) $targetUser->shop_id === (int) $currentUser->shop_id 
+                    && ! $targetUser->isSuperAdmin() 
+                    && ! $targetUser->isBusinessOwner();
             }
 
             return true;
@@ -39,6 +57,11 @@ class UserRequest extends FormRequest
             if ($assigned === 'system:super_admin' || $assigned === 'super_admin') {
                 $this->merge([
                     'role' => 'super_admin',
+                    'role_id' => null,
+                ]);
+            } elseif ($assigned === 'system:business_owner' || $assigned === 'business_owner') {
+                $this->merge([
+                    'role' => 'business_owner',
                     'role_id' => null,
                 ]);
             } elseif ($assigned === 'system:shop_admin' || $assigned === 'shop_admin') {
@@ -84,9 +107,14 @@ class UserRequest extends FormRequest
 
         if ($currentUser->isSuperAdmin()) {
             $rules['shop_id'] = ['nullable', 'exists:shops,id'];
-            $rules['role'] = ['required', Rule::in(['super_admin', 'shop_admin', 'staff', 'user'])];
+            $rules['role'] = ['required', Rule::in(['super_admin', 'business_owner', 'shop_admin', 'staff', 'user'])];
+        } elseif ($currentUser->isBusinessOwner()) {
+            $business = $currentUser->shop ? $currentUser->shop->getRootBusiness() : null;
+            $allowedIds = $business ? $business->getAllBranchIds() : [];
+            $rules['shop_id'] = ['required', Rule::in($allowedIds)];
+            $rules['role'] = ['required', Rule::in(['shop_admin', 'staff', 'user'])];
         } else {
-            // Shop Admin can create/update shop admins and staff within their own shop
+            $rules['shop_id'] = ['nullable'];
             $rules['role'] = ['required', Rule::in(['shop_admin', 'staff', 'user'])];
         }
 

@@ -49,6 +49,11 @@ class User extends Authenticatable
         return $this->role === 'super_admin';
     }
 
+    public function isBusinessOwner(): bool
+    {
+        return $this->role === 'business_owner';
+    }
+
     public function isShopAdmin(): bool
     {
         return $this->role === 'shop_admin';
@@ -61,12 +66,15 @@ class User extends Authenticatable
 
     public function isLubeShop(): bool
     {
-        if ($this->isSuperAdmin()) {
+        if ($this->isSuperAdmin() || $this->isBusinessOwner()) {
             $sessionShopId = session('dashboard_shop_id');
             if ($sessionShopId) {
                 return Shop::find($sessionShopId)?->isLube() ?? false;
             }
-            return true;
+            if ($this->isSuperAdmin()) {
+                return true;
+            }
+            return $this->shop?->isLube() ?? false;
         }
 
         return $this->shop?->isLube() ?? false;
@@ -77,32 +85,83 @@ class User extends Authenticatable
         return $this->status === 'active';
     }
 
-    public function hasPermission(string $permissionSlug): bool
+    public function canAccessModule(string $module): bool
     {
-        if ($this->isSuperAdmin() || $this->isShopAdmin()) {
+        if ($this->isSuperAdmin()) {
             return true;
         }
 
-        // If user has a specific custom role assigned, strictly respect its configured rights
+        if (! $this->shop) {
+            return false;
+        }
+
+        if (! $this->shop->isModuleAvailable($module)) {
+            return false;
+        }
+
+        if ($this->isBusinessOwner() || $this->isShopAdmin()) {
+            return true;
+        }
+
+        $resolvedModules = \App\Services\ModuleRegistry::resolveModuleGroup($module);
+
+        if ($this->role_id && $this->customRole) {
+            return $this->customRole->permissions()->whereIn('module', $resolvedModules)->exists();
+        }
+
+        if ($this->role === 'staff' || $this->role === 'user') {
+            $legacyHubs = ['pos', 'sales', 'inventory', 'stock', 'products', 'purchases', 'finance', 'accounts', 'hr', 'reports', 'management'];
+            foreach ($resolvedModules as $m) {
+                if (in_array($m, $legacyHubs, true) || in_array($module, $legacyHubs, true)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public function hasPermission(string $permissionSlug): bool
+    {
+        static $permissionModuleMap = null;
+        if ($permissionModuleMap === null) {
+            $permissionModuleMap = Permission::pluck('module', 'slug')->all();
+        }
+
+        $module = $permissionModuleMap[$permissionSlug] ?? str($permissionSlug)->before('.')->value();
+
+        // If user belongs to a shop, the module must be enabled for that shop's business type
+        if ($this->shop && ! $this->shop->isModuleAvailable($module)) {
+            return false;
+        }
+
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        if ($this->isBusinessOwner() || $this->isShopAdmin()) {
+            return true;
+        }
+
         if ($this->role_id) {
             return $this->customRole ? $this->customRole->hasPermission($permissionSlug) : false;
         }
 
-        // Default baseline permissions for standard staff/user without custom role
-        $defaultStaffPerms = [
-            'pos.access', 'pos.discount_item', 'pos.discount_bill',
-            'sales.view_invoices', 'products.view', 'stock.view', 'stock.sell',
-        ];
+        // Backward compatibility for legacy accounts without an assigned custom role
+        if ($this->role === 'staff' || $this->role === 'user') {
+            $legacyStaffPerms = [
+                'pos.access', 'pos.discount_item', 'pos.discount_bill',
+                'sales.view_invoices', 'products.view', 'stock.view', 'stock.sell',
+            ];
 
-        return in_array($permissionSlug, $defaultStaffPerms, true);
+            return in_array($permissionSlug, $legacyStaffPerms, true);
+        }
+
+        return false;
     }
 
     public function hasAnyPermission(array|string ...$permissions): bool
     {
-        if ($this->isSuperAdmin() || $this->isShopAdmin()) {
-            return true;
-        }
-
         $flattened = collect($permissions)->flatten()->all();
         foreach ($flattened as $perm) {
             if ($this->hasPermission((string) $perm)) {

@@ -20,6 +20,13 @@ class AuthController extends Controller
         if (Auth::attempt([...$credentials, 'status' => 'active'], $request->boolean('remember'))) {
             $request->session()->regenerate();
 
+            $user = Auth::user();
+            if (! $user->isSuperAdmin() && ! $user->isShopAdmin() && ! $user->isBusinessOwner()) {
+                if ($user->hasPermission('pos.access') && ! $user->hasPermission('purchases.view') && ! $user->hasPermission('stock.view') && ! $user->hasPermission('reports.sales')) {
+                    return redirect()->intended(route('pos'));
+                }
+            }
+
             return redirect()->intended(route('dashboard'));
         }
 

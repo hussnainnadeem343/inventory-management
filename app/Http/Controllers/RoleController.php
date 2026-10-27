@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\Shop;
+use App\Services\ModuleRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -15,18 +16,21 @@ class RoleController extends Controller
     public function index(Request $request): View
     {
         $user = $request->user();
-        abort_unless($user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('roles.manage'), 403);
+        abort_unless($user->isSuperAdmin() || $user->isBusinessOwner() || $user->isShopAdmin() || $user->hasPermission('roles.manage'), 403);
 
         $shopId = $user->isSuperAdmin() ? $request->query('shop_id') : $user->shop_id;
 
         $query = Role::with(['shop', 'creator'])
             ->withCount(['users', 'permissions']);
 
-        if ($shopId) {
-            $query->where(function ($q) use ($shopId) {
-                $q->where('shop_id', $shopId)->orWhereNull('shop_id');
-            });
-        } elseif (! $user->isSuperAdmin()) {
+        if ($user->isSuperAdmin()) {
+            if ($shopId) {
+                $query->where('shop_id', $shopId);
+            }
+        } elseif ($user->isBusinessOwner()) {
+            $branchIds = $user->shop ? $user->shop->getAllBranchIds() : [];
+            $query->whereIn('shop_id', $branchIds);
+        } else {
             $query->where('shop_id', $user->shop_id);
         }
 
@@ -42,22 +46,29 @@ class RoleController extends Controller
     public function create(Request $request): View
     {
         $user = $request->user();
-        abort_unless($user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('roles.manage'), 403);
+        abort_unless($user->isSuperAdmin() || $user->isBusinessOwner() || $user->isShopAdmin() || $user->hasPermission('roles.manage'), 403);
 
-        $permissionsByModule = Permission::all()->groupBy('module');
+        $targetShop = $user->isSuperAdmin()
+            ? (Shop::find($request->query('shop_id')) ?? Shop::first())
+            : $user->shop;
+
+        $permissionsByModule = ModuleRegistry::getPermissionsGroupedByModule($targetShop?->business_type);
+        $moduleDefinitions = ModuleRegistry::getModuleDefinitions();
 
         return view('roles.form', [
             'role' => new Role,
             'permissionsByModule' => $permissionsByModule,
+            'moduleDefinitions' => $moduleDefinitions,
             'rolePermissionIds' => [],
             'shops' => $user->isSuperAdmin() ? Shop::where('status', 'active')->orderBy('name')->get() : collect(),
+            'targetShop' => $targetShop,
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $user = $request->user();
-        abort_unless($user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('roles.manage'), 403);
+        abort_unless($user->isSuperAdmin() || $user->isBusinessOwner() || $user->isShopAdmin() || $user->hasPermission('roles.manage'), 403);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
@@ -68,8 +79,10 @@ class RoleController extends Controller
         ]);
 
         $shopId = $user->isSuperAdmin()
-            ? (int) ($validated['shop_id'] ?? session('dashboard_shop_id') ?? Shop::first()->id)
+            ? (int) ($validated['shop_id'] ?? session('dashboard_shop_id') ?? Shop::first()?->id)
             : $user->shop_id;
+
+        $targetShop = Shop::find($shopId);
 
         $baseSlug = Str::slug($validated['name']);
         $slug = $baseSlug;
@@ -87,11 +100,18 @@ class RoleController extends Controller
             'created_by' => $user->id,
         ]);
 
+        // Filter permissions to only those enabled for this business type
         if (! empty($validated['permissions'])) {
-            $role->permissions()->sync($validated['permissions']);
+            $allowedModules = ModuleRegistry::getModulesForType($targetShop?->business_type ?? '');
+            $validPermissionIds = Permission::whereIn('module', $allowedModules)
+                ->whereIn('id', $validated['permissions'])
+                ->pluck('id')
+                ->all();
+
+            $role->permissions()->sync($validPermissionIds);
         }
 
-        return redirect()->route('roles.index')->with('success', "Role '{$role->name}' created successfully with configured permissions.");
+        return redirect()->route('roles.index')->with('success', "Role '{$role->name}' created successfully with configured rights.");
     }
 
     public function edit(Request $request, Role $role): View
@@ -99,14 +119,18 @@ class RoleController extends Controller
         $user = $request->user();
         $this->authorizeRoleAccess($user, $role);
 
-        $permissionsByModule = Permission::all()->groupBy('module');
+        $targetShop = $role->shop ?? $user->shop;
+        $permissionsByModule = ModuleRegistry::getPermissionsGroupedByModule($targetShop?->business_type);
+        $moduleDefinitions = ModuleRegistry::getModuleDefinitions();
         $rolePermissionIds = $role->permissions()->pluck('permissions.id')->toArray();
 
         return view('roles.form', [
             'role' => $role,
             'permissionsByModule' => $permissionsByModule,
+            'moduleDefinitions' => $moduleDefinitions,
             'rolePermissionIds' => $rolePermissionIds,
             'shops' => $user->isSuperAdmin() ? Shop::where('status', 'active')->orderBy('name')->get() : collect(),
+            'targetShop' => $targetShop,
         ]);
     }
 
@@ -127,7 +151,14 @@ class RoleController extends Controller
             'description' => $validated['description'] ?? null,
         ]);
 
-        $role->permissions()->sync($validated['permissions'] ?? []);
+        $targetShop = $role->shop ?? $user->shop;
+        $allowedModules = ModuleRegistry::getModulesForType($targetShop?->business_type ?? '');
+        $validPermissionIds = Permission::whereIn('module', $allowedModules)
+            ->whereIn('id', $validated['permissions'] ?? [])
+            ->pluck('id')
+            ->all();
+
+        $role->permissions()->sync($validPermissionIds);
 
         return redirect()->route('roles.index')->with('success', "Role '{$role->name}' updated successfully.");
     }
@@ -139,7 +170,7 @@ class RoleController extends Controller
 
         $assignedUsersCount = $role->users()->count();
         if ($assignedUsersCount > 0) {
-            return back()->with('error', "Cannot delete '{$role->name}' because it is assigned to {$assignedUsersCount} user(s). Reassign them first.");
+            return back()->with('error', "Cannot delete role '{$role->name}' because it is assigned to {$assignedUsersCount} staff account(s). Please reassign them first.");
         }
 
         $role->delete();
@@ -153,10 +184,13 @@ class RoleController extends Controller
             return;
         }
 
-        if ($user->isShopAdmin() && $role->shop_id === $user->shop_id) {
-            return;
+        if ($user->shop) {
+            $allowedShopIds = $user->shop->getAllBranchIds();
+            if (in_array($role->shop_id, $allowedShopIds, true)) {
+                return;
+            }
         }
 
-        abort(403, 'Unauthorized. You cannot manage roles from another store.');
+        abort(403, 'Unauthorized. You cannot manage roles from another business.');
     }
 }

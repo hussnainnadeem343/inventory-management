@@ -10,10 +10,13 @@ use App\Models\Category;
 use App\Models\InventoryItem;
 use App\Models\InventoryTransaction;
 use App\Models\ProductBatch;
+use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\Shop;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Maatwebsite\Excel\Facades\Excel;
@@ -65,11 +68,27 @@ class StockController extends Controller
         $categoryQuery = Category::query();
         $shopProductsQuery = InventoryItem::where('status', 'active');
 
-        if ($shopId) {
-            $brandQuery->where('shop_id', $shopId);
-            $categoryQuery->where('shop_id', $shopId);
-            $shopProductsQuery->where('shop_id', $shopId);
+        if ($user->isSuperAdmin()) {
+            if ($shopId) {
+                $targetShop = Shop::find($shopId);
+                $targetIds = $targetShop ? $targetShop->getAllBranchIds() : [$shopId];
+                $brandQuery->whereIn('shop_id', $targetIds);
+                $categoryQuery->whereIn('shop_id', $targetIds);
+                $shopProductsQuery->whereIn('shop_id', $targetIds);
+            }
+        } else {
+            $branchIds = $user->shop ? $user->shop->getAllBranchIds() : [$user->shop_id];
+            $brandQuery->whereIn('shop_id', $branchIds);
+            $categoryQuery->whereIn('shop_id', $branchIds);
+            $shopProductsQuery->whereIn('shop_id', $branchIds);
         }
+
+        $activeShopProducts = $shopProductsQuery
+            ->select('id', 'item_name', 'sku', 'selling_price', 'quantity', 'shop_id')
+            ->orderBy('item_name')
+            ->get()
+            ->unique(fn ($item) => ! empty($item->sku) ? $item->sku : 'item_' . $item->id)
+            ->values();
 
         return view('stock.index', [
             'products' => $products,
@@ -78,13 +97,14 @@ class StockController extends Controller
             'brands' => $brandQuery->orderBy('name')->get(),
             'categories' => $categoryQuery->orderBy('name')->get(),
             'shops' => $user->isSuperAdmin() ? Shop::orderBy('name')->get() : collect(),
-            'activeShopProducts' => $shopProductsQuery->select('id', 'item_name', 'sku', 'selling_price', 'quantity')->orderBy('item_name')->get(),
+            'activeShopProducts' => $activeShopProducts,
         ]);
     }
 
     public function add(Request $request, InventoryItem $product): RedirectResponse
     {
-        $this->authorizeProductShop($request->user(), $product);
+        $user = $request->user();
+        $this->authorizeProductShop($user, $product);
 
         $validated = $request->validate([
             'quantity' => ['required', 'numeric', 'min:0.01'],
@@ -102,8 +122,33 @@ class StockController extends Controller
         $expiryDate = $validated['expiry_date'] ?? null;
         $notes = $validated['notes'] ?? null;
 
-        DB::transaction(function () use ($product, $qty, $newCost, $newSellPrice, $customBatchNo, $expiryDate, $notes, $request): void {
-            $locked = InventoryItem::query()->lockForUpdate()->findOrFail($product->id);
+        // If a branch is adding stock to a product from the shared business catalog, ensure branch has its local record
+        $targetProduct = $product;
+        if ($user->shop_id && $product->shop_id !== $user->shop_id && ! empty($product->sku)) {
+            $targetProduct = InventoryItem::firstOrCreate([
+                'shop_id' => $user->shop_id,
+                'sku' => $product->sku,
+            ], [
+                'item_name' => $product->item_name,
+                'brand_id' => $product->brand_id,
+                'category_id' => $product->category_id,
+                'unit' => $product->unit,
+                'pack_size' => $product->pack_size,
+                'liters' => $product->liters,
+                'product_type' => $product->product_type,
+                'is_loose' => $product->is_loose,
+                'purchase_price' => $product->purchase_price,
+                'selling_price' => $product->selling_price,
+                'status' => 'active',
+                'quantity' => 0,
+                'initial_quantity' => 0,
+                'sold_quantity' => 0,
+                'created_by' => $user->id,
+            ]);
+        }
+
+        DB::transaction(function () use ($targetProduct, $qty, $newCost, $newSellPrice, $customBatchNo, $expiryDate, $notes, $request, $user): void {
+            $locked = InventoryItem::query()->lockForUpdate()->findOrFail($targetProduct->id);
             $oldStock = (float) $locked->quantity;
             $oldCost = (float) ($locked->purchase_price ?? 0);
 
@@ -117,9 +162,17 @@ class StockController extends Controller
                 }
             }
 
-            // Update master product selling price if a new selling price is entered
+            // Update master product selling price if a new selling price is entered (Universal price across business)
             if ($newSellPrice !== null && $newSellPrice > 0) {
                 $locked->selling_price = $newSellPrice;
+
+                if (! empty($locked->sku)) {
+                    $branchIds = $user->shop ? $user->shop->getAllBranchIds() : [$locked->shop_id];
+                    InventoryItem::whereIn('shop_id', $branchIds)
+                        ->where('sku', $locked->sku)
+                        ->where('id', '!=', $locked->id)
+                        ->update(['selling_price' => $newSellPrice]);
+                }
             }
 
             if ($expiryDate) {
@@ -166,7 +219,7 @@ class StockController extends Controller
             ]);
         });
 
-        return back()->with('success', "Added {$qty} units to {$product->item_name}. New stock: " . number_format($product->fresh()->quantity, 2));
+        return back()->with('success', "Added {$qty} units to {$targetProduct->item_name}. New branch stock: " . number_format($targetProduct->fresh()->quantity, 2));
     }
 
     public function sell(Request $request, InventoryItem $product): RedirectResponse
@@ -248,6 +301,40 @@ class StockController extends Controller
                 'notes' => $notes ?: 'Counter Sale',
                 'created_by' => $request->user()->id,
             ]);
+
+            // Synchronize with sales & sale_items for consolidated reporting
+            $resolvedShopId = $locked->shop_id ?: ($request->user()->shop_id ?: Shop::value('id'));
+            if ($resolvedShopId) {
+                $subtotal = round($qty * $unitSalePrice, 2);
+                $sale = Sale::create([
+                    'shop_id' => $resolvedShopId,
+                    'invoice_no' => 'INV-' . strtoupper(Str::random(8)),
+                    'customer_name' => 'Counter Customer',
+                    'customer_phone' => null,
+                    'total_items' => 1,
+                    'subtotal' => $subtotal,
+                    'items_discount_total' => 0,
+                    'discount' => 0,
+                    'total_amount' => $subtotal,
+                    'payment_method' => 'cash',
+                    'paid_amount' => $subtotal,
+                    'change_amount' => 0,
+                    'notes' => $notes ?: 'Counter Sale',
+                    'created_by' => $request->user()->id,
+                ]);
+
+                SaleItem::create([
+                    'sale_id' => $sale->id,
+                    'shop_id' => $resolvedShopId,
+                    'inventory_item_id' => $locked->id,
+                    'product_batch_id' => $primaryBatchId,
+                    'quantity' => $qty,
+                    'unit_cost' => $effectiveUnitCost,
+                    'unit_price' => $unitSalePrice,
+                    'discount' => 0,
+                    'line_total' => $subtotal,
+                ]);
+            }
         });
 
         return back()->with('success', "Sold {$qty} units of {$product->item_name}. Remaining stock: " . number_format($product->fresh()->quantity, 2));
@@ -439,6 +526,8 @@ class StockController extends Controller
             return;
         }
 
-        abort_unless($user->shop_id === $product->shop_id, 403, 'Unauthorized access to another shop stock.');
+        $branchIds = $user->shop ? $user->shop->getAllBranchIds() : [$user->shop_id];
+
+        abort_unless(in_array((int) $product->shop_id, $branchIds, true), 403, 'Unauthorized access to another business stock.');
     }
 }

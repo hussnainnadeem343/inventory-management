@@ -12,7 +12,7 @@ use App\Http\Controllers\Lube\PitTechnicianController;
 use App\Http\Controllers\Lube\VehicleHistoryController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth'])->prefix('lube')->name('lube.')->group(function () {
+Route::middleware(['auth', 'active', 'module:lube'])->prefix('lube')->name('lube.')->group(function () {
 
     // Auto Lube Station Module Hub (Launchpad)
     Route::get('/hub', LubeHubController::class)->name('hub');

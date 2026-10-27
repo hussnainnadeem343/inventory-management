@@ -11,13 +11,22 @@ class EnsureUserIsActive
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() && ! $request->user()->isActive()) {
-            Auth::logout();
-            $request->session()->invalidate();
+        if ($request->user()) {
+            if (! $request->user()->isActive()) {
+                Auth::logout();
+                $request->session()->invalidate();
 
-            return redirect()->route('login')->withErrors(['email' => 'Your account is inactive.']);
+                return redirect()->route('login')->withErrors(['username' => 'Your user account is inactive.']);
+            }
+
+            if (! $request->user()->isSuperAdmin() && $request->user()->shop && ! $request->user()->shop->isActive()) {
+                Auth::logout();
+                $request->session()->invalidate();
+
+                return redirect()->route('login')->withErrors(['username' => 'Your business account has been deactivated or suspended. Please contact platform support.']);
+            }
         }
 
-return $next($request);
+        return $next($request);
     }
 }

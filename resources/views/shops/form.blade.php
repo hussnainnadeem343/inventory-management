@@ -26,28 +26,19 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Business Type <span class="text-danger">*</span></label>
                         @php
-                            $currentType = old('business_type', $shop->business_type ?? 'General Retail');
-                            $presets = [
-                                'General Retail' => 'General Retail / Counter POS',
-                                'Lube (Oil Changing)' => 'Lube (Oil Changing) Station',
-                                'Cosmetics & Beauty' => 'Cosmetics & Beauty',
-                                'Pharmacy / Healthcare' => 'Pharmacy & Healthcare',
-                                'Auto Spare Parts' => 'Auto Spare Parts & Hardware',
-                                'Footwear & Apparel' => 'Footwear & Apparel',
-                                'Electronics & Mobile' => 'Electronics & Mobile',
-                            ];
-                            $isOther = !empty($currentType) && !array_key_exists($currentType, $presets) && !$shop->isLube();
+                            $currentCanonical = \App\Services\ModuleRegistry::normalizeBusinessType(old('business_type', $shop->business_type));
                         @endphp
-                        <select name="business_type" class="form-select @error('business_type') is-invalid @enderror" id="shopBusinessTypeSelect" onchange="if(this.value==='Other'){document.getElementById('customBusinessTypeWrap').classList.remove('d-none'); document.getElementById('customBusinessTypeInput').required=true; document.getElementById('customBusinessTypeInput').focus();}else{document.getElementById('customBusinessTypeWrap').classList.add('d-none'); document.getElementById('customBusinessTypeInput').required=false;}">
-                            @foreach($presets as $val => $lbl)
-                                <option value="{{ $val }}" @selected($currentType === $val || ($val === 'Lube (Oil Changing)' && $shop->isLube()))>{{ $lbl }}</option>
-                            @endforeach
-                            <option value="Other" @selected($isOther)>Other (Custom)...</option>
+                        <select name="business_type" class="form-select @error('business_type') is-invalid @enderror" required>
+                            <option value="Retail & General Business" @selected($currentCanonical === \App\Services\ModuleRegistry::TYPE_RETAIL)>
+                                Retail &amp; General Business (Point of Sale, Inventory, Purchases, Finance, HR)
+                            </option>
+                            <option value="Lube (Oil Changing) Station" @selected($currentCanonical === \App\Services\ModuleRegistry::TYPE_LUBE)>
+                                Lube (Oil Changing) Station (Includes Retail + Auto Lube Pit Stop, Vehicle Records, Oil Reminders)
+                            </option>
                         </select>
-                        <div id="customBusinessTypeWrap" class="{{ $isOther ? '' : 'd-none' }} mt-2">
-                            <input type="text" id="customBusinessTypeInput" name="custom_business_type" class="form-control form-control-sm" placeholder="Please specify your custom business type" value="{{ old('custom_business_type', $isOther ? $currentType : '') }}">
-                        </div>
-                        <small class="text-muted d-block mt-1">Choosing <strong>Lube (Oil Changing)</strong> activates vehicle history, pit technicians, and auto lube counter POS.</small>
+                        <small class="text-muted d-block mt-1">
+                            Defines which modules are available for this business and its staff roles.
+                        </small>
                         @error('business_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-6">
@@ -70,14 +61,47 @@
                         </select>
                         @error('status') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
+
+                    <div class="col-12">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <h6 class="fw-bold text-dark mb-1"><i class="bi bi-shield-check text-primary me-1"></i>Subscription Quotas &amp; Tier Limits</h6>
+                            <small class="text-muted d-block mb-3">Define the maximum number of branches and staff accounts allowed under this business plan.</small>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Max Branches Allowed <span class="text-danger">*</span></label>
+                                    <input type="number" min="1" max="100" class="form-control @error('max_branches') is-invalid @enderror" name="max_branches" value="{{ old('max_branches', $shop->max_branches ?? 1) }}" required>
+                                    <small class="text-muted">Includes the HQ / main store. (e.g. 1 = Single Shop, 5 = Multi-Branch)</small>
+                                    @error('max_branches') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Max Users / Staff Allowed <span class="text-danger">*</span></label>
+                                    <input type="number" min="1" max="1000" class="form-control @error('max_users') is-invalid @enderror" name="max_users" value="{{ old('max_users', $shop->max_users ?? 5) }}" required>
+                                    <small class="text-muted">Total user accounts across all branches of this client business.</small>
+                                    @error('max_users') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 @if(! $shop->exists)
                     <hr class="my-4">
-                    <h3 class="h6 mb-2 text-primary"><i class="bi bi-person-badge me-1"></i>Initial Shop Admin Account (Optional)</h3>
-                    <p class="text-muted small mb-3">You can create the initial Shop Admin login for this shop right now.</p>
+                    <h3 class="h6 mb-2 text-primary"><i class="bi bi-person-badge me-1"></i>Initial Business / Shop Admin Account (Optional)</h3>
+                    <p class="text-muted small mb-3">Create the primary administrative login for this business client now.</p>
 
                     <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Account Role <span class="text-danger">*</span></label>
+                            <select class="form-select @error('admin_role') is-invalid @enderror" name="admin_role">
+                                <option value="business_owner" @selected(old('admin_role', 'business_owner') === 'business_owner')>
+                                    Business Owner (Client Principal - Can self-create sub-branches, manage all staff &amp; view consolidated analytics)
+                                </option>
+                                <option value="shop_admin" @selected(old('admin_role') === 'shop_admin')>
+                                    Shop Admin (Standard branch manager - Restricted to this store)
+                                </option>
+                            </select>
+                            @error('admin_role') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
                         <div class="col-md-6">
                             <label class="form-label">Admin Full Name</label>
                             <input class="form-control @error('admin_name') is-invalid @enderror" name="admin_name" value="{{ old('admin_name') }}" placeholder="e.g. Muhammad Ali">

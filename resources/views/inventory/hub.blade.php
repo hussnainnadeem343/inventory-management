@@ -11,7 +11,7 @@
     <div class="d-flex justify-content-between align-items-center">
         <div>
             <h4 class="mb-0 fw-bold">Inventory &amp; Warehouses Hub</h4>
-            <small class="text-secondary">Direct operational access to stock balances, warehouses, transfers, and catalog</small>
+            <small class="text-secondary">Direct operational access to products, stock balances, brands, categories, units, and godowns</small>
         </div>
     </div>
 </div>
@@ -20,12 +20,44 @@
     $user = auth()->user();
     $cards = [
         [
+            'title' => 'Product Catalog',
+            'route' => route('products.index'),
+            'icon' => 'bi-box-seam',
+            'color' => '#2563eb',
+            'bg' => '#eff6ff',
+            'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('products.view'),
+        ],
+        [
             'title' => 'Stock Overview',
             'route' => route('stock.index'),
             'icon' => 'bi-stack',
             'color' => '#0284c7',
             'bg' => '#f0f9ff',
             'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('stock.view'),
+        ],
+        [
+            'title' => 'Brands',
+            'route' => route('brands.index'),
+            'icon' => 'bi-tags',
+            'color' => '#db2777',
+            'bg' => '#fdf2f8',
+            'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('catalog.manage'),
+        ],
+        [
+            'title' => 'Categories',
+            'route' => route('categories.index'),
+            'icon' => 'bi-collection',
+            'color' => '#7c3aed',
+            'bg' => '#f5f3ff',
+            'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('catalog.manage'),
+        ],
+        [
+            'title' => 'Units of Measure',
+            'route' => route('units.index'),
+            'icon' => 'bi-rulers',
+            'color' => '#475569',
+            'bg' => '#f1f5f9',
+            'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('catalog.manage'),
         ],
         [
             'title' => 'Godowns / Stores',
@@ -50,38 +82,6 @@
             'color' => '#d97706',
             'bg' => '#fffbeb',
             'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('stock.view'),
-        ],
-        [
-            'title' => 'Product Items',
-            'route' => route('products.index'),
-            'icon' => 'bi-boxes',
-            'color' => '#2563eb',
-            'bg' => '#eff6ff',
-            'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('products.view'),
-        ],
-        [
-            'title' => 'Brands',
-            'route' => route('brands.index'),
-            'icon' => 'bi-tag',
-            'color' => '#db2777',
-            'bg' => '#fdf2f8',
-            'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('catalog.manage'),
-        ],
-        [
-            'title' => 'Categories',
-            'route' => route('categories.index'),
-            'icon' => 'bi-grid',
-            'color' => '#7c3aed',
-            'bg' => '#f5f3ff',
-            'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('catalog.manage'),
-        ],
-        [
-            'title' => 'Units of Measure',
-            'route' => route('units.index'),
-            'icon' => 'bi-rulers',
-            'color' => '#475569',
-            'bg' => '#f1f5f9',
-            'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('catalog.manage'),
         ],
     ];
 @endphp

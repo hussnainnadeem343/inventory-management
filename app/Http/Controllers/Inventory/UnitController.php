@@ -40,7 +40,7 @@ class UnitController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = $request->user();
-        $shopId = $user->isSuperAdmin() ? $request->input('shop_id', $user->shop_id) : $user->shop_id;
+        $shopId = $user->shop ? $user->shop->getRootBusiness()->id : ($user->shop_id ?? 1);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
@@ -58,7 +58,7 @@ class UnitController extends Controller
             'created_by' => $user->id,
         ]);
 
-        return redirect()->route('units.index')->with('success', 'Unit of Measure created successfully.');
+        return redirect()->route('units.index')->with('success', 'Unit of Measure created successfully in business catalog.');
     }
 
     public function update(Request $request, Unit $unit): RedirectResponse

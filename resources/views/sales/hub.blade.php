@@ -11,7 +11,7 @@
     <div class="d-flex justify-content-between align-items-center">
         <div>
             <h4 class="mb-0 fw-bold">Sales &amp; POS Hub</h4>
-            <small class="text-secondary">Direct operational access to billing terminals, invoice records, and products</small>
+            <small class="text-secondary">Direct operational access to counter billing terminals and sales invoice records</small>
         </div>
     </div>
 </div>
@@ -35,21 +35,13 @@
             'bg' => '#eff6ff',
             'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('sales.view_invoices'),
         ],
-        [
-            'title' => 'Products & Catalog',
-            'route' => route('products.index'),
-            'icon' => 'bi-box-seam',
-            'color' => '#7c3aed',
-            'bg' => '#f5f3ff',
-            'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('products.view'),
-        ],
     ];
 @endphp
 
 <div class="row g-3 g-lg-4">
     @foreach($cards as $card)
         @if($card['can'])
-            <div class="col-sm-6 col-md-4 col-xl-4">
+            <div class="col-sm-6 col-md-6 col-xl-6">
                 <a href="{{ $card['route'] }}" class="card hub-card border shadow-sm rounded-3 p-4 h-100 text-decoration-none bg-white">
                     <div class="d-flex align-items-center justify-content-between mb-4">
                         <div class="hub-icon-tile rounded-3 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: {{ $card['bg'] }}; color: {{ $card['color'] }}; font-size: 24px;">

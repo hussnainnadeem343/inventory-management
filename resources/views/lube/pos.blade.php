@@ -20,9 +20,16 @@
                                 </span>
                                 <strong class="text-primary-emphasis small text-uppercase" style="letter-spacing: .5px;">Quick Vehicle &amp; Customer Lookup</strong>
                             </div>
-                            <button class="btn btn-sm btn-outline-secondary bg-white text-secondary py-0.5 px-2.5" type="button" id="btnResetLookup" title="Reset all fields">
-                                <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
-                            </button>
+                            <div class="d-flex align-items-center gap-1.5">
+                                <button class="btn btn-sm btn-outline-secondary bg-white text-secondary py-0.5 px-2.5" type="button" id="btnResetLookup" title="Reset all fields">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                                </button>
+                                @if(auth()->user()->hasPermission('reports.sales'))
+                                    <a href="{{ route('reports.cash-register') }}" class="btn btn-sm btn-outline-danger bg-white py-0.5 px-2.5" title="Close Cash Drawer">
+                                        <i class="bi bi-lock-fill me-1"></i> Close Cash
+                                    </a>
+                                @endif
+                            </div>
                         </div>
                         <div class="row g-2 align-items-center">
                             <div class="col-md-6">
@@ -671,7 +678,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const itemId = parseInt(opt.value);
             const name = opt.dataset.name;
             const price = parseFloat(opt.dataset.price) || 0;
-            const defaultQty = 4.00;
+            const defaultQty = 1.00;
             const lineTotal = price * defaultQty;
 
             cartItems.push({
@@ -825,7 +832,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </td>
                 <td class="text-center">
                     <input type="number" class="form-control form-control-sm text-center font-monospace px-1" 
-                           value="${it.quantity}" step="0.25" min="0.1" 
+                           value="${it.quantity}" 
                            style="width: 80px; margin: 0 auto;"
                            onchange="updateItemQty(${idx}, this.value)">
                 </td>
