@@ -25,20 +25,22 @@
 
     @php
         $user = auth()->user();
+        $shop = $user->shop;
 
         // 1. Sales & POS
         $canPos = $user->hasPermission('pos.access');
         $canInvoices = $user->hasPermission('sales.view_invoices');
         $canProducts = $user->hasPermission('products.view');
-        $hasSalesGroup = $canPos || $canInvoices || $canProducts;
-        $isSalesActive = request()->routeIs('pos') || request()->routeIs('sales.*') || request()->routeIs('products.*');
+        $hasSalesGroup = ($shop ? $shop->isModuleAvailable('pos') : true) && ($canPos || $canInvoices);
+        $isSalesActive = request()->routeIs('pos') || request()->routeIs('sales.*');
 
         // 2. Inventory & Stock
         $canStock = $user->hasPermission('stock.view');
-        $hasInventoryGroup = $canStock;
-        $isInventoryActive = request()->routeIs('stock.*') || request()->routeIs('inventory.*') || request()->routeIs('warehouses.*') || request()->routeIs('transfers.*') || request()->routeIs('adjustments.*');
+        $canCatalog = $user->hasPermission('catalog.manage');
+        $hasInventoryGroup = ($shop ? $shop->isModuleAvailable('stock') : true) && ($canStock || $canProducts || $canCatalog);
+        $isInventoryActive = request()->routeIs('stock.*') || request()->routeIs('inventory.*') || request()->routeIs('products.*') || request()->routeIs('brands.*') || request()->routeIs('categories.*') || request()->routeIs('units.*') || request()->routeIs('warehouses.*') || request()->routeIs('transfers.*') || request()->routeIs('adjustments.*');
 
-        // 3. Purchase & Procurement
+        // 3. Purchases & Procurement
         $canPurchases = $user->hasPermission('purchases.view');
         $canCreatePurchases = $user->hasPermission('purchases.create');
         $canGrn = $user->hasPermission('purchases.grn');
@@ -46,36 +48,47 @@
         $canIgp = $user->hasPermission('purchases.igp');
         $canPi = $user->hasPermission('purchases.invoices');
         $canReturn = $user->hasPermission('purchases.return');
-        $hasPurchaseGroup = $user->isSuperAdmin() || $user->isShopAdmin() || $canPurchases || $canCreatePurchases || $canGrn || $canPr || $canIgp || $canPi || $canReturn;
+        $hasPurchaseGroup = ($shop ? $shop->isModuleAvailable('purchases') : true) && ($canPurchases || $canCreatePurchases || $canGrn || $canPr || $canIgp || $canPi || $canReturn);
         $isPurchaseActive = request()->routeIs('purchases.*');
 
         // 4. Finance & Accounts
         $canAccounts = $user->hasPermission('accounts.view');
+        $canManageAccounts = $user->hasPermission('accounts.manage');
         $canVouchers = $user->hasPermission('accounts.vouchers');
         $canFinReports = $user->hasPermission('accounts.reports');
-        $hasFinanceGroup = $user->isSuperAdmin() || $user->isShopAdmin() || $canAccounts || $canVouchers || $canFinReports;
+        $hasFinanceGroup = ($shop ? $shop->isModuleAvailable('accounts') : true) && ($canAccounts || $canManageAccounts || $canVouchers || $canFinReports);
         $isFinanceActive = request()->routeIs('finance.*');
 
         // 5. HR & Payroll
         $canEmployees = $user->hasPermission('hr.employees');
         $canAttendance = $user->hasPermission('hr.attendance');
         $canPayroll = $user->hasPermission('hr.payroll');
-        $hasHrGroup = $user->isSuperAdmin() || $user->isShopAdmin() || $canEmployees || $canAttendance || $canPayroll;
+        $hasHrGroup = ($shop ? $shop->isModuleAvailable('hr') : true) && ($canEmployees || $canAttendance || $canPayroll);
         $isHrActive = request()->routeIs('hr.*');
 
         // 6. Management
-        $canCatalog = $user->hasPermission('catalog.manage');
         $canUsers = $user->hasAnyPermission('users.view', 'users.manage');
         $canRoles = $user->hasPermission('roles.manage');
-        $hasManagementGroup = $user->isSuperAdmin() || $canCatalog || $canUsers || $canRoles;
-        $isManagementActive = request()->routeIs('shops.*') || request()->routeIs('brands.*') || request()->routeIs('categories.*') || request()->routeIs('units.*') || request()->routeIs('users.*') || request()->routeIs('roles.*');
+        $hasManagementGroup = $user->isSuperAdmin() || $user->isBusinessOwner() || $canUsers || $canRoles;
+        $isManagementActive = request()->routeIs('shops.*') || request()->routeIs('branches.*') || request()->routeIs('users.*') || request()->routeIs('roles.*');
 
         // 7. Reports
         $canSalesReport = $user->hasPermission('reports.sales');
         $canStockReport = $user->hasPermission('reports.stock_movement');
         $canExpiryReport = $user->hasPermission('reports.expiry');
-        $hasReportsGroup = $canSalesReport || $canStockReport || $canExpiryReport;
+        $hasReportsGroup = ($shop ? $shop->isModuleAvailable('reports') : true) && ($canSalesReport || $canStockReport || $canExpiryReport);
         $isReportsActive = request()->routeIs('reports.*');
+
+        // Platform Super Admin (DenFin Owner): Platform Management Only
+        if ($user->isSuperAdmin()) {
+            $hasSalesGroup = false;
+            $hasInventoryGroup = false;
+            $hasPurchaseGroup = false;
+            $hasFinanceGroup = false;
+            $hasHrGroup = false;
+            $hasReportsGroup = false;
+            $hasManagementGroup = true;
+        }
     @endphp
 
     {{-- GROUP 1: SALES & POS --}}
@@ -105,11 +118,6 @@
                             <i class="bi bi-receipt"></i><span>Sales Invoices</span>
                         </a>
                     @endif
-                    @if($canProducts)
-                        <a class="{{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}">
-                            <i class="bi bi-box"></i><span>Products</span>
-                        </a>
-                    @endif
                 </div>
             </div>
         </div>
@@ -132,37 +140,59 @@
             </button>
             <div class="collapse {{ $isInventoryActive ? 'show' : '' }}" id="{{ $prefix }}_inventory">
                 <div class="nav-submenu">
-                    <a class="{{ request()->routeIs('stock.*') || request()->routeIs('inventory.*') ? 'active' : '' }}" href="{{ route('stock.index') }}">
-                        <i class="bi bi-stack"></i><span>Stock Overview</span>
-                    </a>
-                    <a class="{{ request()->routeIs('warehouses.*') ? 'active' : '' }}" href="{{ route('warehouses.index') }}">
-                        <i class="bi bi-buildings"></i><span>Godowns / Stores</span>
-                    </a>
-                    <a class="{{ request()->routeIs('transfers.*') ? 'active' : '' }}" href="{{ route('transfers.index') }}">
-                        <i class="bi bi-arrow-left-right"></i><span>Stock Transfers</span>
-                    </a>
-                    <a class="{{ request()->routeIs('adjustments.*') ? 'active' : '' }}" href="{{ route('adjustments.index') }}">
-                        <i class="bi bi-clipboard2-check"></i><span>Stock Adjustments</span>
-                    </a>
+                    @if($canProducts)
+                        <a class="{{ request()->routeIs('products.*') ? 'active' : '' }}" href="{{ route('products.index') }}">
+                            <i class="bi bi-box-seam"></i><span>Products</span>
+                        </a>
+                    @endif
+                    @if($canStock)
+                        <a class="{{ request()->routeIs('stock.*') || request()->routeIs('inventory.*') ? 'active' : '' }}" href="{{ route('stock.index') }}">
+                            <i class="bi bi-stack"></i><span>Stock Overview</span>
+                        </a>
+                    @endif
+                    @if($canCatalog)
+                        <a class="{{ request()->routeIs('brands.*') ? 'active' : '' }}" href="{{ route('brands.index') }}">
+                            <i class="bi bi-tags"></i><span>Brands</span>
+                        </a>
+                        <a class="{{ request()->routeIs('categories.*') ? 'active' : '' }}" href="{{ route('categories.index') }}">
+                            <i class="bi bi-collection"></i><span>Categories</span>
+                        </a>
+                        <a class="{{ request()->routeIs('units.*') ? 'active' : '' }}" href="{{ route('units.index') }}">
+                            <i class="bi bi-rulers"></i><span>Units of Measure</span>
+                        </a>
+                    @endif
+                    @if($canStock)
+                        <a class="{{ request()->routeIs('warehouses.*') ? 'active' : '' }}" href="{{ route('warehouses.index') }}">
+                            <i class="bi bi-buildings"></i><span>Godowns / Stores</span>
+                        </a>
+                        <a class="{{ request()->routeIs('transfers.*') ? 'active' : '' }}" href="{{ route('transfers.index') }}">
+                            <i class="bi bi-arrow-left-right"></i><span>Stock Transfers</span>
+                        </a>
+                        <a class="{{ request()->routeIs('adjustments.*') ? 'active' : '' }}" href="{{ route('adjustments.index') }}">
+                            <i class="bi bi-clipboard2-check"></i><span>Stock Adjustments</span>
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>
     @endif
 
-    {{-- GROUP: AUTO LUBE STATION (Visible when active shop is Lube or Super Admin) --}}
-    @if($user->isLubeShop())
-        @php
-            $isLubeActive = request()->routeIs('lube.*');
-            $canLubePos = $user->hasPermission('lube.pos');
-            $canLubeAnalytics = $user->hasPermission('lube.analytics');
-            $canLubeServices = $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('lube.packages');
-            $canLubePackages = $user->hasPermission('lube.packages');
-            $canLubeVehicles = $user->hasPermission('lube.vehicles');
-            $canLubeReminders = $user->hasPermission('lube.reminders');
-            $canLubeTechnicians = $user->hasPermission('lube.technicians');
-            $canLubeCommissions = $user->hasPermission('lube.commissions');
-            $canLubeDecanting = $user->hasPermission('lube.decanting');
-        @endphp
+    {{-- GROUP: AUTO LUBE STATION (Visible when active shop supports Lube) --}}
+    @php
+        $hasLubeModule = ! $user->isSuperAdmin() && ($shop ? $shop->isModuleAvailable('lube') : false);
+        $isLubeActive = request()->routeIs('lube.*');
+        $canLubePos = $user->hasPermission('lube.pos');
+        $canLubeAnalytics = $user->hasPermission('lube.analytics');
+        $canLubeServices = $user->hasPermission('lube.packages');
+        $canLubePackages = $user->hasPermission('lube.packages');
+        $canLubeVehicles = $user->hasPermission('lube.vehicles');
+        $canLubeReminders = $user->hasPermission('lube.reminders');
+        $canLubeTechnicians = $user->hasPermission('lube.technicians');
+        $canLubeCommissions = $user->hasPermission('lube.commissions');
+        $canLubeDecanting = $user->hasPermission('lube.decanting');
+        $hasLubeGroup = $hasLubeModule && ($canLubePos || $canLubeAnalytics || $canLubeServices || $canLubePackages || $canLubeVehicles || $canLubeReminders || $canLubeTechnicians || $canLubeCommissions || $canLubeDecanting);
+    @endphp
+    @if($hasLubeGroup)
         <div class="nav-group-item">
             <button class="nav-group-btn {{ $isLubeActive ? 'has-active' : '' }}" 
                     type="button" 
@@ -178,9 +208,6 @@
             </button>
             <div class="collapse {{ $isLubeActive ? 'show' : '' }}" id="{{ $prefix }}_lube">
                 <div class="nav-submenu">
-                    <a class="{{ request()->routeIs('lube.hub') ? 'active' : '' }}" href="{{ route('lube.hub') }}">
-                        <i class="bi bi-grid-1x2"></i><span>Lube Hub</span>
-                    </a>
                     @if($canLubePos)
                         <a class="{{ request()->routeIs('lube.pos') ? 'active' : '' }}" href="{{ route('lube.pos') }}">
                             <i class="bi bi-cart3"></i><span>Lube Counter POS</span>
@@ -248,40 +275,42 @@
             </button>
             <div class="collapse {{ $isPurchaseActive ? 'show' : '' }}" id="{{ $prefix }}_purchases">
                 <div class="nav-submenu">
-                    <a class="{{ request()->routeIs('purchases.suppliers.*') ? 'active' : '' }}" href="{{ route('purchases.suppliers.index') }}">
-                        <i class="bi bi-person-lines-fill"></i><span>Suppliers</span>
-                    </a>
-                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canPr || $canPurchases)
+                    @if($canPurchases || $canCreatePurchases)
+                        <a class="{{ request()->routeIs('purchases.suppliers.*') ? 'active' : '' }}" href="{{ route('purchases.suppliers.index') }}">
+                            <i class="bi bi-person-lines-fill"></i><span>Suppliers</span>
+                        </a>
+                    @endif
+                    @if($canPr || $canPurchases)
                         <a class="{{ request()->routeIs('purchases.requisitions.*') ? 'active' : '' }}" href="{{ route('purchases.requisitions.index') }}">
                             <i class="bi bi-file-earmark-text"></i><span>Requisitions (PR)</span>
                         </a>
                     @endif
-                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canCreatePurchases || $canPurchases)
+                    @if($canCreatePurchases || $canPurchases)
                         <a class="{{ request()->routeIs('purchases.orders.*') ? 'active' : '' }}" href="{{ route('purchases.orders.index') }}">
                             <i class="bi bi-cart-check"></i><span>Purchase Orders (PO)</span>
                         </a>
                     @endif
-                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canIgp || $canPurchases)
+                    @if($canIgp || $canPurchases)
                         <a class="{{ request()->routeIs('purchases.igp.*') ? 'active' : '' }}" href="{{ route('purchases.igp.index') }}">
                             <i class="bi bi-door-open"></i><span>Gate Pass (IGP)</span>
                         </a>
                     @endif
-                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canGrn || $canPurchases)
+                    @if($canGrn || $canPurchases)
                         <a class="{{ request()->routeIs('purchases.grn.*') ? 'active' : '' }}" href="{{ route('purchases.grn.index') }}">
                             <i class="bi bi-box-arrow-in-down"></i><span>Stock Inward (GRN)</span>
                         </a>
                     @endif
-                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canPi || $canPurchases)
+                    @if($canPi || $canPurchases)
                         <a class="{{ request()->routeIs('purchases.invoices.*') ? 'active' : '' }}" href="{{ route('purchases.invoices.index') }}">
                             <i class="bi bi-receipt"></i><span>Purchase Invoices (PI)</span>
                         </a>
                     @endif
-                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canReturn || $canPurchases)
+                    @if($canReturn || $canPurchases)
                         <a class="{{ request()->routeIs('purchases.returns.*') ? 'active' : '' }}" href="{{ route('purchases.returns.index') }}">
                             <i class="bi bi-arrow-return-left"></i><span>Purchase Returns</span>
                         </a>
                     @endif
-                    @if($user->isSuperAdmin() || $user->isShopAdmin() || $canPurchases)
+                    @if($canPurchases)
                         <a class="{{ request()->routeIs('purchases.transport_modes.*') ? 'active' : '' }}" href="{{ route('purchases.transport_modes.index') }}">
                             <i class="bi bi-signpost-split"></i><span>Receive Via Modes</span>
                         </a>
@@ -308,19 +337,25 @@
             </button>
             <div class="collapse {{ $isFinanceActive ? 'show' : '' }}" id="{{ $prefix }}_finance">
                 <div class="nav-submenu">
-                    <a class="{{ request()->routeIs('finance.accounts.*') ? 'active' : '' }}" href="{{ route('finance.accounts.index') }}">
-                        <i class="bi bi-list-check"></i><span>Chart of Accounts</span>
-                    </a>
-                    <a class="{{ request()->routeIs('finance.expenses.*') ? 'active' : '' }}" href="{{ route('finance.expenses.index') }}">
-                        <i class="bi bi-cash-coin"></i><span>Daily Expenses</span>
-                    </a>
-                    <a class="{{ request()->routeIs('finance.payments.*') ? 'active' : '' }}" href="{{ route('finance.payments.index') }}">
-                        <i class="bi bi-credit-card"></i><span>Payments &amp; Receipts</span>
-                    </a>
-                    <a class="{{ request()->routeIs('finance.journal.*') ? 'active' : '' }}" href="{{ route('finance.journal.index') }}">
-                        <i class="bi bi-journal-bookmark"></i><span>Journal Vouchers</span>
-                    </a>
-                    @if($canFinReports || $user->isSuperAdmin() || $user->isShopAdmin())
+                    @if($canAccounts || $canManageAccounts)
+                        <a class="{{ request()->routeIs('finance.accounts.*') ? 'active' : '' }}" href="{{ route('finance.accounts.index') }}">
+                            <i class="bi bi-list-check"></i><span>Chart of Accounts</span>
+                        </a>
+                    @endif
+                    @if($canAccounts || $canVouchers)
+                        <a class="{{ request()->routeIs('finance.expenses.*') ? 'active' : '' }}" href="{{ route('finance.expenses.index') }}">
+                            <i class="bi bi-cash-coin"></i><span>Daily Expenses</span>
+                        </a>
+                        <a class="{{ request()->routeIs('finance.payments.*') ? 'active' : '' }}" href="{{ route('finance.payments.index') }}">
+                            <i class="bi bi-credit-card"></i><span>Payments &amp; Receipts</span>
+                        </a>
+                    @endif
+                    @if($canVouchers)
+                        <a class="{{ request()->routeIs('finance.journal.*') ? 'active' : '' }}" href="{{ route('finance.journal.index') }}">
+                            <i class="bi bi-journal-bookmark"></i><span>Journal Vouchers</span>
+                        </a>
+                    @endif
+                    @if($canFinReports)
                         <a class="{{ request()->routeIs('finance.reports.profit-loss') ? 'active' : '' }}" href="{{ route('finance.reports.profit-loss') }}">
                             <i class="bi bi-file-earmark-bar-graph"></i><span>Profit &amp; Loss</span>
                         </a>
@@ -353,7 +388,7 @@
             </button>
             <div class="collapse {{ $isHrActive ? 'show' : '' }}" id="{{ $prefix }}_hr">
                 <div class="nav-submenu">
-                    @if($canEmployees || $user->isSuperAdmin() || $user->isShopAdmin())
+                    @if($canEmployees)
                         <a class="{{ request()->routeIs('hr.departments.*') ? 'active' : '' }}" href="{{ route('hr.departments.index') }}">
                             <i class="bi bi-diagram-2"></i><span>Departments</span>
                         </a>
@@ -361,12 +396,12 @@
                             <i class="bi bi-person-badge"></i><span>Employees</span>
                         </a>
                     @endif
-                    @if($canAttendance || $user->isSuperAdmin() || $user->isShopAdmin())
+                    @if($canAttendance)
                         <a class="{{ request()->routeIs('hr.attendance.*') ? 'active' : '' }}" href="{{ route('hr.attendance.index') }}">
                             <i class="bi bi-calendar-check"></i><span>Daily Attendance</span>
                         </a>
                     @endif
-                    @if($canPayroll || $user->isSuperAdmin() || $user->isShopAdmin())
+                    @if($canPayroll)
                         <a class="{{ request()->routeIs('hr.payroll.*') ? 'active' : '' }}" href="{{ route('hr.payroll.index') }}">
                             <i class="bi bi-wallet2"></i><span>Payroll &amp; Salaries</span>
                         </a>
@@ -395,29 +430,30 @@
                 <div class="nav-submenu">
                     @if($user->isSuperAdmin())
                         <a class="{{ request()->routeIs('shops.*') ? 'active' : '' }}" href="{{ route('shops.index') }}">
-                            <i class="bi bi-shop"></i><span>Shops</span>
+                            <i class="bi bi-shop"></i><span>Client Businesses</span>
                         </a>
-                    @endif
-                    @if($canCatalog)
-                        <a class="{{ request()->routeIs('brands.*') ? 'active' : '' }}" href="{{ route('brands.index') }}">
-                            <i class="bi bi-tags"></i><span>Brands</span>
+                        <a class="{{ request()->routeIs('branches.*') ? 'active' : '' }}" href="{{ route('branches.index') }}">
+                            <i class="bi bi-diagram-3"></i><span>All Branches</span>
                         </a>
-                        <a class="{{ request()->routeIs('categories.*') ? 'active' : '' }}" href="{{ route('categories.index') }}">
-                            <i class="bi bi-collection"></i><span>Categories</span>
-                        </a>
-                        <a class="{{ request()->routeIs('units.*') ? 'active' : '' }}" href="{{ route('units.index') }}">
-                            <i class="bi bi-rulers"></i><span>Units of Measure</span>
-                        </a>
-                    @endif
-                    @if($canUsers)
                         <a class="{{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
-                            <i class="bi bi-person-gear"></i><span>{{ $user->isSuperAdmin() ? 'Users' : 'Shop Users' }}</span>
+                            <i class="bi bi-person-badge"></i><span>Owners &amp; Shop Admins</span>
                         </a>
-                    @endif
-                    @if($canRoles)
-                        <a class="{{ request()->routeIs('roles.*') ? 'active' : '' }}" href="{{ route('roles.index') }}">
-                            <i class="bi bi-shield-lock"></i><span>Roles &amp; Rights</span>
-                        </a>
+                    @else
+                        @if($user->isBusinessOwner())
+                            <a class="{{ request()->routeIs('branches.*') ? 'active' : '' }}" href="{{ route('branches.index') }}">
+                                <i class="bi bi-diagram-3"></i><span>My Branches</span>
+                            </a>
+                        @endif
+                        @if($canUsers)
+                            <a class="{{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">
+                                <i class="bi bi-person-gear"></i><span>Staff Directory</span>
+                            </a>
+                        @endif
+                        @if($canRoles)
+                            <a class="{{ request()->routeIs('roles.*') ? 'active' : '' }}" href="{{ route('roles.index') }}">
+                                <i class="bi bi-shield-lock"></i><span>Roles &amp; Rights</span>
+                            </a>
+                        @endif
                     @endif
                 </div>
             </div>
@@ -443,7 +479,13 @@
                 <div class="nav-submenu">
                     @if($canSalesReport)
                         <a class="{{ request()->routeIs('reports.sales') ? 'active' : '' }}" href="{{ route('reports.sales') }}">
-                            <i class="bi bi-graph-up-arrow"></i><span>Sales &amp; Profit</span>
+                            <i class="bi bi-receipt"></i><span>Sales Invoices</span>
+                        </a>
+                        <a class="{{ request()->routeIs('reports.product-sales') ? 'active' : '' }}" href="{{ route('reports.product-sales') }}">
+                            <i class="bi bi-boxes"></i><span>Product Sales &amp; Margin</span>
+                        </a>
+                        <a class="{{ request()->routeIs('reports.cash-register') ? 'active' : '' }}" href="{{ route('reports.cash-register') }}">
+                            <i class="bi bi-wallet2"></i><span>Cash Register &amp; Payments</span>
                         </a>
                     @endif
                     @if($canStockReport)
@@ -454,6 +496,16 @@
                     @if($canExpiryReport)
                         <a class="{{ request()->routeIs('reports.expiry') ? 'active' : '' }}" href="{{ route('reports.expiry') }}">
                             <i class="bi bi-clock-history"></i><span>Expiry Alerts</span>
+                        </a>
+                    @endif
+                    @if($canSalesReport && ($shop ? $shop->isModuleAvailable('lube') : true))
+                        <a class="{{ request()->routeIs('reports.lube-services') ? 'active' : '' }}" href="{{ route('reports.lube-services') }}">
+                            <i class="bi bi-droplet-half"></i><span>Auto Lube Services</span>
+                        </a>
+                    @endif
+                    @if($canSalesReport || $canAccounts)
+                        <a class="{{ request()->routeIs('reports.expenses') ? 'active' : '' }}" href="{{ route('reports.expenses') }}">
+                            <i class="bi bi-cash-stack"></i><span>Expense Sheet</span>
                         </a>
                     @endif
                 </div>

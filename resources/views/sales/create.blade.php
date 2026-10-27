@@ -63,6 +63,11 @@
         <a href="{{ route('sales.index') }}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-receipt me-1"></i>Past Invoices
         </a>
+        @if(auth()->user()->hasPermission('reports.sales'))
+            <a href="{{ route('reports.cash-register') }}" class="btn btn-outline-danger btn-sm" title="Reconcile and close daily cash drawer">
+                <i class="bi bi-lock-fill me-1"></i>Close Cash
+            </a>
+        @endif
     </div>
 </div>
 

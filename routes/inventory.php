@@ -10,7 +10,7 @@ use App\Http\Controllers\Inventory\StockController;
 use Illuminate\Support\Facades\Route;
 
 // Inventory & Warehouses Module Hub (Launchpad)
-Route::get('/inventory-hub', InventoryHubController::class)->name('inventory.hub');
+Route::get('/inventory-hub', InventoryHubController::class)->name('inventory.hub')->middleware('module:inventory');
 
 // Products Module
 Route::middleware('permission:products.import')->group(function () {

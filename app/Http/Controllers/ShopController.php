@@ -17,7 +17,8 @@ class ShopController extends Controller
         $perPage = in_array((int) $request->query('per_page', 10), [10, 20, 30, 50, 100], true) ? (int) $request->query('per_page', 10) : 10;
         $search = trim((string) $request->query('search'));
 
-        $shops = Shop::withCount(['users', 'inventoryItems'])
+        $shops = Shop::withCount(['users', 'inventoryItems', 'branches'])
+            ->with('parent')
             ->when($search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('code', 'like', "%{$search}%")
@@ -46,6 +47,8 @@ class ShopController extends Controller
                 'business_type' => $validated['business_type'] ?? null,
                 'phone' => $validated['phone'] ?? null,
                 'address' => $validated['address'] ?? null,
+                'max_branches' => $validated['max_branches'] ?? 1,
+                'max_users' => $validated['max_users'] ?? 5,
                 'status' => $validated['status'],
             ]);
 
@@ -56,7 +59,7 @@ class ShopController extends Controller
                     'username' => $validated['admin_username'],
                     'email' => $validated['admin_email'] ?? null,
                     'password' => $validated['admin_password'],
-                    'role' => 'shop_admin',
+                    'role' => $validated['admin_role'] ?? 'shop_admin',
                     'status' => 'active',
                 ]);
             }

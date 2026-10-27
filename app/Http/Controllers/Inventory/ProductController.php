@@ -37,8 +37,27 @@ class ProductController extends Controller
         $query = InventoryItem::with(['brand', 'category', 'creator', 'shop'])
             ->filtered($filters);
 
-        if ($shopId) {
-            $query->where('shop_id', $shopId);
+        if ($user->isSuperAdmin()) {
+            if ($shopId) {
+                $targetShop = Shop::find($shopId);
+                $query->whereIn('shop_id', $targetShop ? $targetShop->getAllBranchIds() : [$shopId]);
+            }
+        } else {
+            $rootShopId = $user->shop ? $user->shop->getRootBusiness()->id : $user->shop_id;
+            $branchIds = $user->shop ? $user->shop->getAllBranchIds() : [$user->shop_id];
+
+            $query->where(function ($q) use ($rootShopId, $branchIds) {
+                $q->where('shop_id', $rootShopId)
+                    ->orWhere(function ($sub) use ($rootShopId, $branchIds) {
+                        $sub->whereIn('shop_id', $branchIds)
+                            ->whereNotIn('sku', function ($skuQuery) use ($rootShopId) {
+                                $skuQuery->select('sku')
+                                    ->from('inventory_items')
+                                    ->where('shop_id', $rootShopId)
+                                    ->whereNotNull('sku');
+                            });
+                    });
+            });
         }
 
         if ($filters['status']) {
@@ -57,9 +76,17 @@ class ProductController extends Controller
 
         $brandQuery = Brand::query();
         $categoryQuery = Category::query();
-        if ($shopId) {
-            $brandQuery->where('shop_id', $shopId);
-            $categoryQuery->where('shop_id', $shopId);
+        if ($user->isSuperAdmin()) {
+            if ($shopId) {
+                $targetShop = Shop::find($shopId);
+                $targetIds = $targetShop ? $targetShop->getAllBranchIds() : [$shopId];
+                $brandQuery->whereIn('shop_id', $targetIds);
+                $categoryQuery->whereIn('shop_id', $targetIds);
+            }
+        } else {
+            $branchIds = $user->shop ? $user->shop->getAllBranchIds() : [$user->shop_id];
+            $brandQuery->whereIn('shop_id', $branchIds);
+            $categoryQuery->whereIn('shop_id', $branchIds);
         }
 
         return view('products.index', [
@@ -86,22 +113,71 @@ class ProductController extends Controller
         abort_unless($user->hasPermission('products.create'), 403, 'Unauthorized. You do not have permission to add new products.');
 
         $validated = $request->validated();
-        $shopId = $user->shop_id ?? ($validated['shop_id'] ?? 1);
+        $rootShopId = $user->shop ? $user->shop->getRootBusiness()->id : ($user->shop_id ?? ($validated['shop_id'] ?? 1));
+        $branchShopId = $user->shop_id ?? $rootShopId;
 
-        DB::transaction(function () use ($validated, $shopId, $user): void {
+        DB::transaction(function () use ($validated, $rootShopId, $branchShopId, $user): void {
             $initialQty = (float) ($validated['initial_quantity'] ?? 0);
 
             $product = new InventoryItem($validated);
-            $product->shop_id = $shopId;
-            $product->quantity = $initialQty;
-            $product->initial_quantity = $initialQty;
+            $product->shop_id = $rootShopId; // Shared catalog belongs to the root business
+            $product->quantity = ($branchShopId === $rootShopId) ? $initialQty : 0;
+            $product->initial_quantity = ($branchShopId === $rootShopId) ? $initialQty : 0;
             $product->sold_quantity = 0;
             $product->created_by = $user->id;
             $product->save();
 
-            if ($initialQty > 0) {
+            if ($branchShopId !== $rootShopId && $initialQty > 0 && ! empty($product->sku)) {
+                $branchItem = InventoryItem::create([
+                    'shop_id' => $branchShopId,
+                    'sku' => $product->sku,
+                    'item_name' => $product->item_name,
+                    'brand_id' => $product->brand_id,
+                    'category_id' => $product->category_id,
+                    'unit' => $product->unit,
+                    'pack_size' => $product->pack_size,
+                    'liters' => $product->liters,
+                    'product_type' => $product->product_type,
+                    'is_loose' => $product->is_loose,
+                    'purchase_price' => $product->purchase_price,
+                    'selling_price' => $product->selling_price,
+                    'status' => 'active',
+                    'quantity' => $initialQty,
+                    'initial_quantity' => $initialQty,
+                    'sold_quantity' => 0,
+                    'created_by' => $user->id,
+                ]);
+
                 $batch = ProductBatch::create([
-                    'shop_id' => $shopId,
+                    'shop_id' => $branchShopId,
+                    'inventory_item_id' => $branchItem->id,
+                    'batch_no' => 'BATCH-001',
+                    'purchase_price' => $product->purchase_price ?? 0,
+                    'selling_price' => $product->selling_price ?? 0,
+                    'initial_quantity' => $initialQty,
+                    'quantity' => $initialQty,
+                    'expiry_date' => $product->expiry_date,
+                    'status' => 'active',
+                    'created_by' => $user->id,
+                ]);
+
+                InventoryTransaction::create([
+                    'shop_id' => $branchShopId,
+                    'inventory_item_id' => $branchItem->id,
+                    'product_batch_id' => $batch->id,
+                    'transaction_type' => InventoryTransaction::TYPE_STOCK_IN,
+                    'quantity' => $initialQty,
+                    'balance_before' => 0,
+                    'balance_after' => $initialQty,
+                    'unit_cost' => $product->purchase_price,
+                    'unit_sale_price' => $product->selling_price,
+                    'expiry_date' => $product->expiry_date,
+                    'notes' => 'Opening / Initial Stock (Branch)',
+                    'created_by' => $user->id,
+                ]);
+            } elseif ($branchShopId === $rootShopId && $initialQty > 0) {
+                $batch = ProductBatch::create([
+                    'shop_id' => $branchShopId,
                     'inventory_item_id' => $product->id,
                     'batch_no' => 'BATCH-001',
                     'purchase_price' => $product->purchase_price ?? 0,
@@ -114,7 +190,7 @@ class ProductController extends Controller
                 ]);
 
                 InventoryTransaction::create([
-                    'shop_id' => $shopId,
+                    'shop_id' => $branchShopId,
                     'inventory_item_id' => $product->id,
                     'product_batch_id' => $batch->id,
                     'transaction_type' => InventoryTransaction::TYPE_STOCK_IN,
@@ -130,7 +206,7 @@ class ProductController extends Controller
             }
         });
 
-        return redirect()->route('products.index')->with('success', 'Product added to catalog successfully.');
+        return redirect()->route('products.index')->with('success', 'Product added to business catalog successfully.');
     }
 
     public function edit(Request $request, InventoryItem $product): View
@@ -151,7 +227,16 @@ class ProductController extends Controller
 
         $product->update($validated);
 
-        return redirect()->route('products.index')->with('success', 'Product updated successfully.');
+        // Universal Selling Price (Option A): synchronize price across all branches for this SKU
+        if (! empty($product->sku)) {
+            $branchIds = $user->shop ? $user->shop->getAllBranchIds() : [$product->shop_id];
+            InventoryItem::whereIn('shop_id', $branchIds)
+                ->where('sku', $product->sku)
+                ->where('id', '!=', $product->id)
+                ->update(['selling_price' => $product->selling_price]);
+        }
+
+        return redirect()->route('products.index')->with('success', 'Product updated in catalog successfully.');
     }
 
     public function destroy(Request $request, InventoryItem $product): RedirectResponse
@@ -171,13 +256,16 @@ class ProductController extends Controller
     private function form(InventoryItem $product, $user): View
     {
         $shopId = $user->isSuperAdmin() ? ($product->shop_id ?? request()->query('shop_id')) : $user->shop_id;
+        $targetIds = $user->isSuperAdmin()
+            ? ($shopId ? (Shop::find($shopId)?->getAllBranchIds() ?? [$shopId]) : null)
+            : ($user->shop ? $user->shop->getAllBranchIds() : [$user->shop_id]);
 
         $brandQuery = Brand::where('status', 'active');
         $categoryQuery = Category::where('status', 'active');
 
-        if ($shopId) {
-            $brandQuery->where('shop_id', $shopId);
-            $categoryQuery->where('shop_id', $shopId);
+        if ($targetIds) {
+            $brandQuery->whereIn('shop_id', $targetIds);
+            $categoryQuery->whereIn('shop_id', $targetIds);
         }
 
         if ($product->exists) {
@@ -196,7 +284,8 @@ class ProductController extends Controller
 
     private function authorizeProductAccess($user, InventoryItem $product, string $permission = 'products.edit'): void
     {
-        $isAllowed = ($user->isSuperAdmin() || $user->shop_id === $product->shop_id) && $user->hasPermission($permission);
+        $branchIds = $user->shop ? $user->shop->getAllBranchIds() : [$user->shop_id];
+        $isAllowed = ($user->isSuperAdmin() || in_array((int) $product->shop_id, $branchIds, true)) && $user->hasPermission($permission);
 
         abort_unless($isAllowed, 403, 'Unauthorized. You do not have permission to manage this product.');
     }

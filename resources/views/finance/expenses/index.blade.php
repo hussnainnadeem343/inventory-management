@@ -6,11 +6,16 @@
         <h4 class="mb-0 fw-bold">Daily Shop Expenses</h4>
         <small class="text-secondary">Track operational, utility, and petty cash disbursements</small>
     </div>
-    @if(auth()->user()->hasPermission('accounts.vouchers'))
-        <a class="btn btn-primary" href="{{ route('finance.expenses.create') }}">
-            <i class="bi bi-plus-lg me-1"></i> Record Expense
+    <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-outline-success" href="{{ route('reports.expenses.export', request()->all()) }}">
+            <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
         </a>
-    @endif
+        @if(auth()->user()->hasPermission('accounts.vouchers'))
+            <a class="btn btn-primary" href="{{ route('finance.expenses.create') }}">
+                <i class="bi bi-plus-lg me-1"></i> Record Expense
+            </a>
+        @endif
+    </div>
 </div>
 
 <div class="card p-3 mb-3">

@@ -11,7 +11,7 @@
     <div class="d-flex justify-content-between align-items-center">
         <div>
             <h4 class="mb-0 fw-bold">Management &amp; Settings Hub</h4>
-            <small class="text-secondary">Administrative configuration for user access, security roles, outlets, and catalog</small>
+            <small class="text-secondary">Administrative configuration for user accounts, security roles, client businesses, and branch hierarchy</small>
         </div>
     </div>
 </div>
@@ -20,7 +20,8 @@
     $user = auth()->user();
     $cards = [
         [
-            'title' => 'User Accounts',
+            'title' => $user->isSuperAdmin() ? 'Business Owners & Shop Admins' : 'User Accounts',
+            'desc' => 'Administrative user accounts and credentials directory',
             'route' => route('users.index'),
             'icon' => 'bi-person-badge',
             'color' => '#2563eb',
@@ -36,7 +37,7 @@
             'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('roles.manage'),
         ],
         [
-            'title' => 'Shops & Outlets',
+            'title' => 'Client Businesses',
             'route' => route('shops.index'),
             'icon' => 'bi-shop',
             'color' => '#059669',
@@ -44,12 +45,12 @@
             'can' => $user->isSuperAdmin(),
         ],
         [
-            'title' => 'Product Catalog',
-            'route' => route('categories.index'),
-            'icon' => 'bi-tags',
-            'color' => '#d97706',
-            'bg' => '#fffbeb',
-            'can' => $user->isSuperAdmin() || $user->isShopAdmin() || $user->hasPermission('catalog.manage'),
+            'title' => 'My Branches',
+            'route' => route('branches.index'),
+            'icon' => 'bi-diagram-3',
+            'color' => '#0891b2',
+            'bg' => '#ecfeff',
+            'can' => $user->isSuperAdmin() || $user->isBusinessOwner(),
         ],
     ];
 @endphp

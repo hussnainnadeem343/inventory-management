@@ -27,12 +27,20 @@
             <div class="card p-3 shadow-sm border-0 sticky-top" style="top: 85px;">
                 <h5 class="fw-bold mb-3"><i class="bi bi-info-circle text-primary me-2"></i>Role Details</h5>
 
+                @if(isset($targetShop) && $targetShop)
+                    <div class="p-2 mb-3 bg-light rounded border small">
+                        <span class="text-muted d-block" style="font-size: 11px;">Business:</span>
+                        <strong class="text-dark">{{ $targetShop->name }}</strong>
+                        <span class="badge text-bg-secondary ms-1">{{ $targetShop->business_type ?: 'Retail & General' }}</span>
+                    </div>
+                @endif
+
                 @if(auth()->user()->isSuperAdmin() && $shops->count() > 0 && ! $role->exists)
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Target Store <span class="text-danger">*</span></label>
-                        <select name="shop_id" class="form-select" required>
+                        <select name="shop_id" class="form-select" required onchange="window.location.href='{{ route('roles.create') }}?shop_id=' + this.value">
                             @foreach($shops as $shop)
-                                <option value="{{ $shop->id }}" @selected(old('shop_id', $role->shop_id) == $shop->id)>{{ $shop->name }} ({{ $shop->code }})</option>
+                                <option value="{{ $shop->id }}" @selected(old('shop_id', $targetShop?->id) == $shop->id)>{{ $shop->name }} ({{ $shop->code }})</option>
                             @endforeach
                         </select>
                     </div>
@@ -41,6 +49,7 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Role Name <span class="text-danger">*</span></label>
                     <input type="text" name="name" class="form-control" value="{{ old('name', $role->name) }}" placeholder="e.g. Counter Cashier, Shift Supervisor" required>
+                    <small class="text-muted">Enter a custom role name suited to your business.</small>
                 </div>
 
                 <div class="mb-3">
@@ -56,7 +65,7 @@
                         <i class="bi bi-x-circle me-1"></i>Deselect All
                     </button>
 
-                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold shadow-sm">
                         <i class="bi bi-save me-1"></i>{{ $role->exists ? 'Update Role & Rights' : 'Save New Role' }}
                     </button>
                 </div>
@@ -65,32 +74,24 @@
 
         {{-- Right: Module Permissions Grid --}}
         <div class="col-lg-8">
-            @php
-                $moduleLabels = [
-                    'pos' => ['title' => 'POS & Counter Sales', 'icon' => 'cart3', 'badge' => 'primary'],
-                    'products' => ['title' => 'Products Catalog', 'icon' => 'box-seam', 'badge' => 'info'],
-                    'stock' => ['title' => 'Stock & Inventory Operations', 'icon' => 'boxes', 'badge' => 'success'],
-                    'reports' => ['title' => 'Financial & Stock Reports', 'icon' => 'graph-up-arrow', 'badge' => 'warning'],
-                    'catalog' => ['title' => 'Brands & Categories', 'icon' => 'tags', 'badge' => 'secondary'],
-                    'users' => ['title' => 'Staff Directory & Accounts', 'icon' => 'people', 'badge' => 'dark'],
-                    'roles' => ['title' => 'Roles & Security Governance', 'icon' => 'shield-lock', 'badge' => 'danger'],
-                ];
-            @endphp
-
             @foreach($permissionsByModule as $module => $modulePermissions)
                 @php
-                    $meta = $moduleLabels[$module] ?? ['title' => ucfirst($module), 'icon' => 'gear', 'badge' => 'secondary'];
+                    $meta = $moduleDefinitions[$module] ?? ['title' => ucfirst($module), 'icon' => 'gear', 'badge' => 'secondary', 'description' => ''];
                 @endphp
                 <div class="card mb-3 shadow-sm border-0 permission-module-card">
-                    <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
-                        <div class="fw-bold d-flex align-items-center gap-2">
-                            <i class="bi bi-{{ $meta['icon'] }} text-{{ $meta['badge'] }} fs-5"></i>
-                            <span>{{ $meta['title'] }}</span>
-                            <span class="badge text-bg-light border small">{{ $modulePermissions->count() }} rights</span>
+                    <div class="card-header bg-white py-2.5 d-flex justify-content-between align-items-center border-bottom">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="avatar bg-{{ $meta['badge'] }}-subtle text-{{ $meta['badge'] }} rounded-2" style="width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">
+                                <i class="bi bi-{{ $meta['icon'] }} fs-6"></i>
+                            </span>
+                            <div>
+                                <strong class="text-dark d-block" style="font-size: 14px; line-height: 1.2;">{{ $meta['title'] }}</strong>
+                                <small class="text-muted" style="font-size: 11px;">{{ $meta['description'] ?? '' }} &bull; {{ $modulePermissions->count() }} rights</small>
+                            </div>
                         </div>
                         <div class="form-check mb-0">
                             <input class="form-check-input select-all-module" type="checkbox" id="select_all_{{ $module }}">
-                            <label class="form-check-label small text-secondary fw-semibold" for="select_all_{{ $module }}">
+                            <label class="form-check-label small text-secondary fw-semibold" for="select_all_{{ $module }}" style="cursor: pointer;">
                                 Select All
                             </label>
                         </div>
@@ -103,11 +104,18 @@
                                 @endphp
                                 <div class="col-md-6">
                                     <div class="border rounded-2 p-2 h-100 bg-light-subtle">
-                                        <div class="form-check">
-                                            <input class="form-check-input perm-checkbox" type="checkbox" name="permissions[]" value="{{ $perm->id }}" id="perm_{{ $perm->id }}" @checked($isChecked)>
-                                            <label class="form-check-label fw-semibold text-dark" for="perm_{{ $perm->id }}">
-                                                {{ $perm->name }}
-                                            </label>
+                                        <div class="form-check d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <input class="form-check-input perm-checkbox" type="checkbox" name="permissions[]" value="{{ $perm->id }}" id="perm_{{ $perm->id }}" @checked($isChecked)>
+                                                <label class="form-check-label fw-semibold text-dark" for="perm_{{ $perm->id }}" style="cursor: pointer;">
+                                                    {{ $perm->name }}
+                                                </label>
+                                            </div>
+                                            @if($module === 'inventory')
+                                                <span class="badge text-bg-light border text-secondary flex-shrink-0" style="font-size: 10px;">
+                                                    {{ $perm->module === 'catalog' ? 'Catalog' : ($perm->module === 'products' ? 'Products' : 'Stock') }}
+                                                </span>
+                                            @endif
                                         </div>
                                         @if($perm->description)
                                             <div class="text-secondary small ms-4 mt-1" style="font-size: 11px;">

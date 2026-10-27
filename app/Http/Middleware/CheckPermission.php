@@ -19,12 +19,21 @@ class CheckPermission
             abort(401);
         }
 
-        // Super Admin and Shop Admin have full unrestricted access to their shop
-        if ($user->isSuperAdmin() || $user->isShopAdmin()) {
+        if (! $user->isActive()) {
+            abort(403, 'Your account is inactive.');
+        }
+
+        if (! $user->isSuperAdmin() && $user->shop && ! $user->shop->isActive()) {
+            abort(403, 'Your business account has been suspended or deactivated.');
+        }
+
+        // Platform Super Admin bypass
+        if ($user->isSuperAdmin()) {
             return $next($request);
         }
 
         // Check if user has at least one of the passed permissions
+        // Note: User::hasPermission enforces both business-type module availability and role rights
         foreach ($permissions as $permissionGroup) {
             $subPerms = explode(',', $permissionGroup);
             foreach ($subPerms as $slug) {

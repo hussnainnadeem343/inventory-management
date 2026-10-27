@@ -27,8 +27,15 @@ class BrandController extends Controller
         $perPage = in_array((int) $request->query('per_page', 10), [10, 20, 30, 50, 100], true) ? (int) $request->query('per_page', 10) : 10;
 
         $query = Brand::with(['creator', 'shop'])->filtered($filters);
-        if ($shopId) {
-            $query->where('shop_id', $shopId);
+
+        if ($user->isSuperAdmin()) {
+            if ($shopId) {
+                $targetShop = Shop::find($shopId);
+                $query->whereIn('shop_id', $targetShop ? $targetShop->getAllBranchIds() : [$shopId]);
+            }
+        } else {
+            $branchIds = $user->shop ? $user->shop->getAllBranchIds() : [$user->shop_id];
+            $query->whereIn('shop_id', $branchIds);
         }
 
         $brands = $query->latest()->paginate($perPage)->withQueryString();
@@ -45,7 +52,7 @@ class BrandController extends Controller
     {
         $user = $request->user();
         $shops = $user->isSuperAdmin() ? Shop::where('status', 'active')->orderBy('name')->get() : collect();
-        $selectedShopId = $user->shop_id ?? session('dashboard_shop_id') ?? $shops->first()?->id;
+        $selectedShopId = $user->shop ? $user->shop->getRootBusiness()->id : ($user->shop_id ?? session('dashboard_shop_id') ?? $shops->first()?->id);
 
         return view('brands.form', [
             'brand' => new Brand(['shop_id' => $selectedShopId]),
@@ -58,14 +65,16 @@ class BrandController extends Controller
     {
         $validated = $request->validated();
         $user = $request->user();
-        $shopId = $user->shop_id ?? ($validated['shop_id'] ?? session('dashboard_shop_id') ?? Shop::where('status', 'active')->first()?->id ?? 1);
+        $shopId = $user->shop
+            ? $user->shop->getRootBusiness()->id
+            : ($user->shop_id ?? ($validated['shop_id'] ?? session('dashboard_shop_id') ?? Shop::where('status', 'active')->first()?->id ?? 1));
 
         $brand = new Brand($validated);
         $brand->shop_id = $shopId;
         $brand->created_by = $user->id;
         $brand->save();
 
-        return redirect()->route('brands.index')->with('success', 'Brand added successfully.');
+        return redirect()->route('brands.index')->with('success', 'Brand added to business catalog successfully.');
     }
 
     public function edit(Request $request, Brand $brand): View
@@ -111,8 +120,14 @@ class BrandController extends Controller
     private function authorizeBrandManagement(Request $request, Brand $brand): void
     {
         $user = $request->user();
-        $isAllowed = $user->isSuperAdmin() || ($user->isShopAdmin() && $user->shop_id === $brand->shop_id);
+        if ($user->isSuperAdmin()) {
+            return;
+        }
 
-        abort_unless($isAllowed, 403, 'Unauthorized action. Only Shop Admins or Super Admins can edit or delete brands.');
+        $branchIds = $user->shop ? $user->shop->getAllBranchIds() : [$user->shop_id];
+        $isAllowed = ($user->isBusinessOwner() || $user->isShopAdmin() || $user->hasPermission('catalog.manage'))
+            && in_array((int) $brand->shop_id, $branchIds, true);
+
+        abort_unless($isAllowed, 403, 'Unauthorized action. Only authorized administrators can edit or delete brands.');
     }
 }

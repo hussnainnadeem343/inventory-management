@@ -24,7 +24,15 @@ class Unit extends Model
 
     public function scopeForShop(Builder $query, ?int $shopId = null): Builder
     {
-        $shopId = $shopId ?? auth()->user()?->shop_id;
+        $user = auth()->user();
+        if ($user && ! $user->isSuperAdmin() && $user->shop) {
+            $branchIds = $user->shop->getAllBranchIds();
+            return $query->where(function ($q) use ($branchIds) {
+                $q->whereIn('shop_id', $branchIds)->orWhereNull('shop_id');
+            });
+        }
+
+        $shopId = $shopId ?? $user?->shop_id;
 
         return $shopId
             ? $query->where(function ($q) use ($shopId) {
