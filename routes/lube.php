@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth', 'active', 'module:lube'])->prefix('lube')->name('lube.')->group(function () {
 
     // Auto Lube Station Module Hub (Launchpad)
-    Route::get('/hub', LubeHubController::class)->name('hub');
+    Route::get('/hub', LubeHubController::class)->name('hub')->middleware('permission:lube.pos,lube.analytics,lube.packages,lube.vehicles,lube.reminders,lube.technicians,lube.commissions,lube.decanting');
 
     // 1. Station Analytics
     Route::middleware('permission:lube.analytics')->group(function () {
@@ -26,16 +26,19 @@ Route::middleware(['auth', 'active', 'module:lube'])->prefix('lube')->name('lube
     Route::middleware('permission:lube.pos')->group(function () {
         Route::get('/pos', [LubePosController::class, 'index'])->name('pos');
         Route::get('/pos/search', [LubePosController::class, 'search'])->name('pos.search');
+        Route::get('/pos/barcode', [LubePosController::class, 'barcode'])->name('pos.barcode');
         Route::post('/pos', [LubePosController::class, 'store'])->name('pos.store');
         Route::get('/pos/receipt/{sale}', [LubePosController::class, 'receipt'])->name('pos.receipt');
         Route::get('/pos/sticker/{serviceRecord}', [LubePosController::class, 'sticker'])->name('pos.sticker');
     });
 
     // 3. Labor & Pit Services
-    Route::get('/services', [LubeLaborServiceController::class, 'index'])->name('services.index');
-    Route::post('/services', [LubeLaborServiceController::class, 'store'])->name('services.store');
-    Route::put('/services/{service}', [LubeLaborServiceController::class, 'update'])->name('services.update');
-    Route::delete('/services/{service}', [LubeLaborServiceController::class, 'destroy'])->name('services.destroy');
+    Route::middleware('permission:lube.packages')->group(function () {
+        Route::get('/services', [LubeLaborServiceController::class, 'index'])->name('services.index');
+        Route::post('/services', [LubeLaborServiceController::class, 'store'])->name('services.store');
+        Route::put('/services/{service}', [LubeLaborServiceController::class, 'update'])->name('services.update');
+        Route::delete('/services/{service}', [LubeLaborServiceController::class, 'destroy'])->name('services.destroy');
+    });
 
     // 4. Service Packages
     Route::middleware('permission:lube.packages')->group(function () {

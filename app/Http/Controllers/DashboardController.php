@@ -121,10 +121,11 @@ class DashboardController extends Controller
         };
 
         // Determine granular module & screen view permissions
-        $canSeeSales = $user->hasAnyPermission('pos.access', 'sales.view_invoices', 'reports.sales');
-        $canSeePurchases = ($currentShop ? $currentShop->isModuleAvailable('purchases') : true) && $user->hasPermission('purchases.view');
-        $canSeeStock = ($currentShop ? $currentShop->isModuleAvailable('stock') : true) && $user->hasPermission('stock.view');
-        $canSeeLube = ($currentShop ? $currentShop->isModuleAvailable('lube') : $user->isSuperAdmin()) && $user->hasAnyPermission('lube.pos', 'lube.analytics', 'lube.packages', 'lube.vehicles');
+        $isInspectingShop = $user->isSuperAdmin() && $selectedShopId;
+        $canSeeSales = $isInspectingShop || $user->hasAnyPermission('pos.access', 'sales.view_invoices', 'reports.sales');
+        $canSeePurchases = ($currentShop ? $currentShop->isModuleAvailable('purchases') : true) && ($isInspectingShop || $user->hasPermission('purchases.view'));
+        $canSeeStock = ($currentShop ? $currentShop->isModuleAvailable('stock') : true) && ($isInspectingShop || $user->hasPermission('stock.view'));
+        $canSeeLube = ($currentShop ? $currentShop->isModuleAvailable('lube') : false) && ($isInspectingShop || $user->hasAnyPermission('lube.pos', 'lube.analytics', 'lube.packages', 'lube.vehicles'));
 
         // Smart redirect for restricted POS-only users
         if (! $user->isSuperAdmin() && ! $user->isShopAdmin() && ! $user->isBusinessOwner()) {

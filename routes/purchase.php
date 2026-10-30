@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 // Complete 6-Stage Enterprise Purchase & Procurement Module Routes
 Route::prefix('purchases')->name('purchases.')->group(function () {
     // 0. Purchase Module Hub (Launchpad)
-    Route::get('/', PurchaseHubController::class)->name('index')->middleware('module:purchases');
+    Route::get('/', PurchaseHubController::class)->name('index')->middleware(['module:purchases', 'permission:purchases.view,purchases.create,purchases.requisitions,purchases.igp,purchases.grn,purchases.invoices,purchases.return']);
     // 1. Suppliers Management
     Route::middleware('permission:purchases.create')->group(function () {
         Route::get('/suppliers/create', [SupplierController::class, 'create'])->name('suppliers.create');

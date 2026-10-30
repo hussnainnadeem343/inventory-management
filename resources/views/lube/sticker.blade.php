@@ -96,7 +96,7 @@
     <div class="sticker-box">
         <div class="header">
             <div class="shop-name">{{ $serviceRecord->shop->name ?? 'DENFIN AUTO LUBE' }}</div>
-            <div class="shop-phone">Tel: {{ $serviceRecord->shop->phone ?? '+92 300 1234567' }}</div>
+            <div class="shop-phone">Tel: {{ $serviceRecord->shop->phone ?? '+923114670195' }}</div>
         </div>
 
         <div class="details-grid">

@@ -27,13 +27,8 @@ class CheckPermission
             abort(403, 'Your business account has been suspended or deactivated.');
         }
 
-        // Platform Super Admin bypass
-        if ($user->isSuperAdmin()) {
-            return $next($request);
-        }
-
-        // Check if user has at least one of the passed permissions
-        // Note: User::hasPermission enforces both business-type module availability and role rights
+        // Platform Super Admin only has access to platform management features (users, roles, branches, shops)
+        // Store operational permissions (products, sales, purchases, finance, hr, etc.) are strictly checked via hasPermission()
         foreach ($permissions as $permissionGroup) {
             $subPerms = explode(',', $permissionGroup);
             foreach ($subPerms as $slug) {

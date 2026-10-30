@@ -47,7 +47,7 @@
     <div class="text-center">
         <h2 style="margin: 0; font-size: 16px; text-transform: uppercase;">{{ $sale->shop->name ?? 'DENFIN AUTO LUBE' }}</h2>
         <div style="font-size: 11px;">{{ $sale->shop->address ?? 'Main Boulevard, Auto Bay' }}</div>
-        <div style="font-size: 11px;">Tel: {{ $sale->shop->phone ?? '+92 300 1234567' }}</div>
+        <div style="font-size: 11px;">Tel: {{ $sale->shop->phone ?? '+92 311 467 0195' }}</div>
     </div>
 
     <div class="divider"></div>

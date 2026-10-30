@@ -88,7 +88,7 @@ class User extends Authenticatable
     public function canAccessModule(string $module): bool
     {
         if ($this->isSuperAdmin()) {
-            return true;
+            return in_array($module, ['management', 'users', 'roles', 'branches', 'shops'], true);
         }
 
         if (! $this->shop) {
@@ -110,7 +110,7 @@ class User extends Authenticatable
         }
 
         if ($this->role === 'staff' || $this->role === 'user') {
-            $legacyHubs = ['pos', 'sales', 'inventory', 'stock', 'products', 'purchases', 'finance', 'accounts', 'hr', 'reports', 'management'];
+            $legacyHubs = ['pos', 'sales', 'inventory', 'stock', 'products'];
             foreach ($resolvedModules as $m) {
                 if (in_array($m, $legacyHubs, true) || in_array($module, $legacyHubs, true)) {
                     return true;
@@ -136,7 +136,12 @@ class User extends Authenticatable
         }
 
         if ($this->isSuperAdmin()) {
-            return true;
+            $platformPerms = [
+                'users.view', 'users.manage', 'roles.manage',
+                'settings.view', 'branches.view', 'branches.manage',
+            ];
+
+            return in_array($permissionSlug, $platformPerms, true);
         }
 
         if ($this->isBusinessOwner() || $this->isShopAdmin()) {

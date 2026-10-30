@@ -18,15 +18,51 @@ class ProductRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $productType = $this->input('product_type', 'standard');
-        $isLoose = $this->boolean('is_loose') || $productType === 'loose';
-        $liters = $this->input('liters');
-        $packSize = $this->input('pack_size');
+        $productNature = $this->input('product_nature');
+        $oilSubType = $this->input('oil_sub_type');
 
-        if ($liters !== null && $packSize === null) {
-            $packSize = $liters;
-        } elseif ($packSize !== null && $liters === null) {
-            $liters = $packSize;
+        if ($productNature === 'general') {
+            // General retail product or spare part / filter (no oil or loose properties)
+            $productType = 'standard';
+            $isLoose = false;
+            $liters = null;
+            $packSize = $this->input('pack_size');
+        } elseif ($productNature === 'oil') {
+            if ($oilSubType === 'loose') {
+                $productType = 'loose';
+                $isLoose = true;
+                $liters = 1.0;
+                $packSize = 1.0;
+                if (! $this->filled('unit')) {
+                    $this->merge(['unit' => 'LTR']);
+                }
+            } elseif ($oilSubType === 'drum') {
+                $productType = 'drum';
+                $isLoose = false;
+                $liters = $this->filled('liters') ? (float) $this->input('liters') : null;
+                $packSize = $liters;
+                if (! $this->filled('unit')) {
+                    $this->merge(['unit' => 'DRUM']);
+                }
+            } else {
+                // Packaged bottle or can
+                $productType = 'standard';
+                $isLoose = false;
+                $liters = $this->filled('liters') ? (float) $this->input('liters') : null;
+                $packSize = $liters ?: $this->input('pack_size');
+            }
+        } else {
+            // Fallback for direct inputs or generic non-lube shops
+            $productType = $this->input('product_type', 'standard');
+            $isLoose = $this->boolean('is_loose') || $productType === 'loose';
+            $liters = $this->input('liters');
+            $packSize = $this->input('pack_size');
+
+            if ($liters !== null && $packSize === null) {
+                $packSize = $liters;
+            } elseif ($packSize !== null && $liters === null) {
+                $liters = $packSize;
+            }
         }
 
         $this->merge([
@@ -69,7 +105,7 @@ class ProductRequest extends FormRequest
                 Rule::exists(Category::class, 'id'),
             ],
 
-            'pack_size' => ['nullable', 'numeric', 'gt:0'],
+            'pack_size' => ['nullable', 'numeric', 'min:0'],
 
             'liters' => ['nullable', 'numeric', 'min:0'],
 

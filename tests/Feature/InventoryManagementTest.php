@@ -16,7 +16,24 @@ class InventoryManagementTest extends TestCase
 
     private function admin(): User
     {
-        return User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
+        $shop = \App\Models\Shop::firstOrCreate(['code' => 'MAIN-01'], ['name' => 'Main Store', 'status' => 'active']);
+        return User::factory()->create(['role' => 'shop_admin', 'shop_id' => $shop->id, 'status' => 'active']);
+    }
+
+    public function test_super_admin_cannot_access_store_inventory_or_pos_screens_via_url(): void
+    {
+        $superAdmin = User::factory()->create(['role' => 'super_admin', 'status' => 'active', 'shop_id' => null]);
+
+        $this->actingAs($superAdmin)->get('/products/create')->assertForbidden();
+        $this->actingAs($superAdmin)->get('/products')->assertForbidden();
+        $this->actingAs($superAdmin)->get('/pos')->assertForbidden();
+        $this->actingAs($superAdmin)->get('/stock')->assertForbidden();
+        $this->actingAs($superAdmin)->get('/inventory-hub')->assertForbidden();
+        $this->actingAs($superAdmin)->get('/sales-hub')->assertForbidden();
+        $this->actingAs($superAdmin)->get('/purchases')->assertForbidden();
+        $this->actingAs($superAdmin)->get('/finance')->assertForbidden();
+        $this->actingAs($superAdmin)->get('/hr')->assertForbidden();
+        $this->actingAs($superAdmin)->get('/reports')->assertForbidden();
     }
 
     public function test_registration_route_does_not_exist(): void
@@ -174,9 +191,9 @@ class InventoryManagementTest extends TestCase
     public function test_referenced_brand_cannot_be_deleted(): void
     {
         $admin = $this->admin();
-        $brand = Brand::create(['name' => 'Samsung', 'status' => 'active', 'created_by' => $admin->id]);
-        $category = Category::create(['name' => 'Electronics', 'status' => 'active', 'created_by' => $admin->id]);
-        InventoryItem::create(['item_name' => 'TV', 'sku' => 'TV-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 1, 'unit' => 'PCS', 'purchase_price' => 1, 'selling_price' => 2, 'status' => 'active', 'created_by' => $admin->id]);
+        $brand = Brand::create(['shop_id' => $admin->shop_id, 'name' => 'Samsung', 'status' => 'active', 'created_by' => $admin->id]);
+        $category = Category::create(['shop_id' => $admin->shop_id, 'name' => 'Electronics', 'status' => 'active', 'created_by' => $admin->id]);
+        InventoryItem::create(['shop_id' => $admin->shop_id, 'item_name' => 'TV', 'sku' => 'TV-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 1, 'unit' => 'PCS', 'purchase_price' => 1, 'selling_price' => 2, 'status' => 'active', 'created_by' => $admin->id]);
         $this->actingAs($admin)->delete("/brands/$brand->id")->assertSessionHas('error');
         $this->assertDatabaseHas('brands', ['id' => $brand->id, 'deleted_at' => null]);
     }
@@ -191,8 +208,8 @@ class InventoryManagementTest extends TestCase
     public function test_product_creation_starts_with_zero_stock_and_form_has_no_stock_fields(): void
     {
         $admin = $this->admin();
-        $brand = Brand::create(['name' => 'Product Brand', 'status' => 'active', 'created_by' => $admin->id]);
-        $category = Category::create(['name' => 'Product Category', 'status' => 'active', 'created_by' => $admin->id]);
+        $brand = Brand::create(['shop_id' => $admin->shop_id, 'name' => 'Product Brand', 'status' => 'active', 'created_by' => $admin->id]);
+        $category = Category::create(['shop_id' => $admin->shop_id, 'name' => 'Product Category', 'status' => 'active', 'created_by' => $admin->id]);
 
         $this->actingAs($admin)->get('/products/create')->assertOk()->assertSee('Save Product');
         $this->actingAs($admin)->post('/products', ['item_name' => 'New Product', 'sku' => 'PRODUCT-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'pack_size' => 400, 'unit' => 'ml', 'purchase_price' => 100, 'selling_price' => 120, 'status' => 'active'])->assertRedirect('/products');
@@ -202,9 +219,9 @@ class InventoryManagementTest extends TestCase
     public function test_stock_management_flow_and_history_are_separate_from_product(): void
     {
         $admin = $this->admin();
-        $brand = Brand::create(['name' => 'Flow Brand', 'status' => 'active', 'created_by' => $admin->id]);
-        $category = Category::create(['name' => 'Flow Category', 'status' => 'active', 'created_by' => $admin->id]);
-        $product = InventoryItem::create(['item_name' => 'Coke', 'sku' => 'FLOW-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 0, 'sold_quantity' => 0, 'unit' => 'ml', 'status' => 'active', 'created_by' => $admin->id]);
+        $brand = Brand::create(['shop_id' => $admin->shop_id, 'name' => 'Flow Brand', 'status' => 'active', 'created_by' => $admin->id]);
+        $category = Category::create(['shop_id' => $admin->shop_id, 'name' => 'Flow Category', 'status' => 'active', 'created_by' => $admin->id]);
+        $product = InventoryItem::create(['shop_id' => $admin->shop_id, 'item_name' => 'Coke', 'sku' => 'FLOW-1', 'brand_id' => $brand->id, 'category_id' => $category->id, 'quantity' => 0, 'sold_quantity' => 0, 'unit' => 'ml', 'status' => 'active', 'created_by' => $admin->id]);
 
         $this->actingAs($admin)->post("/stock/{$product->id}/add", ['quantity' => 50])->assertRedirect();
         $this->actingAs($admin)->post("/stock/{$product->id}/sell", ['sell_quantity' => 30])->assertRedirect();
@@ -217,9 +234,9 @@ class InventoryManagementTest extends TestCase
     public function test_brand_search_and_status_filters_work(): void
     {
         $admin = $this->admin();
-        Brand::create(['name' => 'Apple', 'description' => 'iPhone maker', 'status' => 'active', 'created_by' => $admin->id]);
-        Brand::create(['name' => 'Apricot Tech', 'description' => 'Computers', 'status' => 'inactive', 'created_by' => $admin->id]);
-        Brand::create(['name' => 'Samsung', 'description' => 'Android maker', 'status' => 'active', 'created_by' => $admin->id]);
+        Brand::create(['shop_id' => $admin->shop_id, 'name' => 'Apple', 'description' => 'iPhone maker', 'status' => 'active', 'created_by' => $admin->id]);
+        Brand::create(['shop_id' => $admin->shop_id, 'name' => 'Apricot Tech', 'description' => 'Computers', 'status' => 'inactive', 'created_by' => $admin->id]);
+        Brand::create(['shop_id' => $admin->shop_id, 'name' => 'Samsung', 'description' => 'Android maker', 'status' => 'active', 'created_by' => $admin->id]);
 
         $this->actingAs($admin)->get('/brands')
             ->assertOk()
@@ -251,9 +268,9 @@ class InventoryManagementTest extends TestCase
     public function test_category_search_and_status_filters_work(): void
     {
         $admin = $this->admin();
-        Category::create(['name' => 'Smartphones', 'description' => 'Mobile handheld devices', 'status' => 'active', 'created_by' => $admin->id]);
-        Category::create(['name' => 'Accessories', 'description' => 'Mobile chargers and cables', 'status' => 'inactive', 'created_by' => $admin->id]);
-        Category::create(['name' => 'Laptops', 'description' => 'Portable computers', 'status' => 'active', 'created_by' => $admin->id]);
+        Category::create(['shop_id' => $admin->shop_id, 'name' => 'Smartphones', 'description' => 'Mobile handheld devices', 'status' => 'active', 'created_by' => $admin->id]);
+        Category::create(['shop_id' => $admin->shop_id, 'name' => 'Accessories', 'description' => 'Mobile chargers and cables', 'status' => 'inactive', 'created_by' => $admin->id]);
+        Category::create(['shop_id' => $admin->shop_id, 'name' => 'Laptops', 'description' => 'Portable computers', 'status' => 'active', 'created_by' => $admin->id]);
 
         $this->actingAs($admin)->get('/categories')
             ->assertOk()

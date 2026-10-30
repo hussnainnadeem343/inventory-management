@@ -5,7 +5,7 @@ use App\Http\Controllers\Sales\SalesHubController;
 use Illuminate\Support\Facades\Route;
 
 // Sales & POS Module Hub (Launchpad)
-Route::get('/sales-hub', SalesHubController::class)->name('sales.hub');
+Route::get('/sales-hub', SalesHubController::class)->name('sales.hub')->middleware(['module:pos', 'permission:pos.access,sales.view_invoices']);
 
 // POS & Multi-Item Sales
 Route::middleware('permission:pos.access')->group(function () {

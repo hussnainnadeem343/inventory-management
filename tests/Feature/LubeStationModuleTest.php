@@ -128,6 +128,70 @@ class LubeStationModuleTest extends TestCase
         ]);
     }
 
+    public function test_search_by_phone_number_returns_multiple_registered_vehicles(): void
+    {
+        Vehicle::create([
+            'shop_id' => $this->lubeShop->id,
+            'plate_number' => 'LEA-24-1111',
+            'vehicle_type' => 'sedan',
+            'make' => 'Toyota',
+            'model' => 'Corolla',
+            'customer_name' => 'Tariq Mehmood',
+            'customer_phone' => '03009876543',
+            'last_odometer' => 30000,
+        ]);
+
+        Vehicle::create([
+            'shop_id' => $this->lubeShop->id,
+            'plate_number' => 'LEA-24-2222',
+            'vehicle_type' => 'suv',
+            'make' => 'Honda',
+            'model' => 'BR-V',
+            'customer_name' => 'Tariq Mehmood',
+            'customer_phone' => '03009876543',
+            'last_odometer' => 55000,
+        ]);
+
+        Vehicle::create([
+            'shop_id' => $this->lubeShop->id,
+            'plate_number' => 'LEA-24-3333',
+            'vehicle_type' => 'bike',
+            'make' => 'Suzuki',
+            'model' => 'GS-150',
+            'customer_name' => 'Tariq Mehmood',
+            'customer_phone' => '03009876543',
+            'last_odometer' => 12000,
+        ]);
+
+        $response = $this->actingAs($this->lubeAdmin)
+            ->getJson(route('lube.pos.search', ['query' => '0300-9876543']));
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'found' => true,
+            'count' => 3,
+        ]);
+
+        $data = $response->json();
+        $this->assertCount(3, $data['vehicles']);
+        $plates = collect($data['vehicles'])->pluck('plate_number')->all();
+        $this->assertContains('LEA-24-1111', $plates);
+        $this->assertContains('LEA-24-2222', $plates);
+        $this->assertContains('LEA-24-3333', $plates);
+    }
+
+    public function test_lube_counter_pos_renders_simplified_lookup_card_and_multi_vehicle_elements(): void
+    {
+        $response = $this->actingAs($this->lubeAdmin)->get(route('lube.pos'));
+        $response->assertStatus(200);
+        $response->assertSee('lookupPlateInput');
+        $response->assertSee('lookupPhoneInput');
+        $response->assertSee('multipleVehiclesBox');
+        $response->assertSee('multiVehicleSelect');
+        $response->assertSee('multiVehiclesList');
+        $response->assertDontSee('linear-gradient(135deg, #f0f7ff 0%, #e0e7ff 100%)');
+    }
+
     public function test_complete_lube_counter_pos_checkout_flow(): void
     {
         // Set up technician
@@ -684,5 +748,97 @@ class LubeStationModuleTest extends TestCase
             $res = $this->actingAs($this->lubeAdmin)->get(route($route));
             $res->assertStatus(200);
         }
+    }
+
+    public function test_lube_counter_pos_barcode_lookup_returns_item_details(): void
+    {
+        $lubeItem = InventoryItem::create([
+            'shop_id' => $this->lubeShop->id,
+            'brand_id' => $this->brand->id,
+            'category_id' => $this->category->id,
+            'item_name' => 'Castrol Magnatec 10W-40 4L',
+            'sku' => 'CAS-10W40-4L',
+            'initial_quantity' => 15,
+            'quantity' => 15,
+            'sold_quantity' => 0,
+            'unit' => 'CAN',
+            'purchase_price' => 3200,
+            'selling_price' => 4500,
+            'is_loose' => false,
+            'status' => 'active',
+            'created_by' => $this->lubeAdmin->id,
+        ]);
+
+        $retailItem = InventoryItem::create([
+            'shop_id' => $this->retailShop->id,
+            'brand_id' => $this->brand->id,
+            'category_id' => $this->category->id,
+            'item_name' => 'Metro Super Retail Item',
+            'sku' => 'RETAIL-ONLY-SKU',
+            'initial_quantity' => 10,
+            'quantity' => 10,
+            'sold_quantity' => 0,
+            'unit' => 'PCS',
+            'purchase_price' => 100,
+            'selling_price' => 150,
+            'is_loose' => false,
+            'status' => 'active',
+            'created_by' => $this->retailAdmin->id,
+        ]);
+
+        // 1. Successful lookup by SKU
+        $response = $this->actingAs($this->lubeAdmin)
+            ->getJson(route('lube.pos.barcode', ['code' => 'CAS-10W40-4L']));
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'found' => true,
+            'item' => [
+                'id' => $lubeItem->id,
+                'name' => 'Castrol Magnatec 10W-40 4L',
+                'sku' => 'CAS-10W40-4L',
+                'selling_price' => 4500.00,
+                'unit' => 'CAN',
+                'quantity' => 15.00,
+                'is_loose' => false,
+            ],
+        ]);
+
+        // 2. Successful lookup by item ID
+        $responseId = $this->actingAs($this->lubeAdmin)
+            ->getJson(route('lube.pos.barcode', ['code' => (string) $lubeItem->id]));
+        $responseId->assertStatus(200);
+        $responseId->assertJson(['found' => true]);
+
+        // 3. Multi-shop security: scanning another shop's SKU returns not found
+        $responseRetail = $this->actingAs($this->lubeAdmin)
+            ->getJson(route('lube.pos.barcode', ['code' => 'RETAIL-ONLY-SKU']));
+        $responseRetail->assertStatus(200);
+        $responseRetail->assertJson(['found' => false]);
+
+        // 4. Non-existent barcode returns found: false
+        $responseNonExistent = $this->actingAs($this->lubeAdmin)
+            ->getJson(route('lube.pos.barcode', ['code' => 'DOES-NOT-EXIST-999']));
+        $responseNonExistent->assertStatus(200);
+        $responseNonExistent->assertJson(['found' => false]);
+
+        // 5. Blank code returns 422
+        $responseBlank = $this->actingAs($this->lubeAdmin)
+            ->getJson(route('lube.pos.barcode', ['code' => '']));
+        $responseBlank->assertStatus(422);
+    }
+
+    public function test_lube_counter_pos_renders_barcode_scanner_and_sticker_controls(): void
+    {
+        $response = $this->actingAs($this->lubeAdmin)->get(route('lube.pos'));
+        $response->assertStatus(200);
+        $response->assertSee('barcodeScannerInput');
+        $response->assertSee('btnScanBarcode');
+        $response->assertSee('barcodeFeedback');
+        $response->assertSee('processBarcode');
+        $response->assertSee('addOrIncrementItem');
+        $response->assertSee('btnPrintStickerOnly');
+        $response->assertSee('modalBtnSticker');
+        $response->assertSee('submitService');
     }
 }

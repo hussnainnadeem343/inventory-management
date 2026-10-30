@@ -5,21 +5,58 @@
 <div class="row justify-content-center">
     <div class="col-lg-9">
         <div class="card p-4">
-            <h2 class="h5 mb-3">{{ $product->exists ? 'Edit Product Details' : 'Register New Product in Catalog' }}</h2>
-            <form method="post" action="{{ $product->exists ? route('products.update', $product) : route('products.store') }}">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h5 mb-0">{{ $product->exists ? 'Edit Product Details' : 'Register New Product in Catalog' }}</h2>
+                @if($isLubeBusiness)
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1" id="businessTypeBadge">
+                        <i class="bi bi-droplet-half me-1"></i> Auto Lube Business
+                    </span>
+                @else
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" id="businessTypeBadge">
+                        <i class="bi bi-shop me-1"></i> Standard Retail Catalog
+                    </span>
+                @endif
+            </div>
+
+            <form method="post" action="{{ $product->exists ? route('products.update', $product) : route('products.store') }}" id="productForm">
                 @csrf
                 @if($product->exists)
                     @method('put')
                 @endif
 
+                {{-- Hidden State Fields --}}
+                <input type="hidden" name="product_type" id="hiddenProductType" value="{{ old('product_type', $product->product_type ?? 'standard') }}">
+                <input type="hidden" name="is_loose" id="hiddenIsLoose" value="{{ old('is_loose', $product->is_loose ? '1' : '0') }}">
+
+                @php
+                    // Determine if the product being edited is an engine oil/drum/loose item or a general item
+                    $isOil = false;
+                    $oilType = 'packaged';
+
+                    if ($product->is_loose || $product->product_type === 'loose' || old('oil_sub_type') === 'loose') {
+                        $isOil = true;
+                        $oilType = 'loose';
+                    } elseif ($product->product_type === 'drum' || str_contains(strtoupper($product->unit ?? ''), 'DRUM') || old('oil_sub_type') === 'drum') {
+                        $isOil = true;
+                        $oilType = 'drum';
+                    } elseif (($product->liters > 0 && in_array(strtoupper($product->unit ?? ''), ['LTR', 'LITER', 'CAN', 'BOTTLE'])) || old('oil_sub_type') === 'packaged') {
+                        $isOil = true;
+                        $oilType = 'packaged';
+                    }
+
+                    if (old('product_nature')) {
+                        $isOil = old('product_nature') === 'oil';
+                    }
+                @endphp
+
                 <div class="row g-3">
                     @if(auth()->user()->isSuperAdmin() && ! $product->exists)
                         <div class="col-md-12">
                             <label class="form-label">Shop / Branch <span class="text-danger">*</span></label>
-                            <select class="form-select @error('shop_id') is-invalid @enderror" name="shop_id" required>
+                            <select class="form-select @error('shop_id') is-invalid @enderror" name="shop_id" id="shopSelect" required>
                                 @foreach($shops as $shop)
-                                    <option value="{{ $shop->id }}" @selected(old('shop_id', $product->shop_id) == $shop->id)>
-                                        {{ $shop->name }} ({{ $shop->code }})
+                                    <option value="{{ $shop->id }}" data-is-lube="{{ $shop->isLube() ? '1' : '0' }}" @selected(old('shop_id', $product->shop_id ?? $currentShop?->id) == $shop->id)>
+                                        {{ $shop->name }} ({{ $shop->code }}) &mdash; {{ $shop->business_type ?: 'Retail & General Business' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -29,7 +66,7 @@
 
                     <div class="col-md-8">
                         <label class="form-label">Item Name <span class="text-danger">*</span></label>
-                        <input class="form-control @error('item_name') is-invalid @enderror" name="item_name" value="{{ old('item_name', $product->item_name) }}" required placeholder="Enter Item Name">
+                        <input class="form-control @error('item_name') is-invalid @enderror" name="item_name" value="{{ old('item_name', $product->item_name) }}" required placeholder="Enter Item Name (e.g. Air Freshener, Oil Filter, Shell Helix 10W-40)">
                         @error('item_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
@@ -72,16 +109,101 @@
                         @error('category_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
+                    {{-- AUTO LUBE BUSINESS SPECIFIC SECTION --}}
+                    <div class="col-12" id="lubeSectionWrapper" style="{{ $isLubeBusiness ? '' : 'display: none;' }}">
+                        <div class="p-3 border rounded-3 bg-light">
+                            <label class="form-label fw-bold mb-2 text-dark d-flex align-items-center gap-2">
+                                <i class="bi bi-tag-fill text-primary"></i> Product Classification
+                            </label>
+                            <div class="row g-2">
+                                <div class="col-md-6">
+                                    <div class="card h-100 p-3 border product-nature-card {{ ! $isOil ? 'active' : '' }}" id="cardNatureGeneral">
+                                        <div class="form-check ps-0 mb-0">
+                                            <div class="d-flex align-items-start gap-2">
+                                                <input class="form-check-input ms-0 mt-1" type="radio" name="product_nature" id="radioGeneral" value="general" @checked(! $isOil)>
+                                                <label class="form-check-label fw-semibold text-dark cursor-pointer" for="radioGeneral">
+                                                    <span class="d-block text-dark">
+                                                        <i class="bi bi-box-seam text-secondary me-1"></i> Standard Product / Part / Accessory
+                                                    </span>
+                                                    <small class="text-muted fw-normal d-block mt-1" style="font-size: 12px;">
+                                                        For Air Fresheners, Air/Oil/AC Filters, Wiper Blades, Spark Plugs, Coolants, Hardware, etc.
+                                                    </small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100 p-3 border product-nature-card {{ $isOil ? 'active-oil' : '' }}" id="cardNatureOil">
+                                        <div class="form-check ps-0 mb-0">
+                                            <div class="d-flex align-items-start gap-2">
+                                                <input class="form-check-input ms-0 mt-1" type="radio" name="product_nature" id="radioOil" value="oil" @checked($isOil)>
+                                                <label class="form-check-label fw-semibold text-dark cursor-pointer" for="radioOil">
+                                                    <span class="d-block text-warning-emphasis">
+                                                        <i class="bi bi-droplet-half text-warning me-1"></i> Engine Oil / Bulk Lubricant
+                                                    </span>
+                                                    <small class="text-muted fw-normal d-block mt-1" style="font-size: 12px;">
+                                                        For Bulk 208L/280L Drums, Dispensed Loose Oil per Liter, or Sealed Packaged Oil Cans.
+                                                    </small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Oil Specification Properties (Only visible when "Engine Oil / Bulk Lubricant" is selected) --}}
+                            <div class="mt-3 pt-3 border-top" id="oilConfigPanel" style="{{ $isOil ? '' : 'display: none;' }}">
+                                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                                    <i class="bi bi-droplet text-warning"></i> Oil Packaging &amp; Dispensing Properties
+                                </h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Oil Sub-Type <span class="text-danger">*</span></label>
+                                        <select class="form-select" name="oil_sub_type" id="oilSubTypeSelect">
+                                            <option value="packaged" @selected($oilType === 'packaged')>
+                                                Packaged / Bottled Oil (e.g. 4L Can, 1L Bottle)
+                                            </option>
+                                            <option value="loose" @selected($oilType === 'loose')>
+                                                Loose Dispensed Oil (Sold per Liter at Counter / Decanting Destination)
+                                            </option>
+                                            <option value="drum" @selected($oilType === 'drum')>
+                                                Bulk Drum (208L / 280L Barrel / Decanting Source)
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6" id="oilVolumeWrapper">
+                                        <label class="form-label fw-semibold" id="oilVolumeLabel">Can / Bottle Volume (Liters)</label>
+                                        <div class="input-group">
+                                            <input class="form-control font-monospace" type="number" step="any" min="0.001" name="liters" id="oilVolumeInput" value="{{ old('liters', $product->liters) }}" placeholder="e.g. 4 for 4L can">
+                                            <span class="input-group-text bg-white text-muted">Liters</span>
+                                        </div>
+                                        <div class="form-text" id="oilVolumeHelp">Volume in liters for standard packaged oil cans.</div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="alert alert-light border py-2 px-3 small mb-0 d-flex align-items-center gap-2" id="oilAlertNotice">
+                                            <i class="bi bi-info-circle-fill text-primary"></i>
+                                            <span id="oilAlertText">Packaged oil cans are sold as sealed units (e.g. 4L can) at POS.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- MEASURE UNIT, PACK SIZE & ALERT QUANTITY --}}
                     <div class="col-md-4">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <label class="form-label mb-0">Measure Unit <span class="text-danger">*</span></label>
                             <a class="small text-decoration-none" href="{{ route('units.index') }}" target="_blank">+ New Unit</a>
                         </div>
-                        <select class="form-select searchable-select @error('unit') is-invalid @enderror" name="unit" required>
+                        <select class="form-select searchable-select @error('unit') is-invalid @enderror" name="unit" id="unitSelect" required>
                             <option value="">Select Unit</option>
                             @foreach($units as $u)
                                 @php $unitCode = is_string($u) ? $u : $u->code; $unitName = is_string($u) ? $u : $u->name; @endphp
-                                <option value="{{ $unitCode }}" @selected(old('unit', $product->unit) == $unitCode)>
+                                <option value="{{ $unitCode }}" @selected(old('unit', $product->unit ?? 'PCS') == $unitCode)>
                                     {{ $unitName }} ({{ $unitCode }})
                                 </option>
                             @endforeach
@@ -89,14 +211,11 @@
                         @error('unit') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
 
-                    <div class="col-md-4">
-                        <label class="form-label fw-semibold" id="litersFieldLabel">Liters / Capacity (L)</label>
-                        <div class="input-group">
-                            <input class="form-control font-monospace @error('liters') is-invalid @enderror" type="number" step="any" min="0.001" name="liters" id="litersInput" value="{{ old('liters', $product->liters ?? $product->pack_size) }}" placeholder="e.g. 280 (for Drum) or 1 (for Loose)">
-                            <span class="input-group-text bg-light text-muted">Liters</span>
-                        </div>
-                        @error('liters') <div class="invalid-feedback d-block">{{ $message }}</div> @enderror
-                        <div class="form-text" id="litersHelpText">Drum: capacity (e.g. 280L, 520L). Loose: unit volume (e.g. 1L).</div>
+                    <div class="col-md-4" id="generalPackSizeCol">
+                        <label class="form-label" id="generalPackSizeLabel">Pack Size / Pieces per Pack</label>
+                        <input class="form-control @error('pack_size') is-invalid @enderror" type="number" step="any" min="0" name="pack_size" id="generalPackSizeInput" value="{{ old('pack_size', $product->pack_size) }}" placeholder="e.g. 1 or 12">
+                        @error('pack_size') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        <div class="form-text" id="generalPackSizeHelp">Optional: Number of units or pieces per carton/box.</div>
                     </div>
 
                     <div class="col-md-4">
@@ -106,32 +225,10 @@
                         <div class="form-text">Triggers yellow warning when stock reaches this limit.</div>
                     </div>
 
-                    {{-- Product Classification / Loose Product Specification --}}
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Product Classification / Type</label>
-                        <select class="form-select @error('product_type') is-invalid @enderror" name="product_type" id="productTypeSelect">
-                            <option value="standard" @selected(old('product_type', $product->product_type ?? 'standard') === 'standard')>Standard / Packaged Item (Bottles, Parts, Filters)</option>
-                            <option value="loose" @selected(old('product_type', $product->product_type) === 'loose' || $product->is_loose)>Loose Product (Dispensed Liters / Oil from Drums)</option>
-                            <option value="drum" @selected(old('product_type', $product->product_type) === 'drum')>Bulk Drum (208L Barrel / Decanting Source)</option>
-                        </select>
-                        @error('product_type') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        <div class="form-text">Marking as <strong>Loose Product</strong> allows it to be targeted for Drum Decanting and POS Loose Oil dispensing.</div>
-                    </div>
-
-                    <div class="col-md-6 d-flex align-items-center">
-                        <div class="form-check p-3 border rounded-3 w-100 bg-light mt-1">
-                            <input class="form-check-input ms-0 me-2" type="checkbox" name="is_loose" id="isLooseCheck" value="1" @checked(old('is_loose', $product->is_loose || $product->product_type === 'loose'))>
-                            <label class="form-check-label fw-semibold text-dark" for="isLooseCheck">
-                                <i class="bi bi-droplet-half text-primary me-1"></i> Mark as Loose Product (Sold per Liter)
-                            </label>
-                            <small class="text-muted d-block ms-4" style="font-size: 11.5px;">Auto-filters in Auto Lube Station Loose Oil Counter &amp; Decanting.</small>
-                        </div>
-                    </div>
-
                     <div class="col-12">
                         <div class="alert alert-light border d-flex align-items-center gap-2 mb-0 py-2 px-3 small text-secondary">
                             <i class="bi bi-info-circle text-primary fs-5"></i>
-                            <span><strong>Procurement Workflow:</strong> Stock quantities, batch numbers, and purchase costs are managed dynamically via <strong>Purchase Orders & Goods Received Notes (GRN)</strong>.</span>
+                            <span><strong>Procurement Workflow:</strong> Stock quantities, batch numbers, and purchase costs are managed dynamically via <strong>Purchase Orders &amp; Goods Received Notes (GRN)</strong>.</span>
                         </div>
                     </div>
 
@@ -154,62 +251,205 @@
     </div>
 </div>
 
+<style>
+.product-nature-card {
+    transition: all 0.2s ease;
+    border: 1.5px solid #e2e8f0;
+    cursor: pointer;
+}
+.product-nature-card:hover {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+}
+.product-nature-card.active {
+    border-color: #2563eb !important;
+    background-color: #eff6ff !important;
+}
+.product-nature-card.active-oil {
+    border-color: #f59e0b !important;
+    background-color: #fffbeb !important;
+}
+</style>
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const typeSelect = document.getElementById('productTypeSelect');
-    const looseCheck = document.getElementById('isLooseCheck');
-    const unitSelect = document.querySelector('select[name="unit"]');
-    const litersLabel = document.getElementById('litersFieldLabel');
-    const litersInput = document.getElementById('litersInput');
-    const litersHelp = document.getElementById('litersHelpText');
+    const shopSelect = document.getElementById('shopSelect');
+    const lubeSectionWrapper = document.getElementById('lubeSectionWrapper');
+    const businessTypeBadge = document.getElementById('businessTypeBadge');
 
-    function syncTypeUI() {
-        if (!typeSelect) return;
-        const val = typeSelect.value;
-        if (val === 'drum') {
-            if (looseCheck) looseCheck.checked = false;
-            if (unitSelect && (!unitSelect.value || unitSelect.value === 'PCS' || unitSelect.value === 'LITER')) {
-                unitSelect.value = 'DRUM';
+    const radioGeneral = document.getElementById('radioGeneral');
+    const radioOil = document.getElementById('radioOil');
+    const cardNatureGeneral = document.getElementById('cardNatureGeneral');
+    const cardNatureOil = document.getElementById('cardNatureOil');
+
+    const oilConfigPanel = document.getElementById('oilConfigPanel');
+    const oilSubTypeSelect = document.getElementById('oilSubTypeSelect');
+    const oilVolumeWrapper = document.getElementById('oilVolumeWrapper');
+    const oilVolumeLabel = document.getElementById('oilVolumeLabel');
+    const oilVolumeInput = document.getElementById('oilVolumeInput');
+    const oilVolumeHelp = document.getElementById('oilVolumeHelp');
+    const oilAlertText = document.getElementById('oilAlertText');
+
+    const unitSelect = document.getElementById('unitSelect');
+    const generalPackSizeCol = document.getElementById('generalPackSizeCol');
+    const generalPackSizeInput = document.getElementById('generalPackSizeInput');
+
+    const hiddenProductType = document.getElementById('hiddenProductType');
+    const hiddenIsLoose = document.getElementById('hiddenIsLoose');
+
+    // Helper to select an option by code or fallback
+    function setUnitValue(code, fallbackCode) {
+        if (!unitSelect) return;
+        const upperCode = code.toUpperCase();
+        let found = false;
+        for (let i = 0; i < unitSelect.options.length; i++) {
+            if (unitSelect.options[i].value.toUpperCase() === upperCode) {
+                unitSelect.selectedIndex = i;
+                found = true;
+                break;
             }
-            if (litersLabel) litersLabel.innerHTML = '<i class="bi bi-fuel-pump text-primary me-1"></i> Drum Capacity (Liters) <span class="text-danger">*</span>';
-            if (litersInput) litersInput.placeholder = 'e.g. 280 or 520';
-            if (litersHelp) litersHelp.textContent = 'Total volume capacity of this drum (e.g. 280L, 520L). Auto-populates decanting usable liters.';
-        } else if (val === 'loose') {
-            if (looseCheck) looseCheck.checked = true;
-            if (unitSelect && (!unitSelect.value || unitSelect.value === 'PCS' || unitSelect.value === 'DRUM')) {
-                unitSelect.value = 'LITER';
+        }
+        if (!found && fallbackCode) {
+            for (let i = 0; i < unitSelect.options.length; i++) {
+                if (unitSelect.options[i].value.toUpperCase() === fallbackCode.toUpperCase()) {
+                    unitSelect.selectedIndex = i;
+                    found = true;
+                    break;
+                }
             }
-            if (litersLabel) litersLabel.innerHTML = '<i class="bi bi-droplet-half text-info me-1"></i> Loose Unit Volume (Liters) <span class="text-danger">*</span>';
-            if (litersInput) {
-                litersInput.placeholder = 'e.g. 1 or 2';
-                if (!litersInput.value) litersInput.value = '1';
-            }
-            if (litersHelp) litersHelp.textContent = 'Defined volume per loose unit (e.g. 1L). Decanting 250L into this product results in 250 available quantity.';
-        } else {
-            if (looseCheck) looseCheck.checked = false;
-            if (litersLabel) litersLabel.textContent = 'Variant / Pack Size in Liters';
-            if (litersInput) litersInput.placeholder = 'e.g. 4 (for 4L can)';
-            if (litersHelp) litersHelp.textContent = 'Optional pack volume in liters for standard packaged items.';
         }
     }
 
-    if (typeSelect) {
-        typeSelect.addEventListener('change', syncTypeUI);
+    function syncOilSubtypeUI() {
+        if (!oilSubTypeSelect) return;
+        const subType = oilSubTypeSelect.value;
+
+        if (subType === 'loose') {
+            if (oilVolumeWrapper) oilVolumeWrapper.style.display = 'none';
+            if (oilAlertText) {
+                oilAlertText.textContent = 'Loose oil is dispensed in exact/fractional liters (e.g. 0.25L, 3.5L) at POS counter and acts as the destination for drum decanting.';
+            }
+            if (hiddenProductType) hiddenProductType.value = 'loose';
+            if (hiddenIsLoose) hiddenIsLoose.value = '1';
+            setUnitValue('LTR', 'LITER');
+        } else if (subType === 'drum') {
+            if (oilVolumeWrapper) oilVolumeWrapper.style.display = 'block';
+            if (oilVolumeLabel) oilVolumeLabel.innerHTML = 'Drum Total Capacity (Liters) <span class="text-danger">*</span>';
+            if (oilVolumeInput) oilVolumeInput.placeholder = 'e.g. 280 or 208';
+            if (oilVolumeHelp) oilVolumeHelp.textContent = 'Total volume capacity of this drum (e.g. 280L). Used as source for decanting.';
+            if (oilAlertText) {
+                oilAlertText.textContent = 'Bulk drums are tracked as single barrel units and decanted into loose oil in the Auto Lube Station.';
+            }
+            if (hiddenProductType) hiddenProductType.value = 'drum';
+            if (hiddenIsLoose) hiddenIsLoose.value = '0';
+            setUnitValue('DRUM', 'PCS');
+        } else {
+            // Packaged / Bottled Can
+            if (oilVolumeWrapper) oilVolumeWrapper.style.display = 'block';
+            if (oilVolumeLabel) oilVolumeLabel.textContent = 'Can / Bottle Volume (Liters)';
+            if (oilVolumeInput) oilVolumeInput.placeholder = 'e.g. 4 for 4L can, 1 for 1L bottle';
+            if (oilVolumeHelp) oilVolumeHelp.textContent = 'Volume in liters for standard packaged oil cans.';
+            if (oilAlertText) {
+                oilAlertText.textContent = 'Packaged oil cans are sold as sealed units (e.g. 4L can) at POS.';
+            }
+            if (hiddenProductType) hiddenProductType.value = 'standard';
+            if (hiddenIsLoose) hiddenIsLoose.value = '0';
+            if (unitSelect && (unitSelect.value === 'DRUM' || unitSelect.value === 'LTR')) {
+                setUnitValue('CAN', 'PCS');
+            }
+        }
     }
 
-    if (looseCheck) {
-        looseCheck.addEventListener('change', function () {
-            if (this.checked) {
-                typeSelect.value = 'loose';
-            } else if (typeSelect.value === 'loose') {
-                typeSelect.value = 'standard';
+    function syncNatureUI() {
+        // Check if lube section is active
+        const isLube = lubeSectionWrapper && lubeSectionWrapper.style.display !== 'none';
+
+        if (!isLube) {
+            // Standard non-lube business: completely generic form
+            if (oilConfigPanel) oilConfigPanel.style.display = 'none';
+            if (generalPackSizeCol) generalPackSizeCol.style.display = 'block';
+            if (hiddenProductType) hiddenProductType.value = 'standard';
+            if (hiddenIsLoose) hiddenIsLoose.value = '0';
+            return;
+        }
+
+        const isOil = radioOil && radioOil.checked;
+
+        if (cardNatureGeneral) {
+            cardNatureGeneral.classList.toggle('active', !isOil);
+        }
+        if (cardNatureOil) {
+            cardNatureOil.classList.toggle('active-oil', isOil);
+        }
+
+        if (isOil) {
+            // Lube business: Oil product selected
+            if (oilConfigPanel) oilConfigPanel.style.display = 'block';
+            if (generalPackSizeCol) generalPackSizeCol.style.display = 'none';
+            syncOilSubtypeUI();
+        } else {
+            // Lube business: Standard general item (Air Freshener, Air Filter, etc.)
+            if (oilConfigPanel) oilConfigPanel.style.display = 'none';
+            if (generalPackSizeCol) generalPackSizeCol.style.display = 'block';
+            if (hiddenProductType) hiddenProductType.value = 'standard';
+            if (hiddenIsLoose) hiddenIsLoose.value = '0';
+            if (oilVolumeInput) oilVolumeInput.value = '';
+            if (unitSelect && (unitSelect.value === 'DRUM' || unitSelect.value === 'LTR')) {
+                setUnitValue('PCS', null);
             }
-            syncTypeUI();
+        }
+    }
+
+    if (radioGeneral) {
+        radioGeneral.addEventListener('change', syncNatureUI);
+    }
+    if (radioOil) {
+        radioOil.addEventListener('change', syncNatureUI);
+    }
+    if (cardNatureGeneral) {
+        cardNatureGeneral.addEventListener('click', function () {
+            if (radioGeneral) {
+                radioGeneral.checked = true;
+                syncNatureUI();
+            }
+        });
+    }
+    if (cardNatureOil) {
+        cardNatureOil.addEventListener('click', function () {
+            if (radioOil) {
+                radioOil.checked = true;
+                syncNatureUI();
+            }
+        });
+    }
+    if (oilSubTypeSelect) {
+        oilSubTypeSelect.addEventListener('change', syncOilSubtypeUI);
+    }
+
+    // Dynamic Shop switcher for Super Admin
+    if (shopSelect) {
+        shopSelect.addEventListener('change', function () {
+            const selectedOpt = shopSelect.options[shopSelect.selectedIndex];
+            const isLubeShop = selectedOpt.getAttribute('data-is-lube') === '1';
+
+            if (lubeSectionWrapper) {
+                lubeSectionWrapper.style.display = isLubeShop ? 'block' : 'none';
+            }
+            if (businessTypeBadge) {
+                if (isLubeShop) {
+                    businessTypeBadge.className = 'badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1';
+                    businessTypeBadge.innerHTML = '<i class="bi bi-droplet-half me-1"></i> Auto Lube Business';
+                } else {
+                    businessTypeBadge.className = 'badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1';
+                    businessTypeBadge.innerHTML = '<i class="bi bi-shop me-1"></i> Standard Retail Catalog';
+                }
+            }
+            syncNatureUI();
         });
     }
 
-    syncTypeUI();
+    syncNatureUI();
 });
 </script>
 @endpush

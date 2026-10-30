@@ -256,6 +256,14 @@ class ProductController extends Controller
     private function form(InventoryItem $product, $user): View
     {
         $shopId = $user->isSuperAdmin() ? ($product->shop_id ?? request()->query('shop_id')) : $user->shop_id;
+        $shops = $user->isSuperAdmin() ? Shop::where('status', 'active')->orderBy('name')->get() : collect();
+        if ($user->isSuperAdmin() && ! $shopId) {
+            $shopId = $shops->first()?->id;
+        }
+
+        $currentShop = $user->shop ?? ($shopId ? Shop::find($shopId) : null);
+        $isLubeBusiness = $currentShop ? $currentShop->isLube() : false;
+
         $targetIds = $user->isSuperAdmin()
             ? ($shopId ? (Shop::find($shopId)?->getAllBranchIds() ?? [$shopId]) : null)
             : ($user->shop ? $user->shop->getAllBranchIds() : [$user->shop_id]);
@@ -273,12 +281,26 @@ class ProductController extends Controller
             $categoryQuery->orWhere('id', $product->category_id);
         }
 
+        $units = \App\Models\Inventory\Unit::forShop($shopId)->active()->orderBy('name')->get();
+        if ($units->isEmpty()) {
+            $units = collect([
+                (object)['code' => 'PCS', 'name' => 'Piece'],
+                (object)['code' => 'BOX', 'name' => 'Box'],
+                (object)['code' => 'PACK', 'name' => 'Pack'],
+                (object)['code' => 'LTR', 'name' => 'Litre'],
+                (object)['code' => 'DRUM', 'name' => 'Drum'],
+                (object)['code' => 'KG', 'name' => 'Kilogram'],
+            ]);
+        }
+
         return view('products.form', [
             'product' => $product,
             'brands' => $brandQuery->orderBy('name')->get(),
             'categories' => $categoryQuery->orderBy('name')->get(),
-            'shops' => $user->isSuperAdmin() ? Shop::where('status', 'active')->orderBy('name')->get() : collect(),
-            'units' => \App\Models\Inventory\Unit::forShop($shopId)->active()->orderBy('name')->get(),
+            'shops' => $shops,
+            'units' => $units,
+            'isLubeBusiness' => $isLubeBusiness,
+            'currentShop' => $currentShop,
         ]);
     }
 

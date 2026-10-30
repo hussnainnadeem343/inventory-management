@@ -41,7 +41,7 @@ class LandingPageController extends Controller
         $demoRequest = DemoRequest::create($validated);
 
         // Pre-composed WhatsApp URL for fast instant conversation
-        $waPhone = config('app.whatsapp_number', '923001234567');
+        $waPhone = config('app.whatsapp_number', '923114670195');
         $waMessage = "Hello DenFin Team! I just submitted a demo request.\n"
             . "• Name: {$demoRequest->name}\n"
             . "• Business: {$demoRequest->business_name}\n"

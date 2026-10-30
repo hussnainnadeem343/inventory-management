@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 // HR & Payroll Module Routes
 Route::prefix('hr')->name('hr.')->group(function () {
     // 0. HR Module Hub (Launchpad)
-    Route::get('/', HrHubController::class)->name('index')->middleware('module:hr');
+    Route::get('/', HrHubController::class)->name('index')->middleware(['module:hr', 'permission:hr.employees,hr.attendance,hr.payroll']);
     // Departments & Designations
     Route::middleware('permission:hr.employees')->group(function () {
         Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');

@@ -10,49 +10,74 @@
             {{-- LEFT COLUMN: Vehicle Info, Mileage Calc & Consumables --}}
             <div class="col-lg-8">
                 
-                {{-- 1. QUICK VEHICLE & CUSTOMER LOOKUP (HIGHLIGHTED) --}}
-                <div class="card border-0 shadow-sm mb-3" style="background: linear-gradient(135deg, #f0f7ff 0%, #e0e7ff 100%); border: 1.5px solid #93c5fd !important; border-radius: 12px;">
+                {{-- 1. QUICK VEHICLE & CUSTOMER LOOKUP --}}
+                <div class="card border shadow-sm mb-3" style="border-radius: 10px;">
                     <div class="card-body p-3">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge bg-primary text-white px-2 py-1 shadow-sm">
-                                    <i class="bi bi-search me-1"></i> QUICK LOOKUP
-                                </span>
-                                <strong class="text-primary-emphasis small text-uppercase" style="letter-spacing: .5px;">Quick Vehicle &amp; Customer Lookup</strong>
+                                <strong class="text-secondary small text-uppercase" style="letter-spacing: .5px;">
+                                    <i class="bi bi-search text-primary me-1"></i> Quick Vehicle &amp; Customer Lookup
+                                </strong>
                             </div>
-                            <div class="d-flex align-items-center gap-1.5">
-                                <button class="btn btn-sm btn-outline-secondary bg-white text-secondary py-0.5 px-2.5" type="button" id="btnResetLookup" title="Reset all fields">
-                                    <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                        </div>
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-5">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light text-primary fw-semibold">
+                                        <i class="bi bi-car-front me-1"></i>
+                                    </span>
+                                    <input type="text" id="lookupPlateInput" class="form-control form-control-sm text-uppercase font-monospace fw-bold" placeholder="LEA-1234" autocomplete="off">
+                                    <button class="btn btn-primary btn-sm px-3 fw-semibold" type="button" id="btnSearchPlate">
+                                        <i class="bi bi-search me-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light text-success fw-semibold">
+                                        <i class="bi bi-telephone me-1"></i>
+                                    </span>
+                                    <input type="text" id="lookupPhoneInput" class="form-control form-control-sm font-monospace" placeholder="0300-1234567" autocomplete="off">
+                                    <button class="btn btn-success btn-sm px-3 fw-semibold" type="button" id="btnSearchPhone">
+                                        <i class="bbi bi-search me-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                             <div class="col-md-3">
+                                <div class="d-flex align-items-center gap-1.5">
+                                <button class="btn btn-sm btn-outline-secondary py-0.5 px-2.5" type="button" id="btnResetLookup" title="Reset all fields">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>
                                 </button>
                                 @if(auth()->user()->hasPermission('reports.sales'))
-                                    <a href="{{ route('reports.cash-register') }}" class="btn btn-sm btn-outline-danger bg-white py-0.5 px-2.5" title="Close Cash Drawer">
+                                    <a href="{{ route('reports.cash-register') }}" class="btn btn-sm btn-outline-danger py-0.5 px-2.5" title="Close Cash Drawer">
                                         <i class="bi bi-lock-fill me-1"></i> Close Cash
                                     </a>
                                 @endif
                             </div>
-                        </div>
-                        <div class="row g-2 align-items-center">
-                            <div class="col-md-6">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-white text-primary fw-bold border-end-0">
-                                        <i class="bi bi-car-front me-1"></i> Plate
-                                    </span>
-                                    <input type="text" id="lookupPlateInput" class="form-control form-control-sm text-uppercase font-monospace fw-bold bg-white" placeholder="e.g. LEA-1234 or BWP-786" autocomplete="off">
-                                    <button class="btn btn-primary btn-sm px-3 fw-semibold" type="button" id="btnSearchPlate">
-                                        <i class="bi bi-search me-1"></i> Search
-                                    </button>
-                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="input-group input-group-sm">
-                                    <span class="input-group-text bg-white text-success fw-bold border-end-0">
-                                        <i class="bi bi-telephone me-1"></i> Phone
-                                    </span>
-                                    <input type="text" id="lookupPhoneInput" class="form-control form-control-sm font-monospace bg-white" placeholder="e.g. 0300-1234567" autocomplete="off">
-                                    <button class="btn btn-success btn-sm px-3 fw-semibold" type="button" id="btnSearchPhone">
-                                        <i class="bi bi-telephone-inbound me-1"></i> Search
-                                    </button>
+                        </div>
+                        {{-- MULTIPLE VEHICLES FOUND SELECTION CONTAINER --}}
+                        <div id="multipleVehiclesBox" class="mt-3 pt-2.5 border-top" style="display: none;">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="small fw-bold text-dark d-flex align-items-center gap-1.5">
+                                    <span class="badge bg-primary px-2 py-1"><i class="bi bi-collection-fill me-1"></i> <span id="multiVehicleCount">0</span> Vehicles Found</span>
+                                    <span class="text-secondary" id="multiVehicleCustomerLabel">Select vehicle to fill counter:</span>
                                 </div>
+                                <button type="button" class="btn btn-sm btn-link text-muted p-0 text-decoration-none" id="btnCloseMultiVehicles" title="Close vehicle list">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+
+                            {{-- Dropdown Option --}}
+                            <!-- <div class="mb-2">
+                                <select id="multiVehicleSelect" class="form-select form-select-sm fw-semibold">
+                                    <option value="">-- Choose from registered vehicles --</option>
+                                </select>
+                            </div> -->
+
+                            {{-- Clickable List Form --}}
+                            <div class="list-group list-group-flush border rounded-2 overflow-auto" id="multiVehiclesList" style="max-height: 220px;">
+                                {{-- Populated dynamically via JS --}}
                             </div>
                         </div>
                     </div>
@@ -255,6 +280,7 @@
                                     @forelse($looseProducts as $lprod)
                                         <option value="{{ $lprod->id }}" 
                                                 data-name="{{ $lprod->item_name }}" 
+                                                data-sku="{{ $lprod->sku }}"
                                                 data-price="{{ $lprod->selling_price }}" 
                                                 data-unit="{{ $lprod->unit ?? 'LITER' }}" 
                                                 data-stock="{{ $lprod->quantity }}"
@@ -278,27 +304,49 @@
                             <i class="bi bi-box-seam text-success"></i>
                             <strong class="text-dark">Packaged Oil, Filters &amp; Parts</strong>
                         </div>
-                        <small class="text-muted" style="font-size: 11px;">Packaged Bottles, Filters &amp; Parts &bull; Auto-Adds to Cart</small>
+                        <span class="badge bg-light text-secondary border px-2 py-1" style="font-size: 11px;">
+                            <i class="bi bi-upc-scan text-success me-1"></i> Barcode Ready
+                        </span>
                     </div>
                     <div class="card-body p-3">
-                        <label class="form-label small fw-semibold mb-1 text-success d-flex align-items-center gap-1">
-                            <i class="bi bi-search"></i> Select Packaged Product / Filter / Part:
-                        </label>
-                        <select id="productAutoPicker" class="form-select form-select-sm border-success-subtle">
-                            <option value="">Select Packaged Product / Filter / Part (Auto-Adds)</option>
-                            @forelse($products as $prod)
-                                <option value="{{ $prod->id }}" 
-                                        data-name="{{ $prod->item_name }}" 
-                                        data-price="{{ $prod->selling_price }}" 
-                                        data-unit="{{ $prod->unit ?? 'PCS' }}" 
-                                        data-stock="{{ $prod->quantity }}"
-                                        data-isloose="0">
-                                    📦 {{ $prod->item_name }} (Rs. {{ number_format($prod->selling_price, 2) }} | Stock: {{ $prod->quantity }} {{ $prod->unit }})
-                                </option>
-                            @empty
-                                <option value="" disabled>No in-stock packaged products with defined pricing found.</option>
-                            @endforelse
-                        </select>
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-8">
+                                <label class="form-label small fw-semibold mb-1 text-secondary d-flex align-items-center gap-1">
+                                    <i class="bi bi-search"></i> Or Select Packaged Product / Filter / Part:
+                                </label>
+                                <select id="productAutoPicker" class="form-select form-select-sm border-success-subtle">
+                                    <option value="">Select Packaged Product / Filter / Part (Auto-Adds)</option>
+                                    @forelse($products as $prod)
+                                        <option value="{{ $prod->id }}" 
+                                                data-name="{{ $prod->item_name }}" 
+                                                data-sku="{{ $prod->sku }}"
+                                                data-price="{{ $prod->selling_price }}" 
+                                                data-unit="{{ $prod->unit ?? 'PCS' }}" 
+                                                data-stock="{{ $prod->quantity }}"
+                                                data-isloose="0">
+                                            📦 {{ $prod->item_name }} ({{ $prod->sku }}) &bull; Rs. {{ number_format($prod->selling_price, 2) }} | Stock: {{ $prod->quantity }} {{ $prod->unit }}
+                                        </option>
+                                    @empty
+                                        <option value="" disabled>No in-stock packaged products with defined pricing found.</option>
+                                    @endforelse
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold mb-1 text-success d-flex align-items-center gap-1">
+                                    <i class="bi bi-upc-scan"></i> Barcode Scanner (Gun / SKU):
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-white text-success border-end-0">
+                                        <i class="bi bi-upc"></i>
+                                    </span>
+                                    <input type="text" id="barcodeScannerInput" class="form-control form-control-sm font-monospace fw-bold bg-white" placeholder="Scan barcode" autocomplete="off">
+                                    <button class="btn btn-success btn-sm px-3 fw-semibold" type="button" id="btnScanBarcode">
+                                        <i class="bi bi-plus-lg me-1"></i> Add
+                                    </button>
+                                </div>
+                                <div id="barcodeFeedback" class="small mt-1" style="display: none;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -343,7 +391,7 @@
 
                 {{-- 4. MULTI-POINT PIT INSPECTION (MOVED UP TO THE TOP!) --}}
                 <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px; border-top: 3px solid #10b981 !important;">
-                    <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
+                    <!-- <div class="card-header bg-white border-bottom py-2 d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center gap-2">
                             <i class="bi bi-check2-square text-success fs-5"></i>
                             <div>
@@ -354,7 +402,7 @@
                         <div class="d-flex gap-1">
                             <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-1.5" id="btnToggleAllInspection" style="font-size: 10px;">Select All</button>
                         </div>
-                    </div>
+                    </div> -->
                     <div class="card-body p-2.5">
                         <div class="row g-2">
                             <div class="col-6">
@@ -595,38 +643,197 @@ document.addEventListener('DOMContentLoaded', function() {
     const plateInput = document.getElementById('lookupPlateInput');
     const phoneInput = document.getElementById('lookupPhoneInput');
     const vehicleStatusBadge = document.getElementById('vehicleStatusBadge');
+    const multipleVehiclesBox = document.getElementById('multipleVehiclesBox');
+    const multiVehicleSelect = document.getElementById('multiVehicleSelect');
+    const multiVehiclesList = document.getElementById('multiVehiclesList');
+    const multiVehicleCount = document.getElementById('multiVehicleCount');
+    const multiVehicleCustomerLabel = document.getElementById('multiVehicleCustomerLabel');
+    const btnCloseMultiVehicles = document.getElementById('btnCloseMultiVehicles');
+
+    let currentFoundVehicles = [];
+
+    function populateVehicleFields(v) {
+        if (!v) return;
+        document.getElementById('plateNumber').value = v.plate_number || '';
+        document.getElementById('vehicleType').value = v.vehicle_type || 'sedan';
+        document.getElementById('vehicleMake').value = v.make || '';
+        document.getElementById('vehicleModel').value = v.model || '';
+        document.getElementById('customerName').value = v.customer_name || '';
+        document.getElementById('customerPhone').value = v.customer_phone || '';
+        document.getElementById('vehicleYear').value = v.year || '';
+        
+        if (v.last_oil_grade) {
+            document.getElementById('oilGrade').value = v.last_oil_grade;
+        }
+
+        vehicleStatusBadge.className = 'badge bg-success-subtle text-success';
+        const lastOdoText = v.last_odometer ? Number(v.last_odometer).toLocaleString() + ' KM' : 'N/A';
+        vehicleStatusBadge.innerHTML = `<i class="bi bi-check-circle me-1"></i> Registered (${v.plate_number} • Prev: ${lastOdoText})`;
+        
+        if (v.last_odometer && currentOdoInput) {
+            currentOdoInput.setAttribute('placeholder', 'Prev: ' + Number(v.last_odometer).toLocaleString() + ' KM');
+        }
+
+        if (plateInput && v.plate_number) {
+            plateInput.value = v.plate_number;
+        }
+    }
+
+    function renderMultipleVehiclesUI(vehicles, customerInfo) {
+        currentFoundVehicles = vehicles;
+        if (!multipleVehiclesBox) return;
+
+        if (!vehicles || vehicles.length <= 1) {
+            multipleVehiclesBox.style.display = 'none';
+            return;
+        }
+
+        if (multiVehicleCount) multiVehicleCount.textContent = vehicles.length;
+        if (multiVehicleCustomerLabel) {
+            multiVehicleCustomerLabel.textContent = customerInfo ? `for ${customerInfo}:` : 'Select vehicle to fill counter:';
+        }
+
+        // 1. Populate Dropdown
+        if (multiVehicleSelect) {
+            multiVehicleSelect.innerHTML = `<option value="">-- Choose from ${vehicles.length} registered vehicles --</option>` +
+                vehicles.map((v, idx) => {
+                    const odo = v.last_odometer ? ` (${Number(v.last_odometer).toLocaleString()} KM)` : '';
+                    return `<option value="${idx}">${v.plate_number} - ${v.make} ${v.model} ${v.year ? v.year : ''}${odo}</option>`;
+                }).join('');
+        }
+
+        // 2. Populate List Group
+        if (multiVehiclesList) {
+            multiVehiclesList.innerHTML = vehicles.map((v, idx) => {
+                const odoBadge = v.last_odometer ? `<span class="badge bg-light text-dark border font-monospace me-1"><i class="bi bi-speedometer2 me-1"></i>${Number(v.last_odometer).toLocaleString()} KM</span>` : '';
+                const gradeBadge = v.last_oil_grade ? `<span class="badge bg-light text-secondary border me-1">${v.last_oil_grade}</span>` : '';
+                const dateBadge = v.last_service_date ? `<small class="text-muted d-block mt-0.5"><i class="bi bi-clock-history me-1"></i>Last Svc: ${v.last_service_date}</small>` : '';
+
+                return `
+                    <div class="list-group-item list-group-item-action py-2 px-3 d-flex justify-content-between align-items-center vehicle-list-item" data-index="${idx}" style="cursor: pointer;">
+                        <div class="d-flex align-items-center gap-2.5">
+                            <span class="badge bg-primary text-uppercase font-monospace fs-6 px-2.5 py-1.5 shadow-sm">${v.plate_number}</span>
+                            <div>
+                                <strong class="text-dark d-block">${v.make} ${v.model} ${v.year ? '<small class="text-muted">('+v.year+')</small>' : ''}</strong>
+                                <small class="text-secondary">${v.customer_name || 'Customer'} • <span class="text-capitalize">${v.vehicle_type || 'Vehicle'}</span></small>
+                                ${dateBadge}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="mb-1">${odoBadge}${gradeBadge}</div>
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0.5 px-2.5 fw-semibold btn-select-vehicle" data-index="${idx}">
+                                Select <i class="bi bi-arrow-right ms-0.5"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        multipleVehiclesBox.style.display = 'block';
+    }
+
+    function selectVehicle(idx) {
+        if (!currentFoundVehicles || !currentFoundVehicles[idx]) return;
+        const v = currentFoundVehicles[idx];
+        populateVehicleFields(v);
+
+        if (multiVehicleSelect) {
+            multiVehicleSelect.value = String(idx);
+        }
+
+        if (multiVehiclesList) {
+            const items = multiVehiclesList.querySelectorAll('.vehicle-list-item');
+            items.forEach((item, i) => {
+                const btn = item.querySelector('.btn-select-vehicle');
+                if (i === Number(idx)) {
+                    item.classList.add('bg-primary-subtle', 'border-primary');
+                    if (btn) {
+                        btn.className = 'btn btn-sm btn-primary py-0.5 px-2.5 fw-semibold btn-select-vehicle';
+                        btn.innerHTML = '<i class="bi bi-check2 me-1"></i> Selected';
+                    }
+                } else {
+                    item.classList.remove('bg-primary-subtle', 'border-primary');
+                    if (btn) {
+                        btn.className = 'btn btn-sm btn-outline-primary py-0.5 px-2.5 fw-semibold btn-select-vehicle';
+                        btn.innerHTML = 'Select <i class="bi bi-arrow-right ms-0.5"></i>';
+                    }
+                }
+            });
+        }
+    }
+
+    if (multiVehicleSelect) {
+        multiVehicleSelect.addEventListener('change', function() {
+            if (this.value !== '') {
+                selectVehicle(Number(this.value));
+            }
+        });
+    }
+
+    if (multiVehiclesList) {
+        multiVehiclesList.addEventListener('click', function(e) {
+            const item = e.target.closest('.vehicle-list-item');
+            if (item) {
+                const idx = item.dataset.index;
+                selectVehicle(Number(idx));
+            }
+        });
+    }
+
+    if (btnCloseMultiVehicles) {
+        btnCloseMultiVehicles.addEventListener('click', function() {
+            if (multipleVehiclesBox) multipleVehiclesBox.style.display = 'none';
+        });
+    }
 
     function performSearch(term) {
         if (!term || term.trim() === '') return;
-        fetch(`{{ route('lube.pos.search') }}?query=${encodeURIComponent(term.trim())}`)
+        const cleanTerm = term.trim();
+
+        vehicleStatusBadge.className = 'badge bg-info-subtle text-info';
+        vehicleStatusBadge.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status"></span> Searching...`;
+
+        fetch(`{{ route('lube.pos.search') }}?query=${encodeURIComponent(cleanTerm)}`)
             .then(res => res.json())
             .then(data => {
-                if (data.found && data.vehicle) {
-                    const v = data.vehicle;
-                    document.getElementById('plateNumber').value = v.plate_number;
-                    document.getElementById('vehicleType').value = v.vehicle_type || 'sedan';
-                    document.getElementById('vehicleMake').value = v.make;
-                    document.getElementById('vehicleModel').value = v.model;
-                    document.getElementById('customerName').value = v.customer_name;
-                    document.getElementById('customerPhone').value = v.customer_phone || '';
-                    document.getElementById('vehicleYear').value = v.year || '';
+                if (data.found && data.vehicles && data.vehicles.length > 0) {
+                    const vehicles = data.vehicles;
                     
-                    if (v.last_oil_grade) {
-                        document.getElementById('oilGrade').value = v.last_oil_grade;
-                    }
+                    if (vehicles.length > 1) {
+                        const customer = vehicles[0].customer_name ? `${vehicles[0].customer_name} (${vehicles[0].customer_phone || cleanTerm})` : cleanTerm;
+                        renderMultipleVehiclesUI(vehicles, customer);
+                        selectVehicle(0);
 
-                    vehicleStatusBadge.className = 'badge bg-success-subtle text-success';
-                    vehicleStatusBadge.innerHTML = `<i class="bi bi-check-circle me-1"></i> Registered (Last: ${v.last_odometer ? v.last_odometer.toLocaleString() + ' KM' : 'N/A'})`;
-                    
-                    if (v.last_odometer) {
-                        currentOdoInput.setAttribute('placeholder', 'Prev: ' + v.last_odometer.toLocaleString() + ' KM');
+                        vehicleStatusBadge.className = 'badge bg-primary-subtle text-primary';
+                        vehicleStatusBadge.innerHTML = `<i class="bi bi-collection me-1"></i> ${vehicles.length} Vehicles Found • Choose from list`;
+                    } else {
+                        if (multipleVehiclesBox) multipleVehiclesBox.style.display = 'none';
+                        populateVehicleFields(vehicles[0]);
                     }
+                } else if (data.found && data.vehicle) {
+                    if (multipleVehiclesBox) multipleVehiclesBox.style.display = 'none';
+                    populateVehicleFields(data.vehicle);
                 } else {
+                    if (multipleVehiclesBox) multipleVehiclesBox.style.display = 'none';
                     vehicleStatusBadge.className = 'badge bg-warning-subtle text-warning-emphasis';
                     vehicleStatusBadge.innerHTML = `<i class="bi bi-info-circle me-1"></i> New Vehicle`;
+
+                    if (plateInput && plateInput.value.trim()) {
+                        const pNum = document.getElementById('plateNumber');
+                        if (pNum) pNum.value = plateInput.value.trim().toUpperCase();
+                    }
+                    if (phoneInput && phoneInput.value.trim()) {
+                        const cPhone = document.getElementById('customerPhone');
+                        if (cPhone) cPhone.value = phoneInput.value.trim();
+                    }
                 }
             })
-            .catch(err => console.error(err));
+            .catch(err => {
+                console.error(err);
+                vehicleStatusBadge.className = 'badge bg-danger-subtle text-danger';
+                vehicleStatusBadge.textContent = 'Search failed';
+            });
     }
 
     document.getElementById('btnSearchPlate').addEventListener('click', () => performSearch(plateInput.value));
@@ -650,6 +857,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         cartItems = [];
         laborAmount = 0;
+        currentFoundVehicles = [];
+        if (multipleVehiclesBox) multipleVehiclesBox.style.display = 'none';
+        if (multiVehiclesList) multiVehiclesList.innerHTML = '';
+        if (multiVehicleSelect) multiVehicleSelect.innerHTML = '<option value="">-- Choose from registered vehicles --</option>';
         renderCart();
         recalculateNextDue();
         vehicleStatusBadge.className = 'badge bg-secondary-subtle text-secondary';
@@ -668,6 +879,179 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Helper: Add item to cart or increment counter if product is selected again
+    function addOrIncrementItem(itemId, name, qty, price, isLabor = false) {
+        qty = Math.max(0.01, parseFloat(qty) || 1);
+        price = Math.max(0, parseFloat(price) || 0);
+
+        let existing = null;
+        if (isLabor) {
+            existing = cartItems.find(it => it.is_labor && it.name === name);
+        } else if (itemId) {
+            existing = cartItems.find(it => !it.is_labor && it.item_id === itemId);
+        } else {
+            existing = cartItems.find(it => !it.is_labor && it.name === name);
+        }
+
+        if (existing) {
+            // Increment existing quantity (only the counter increases)
+            existing.quantity = Math.round((existing.quantity + qty) * 100) / 100;
+            existing.line_total = Math.max(0, (existing.quantity * existing.unit_price) - (existing.discount || 0));
+        } else {
+            // New line item
+            cartItems.push({
+                item_id: itemId,
+                name: name,
+                quantity: qty,
+                unit_price: price,
+                discount: 0,
+                line_total: Math.round(price * qty * 100) / 100,
+                is_labor: isLabor
+            });
+        }
+    }
+
+    // Barcode feedback notification
+    function showBarcodeFeedback(message, isSuccess = true) {
+        const fb = document.getElementById('barcodeFeedback');
+        if (!fb) return;
+        fb.style.display = 'block';
+        fb.innerHTML = isSuccess 
+            ? `<span class="text-success fw-semibold"><i class="bi bi-check-circle me-1"></i>${message}</span>`
+            : `<span class="text-danger fw-semibold"><i class="bi bi-exclamation-triangle me-1"></i>${message}</span>`;
+        setTimeout(() => {
+            fb.style.display = 'none';
+        }, 3500);
+    }
+
+    // Barcode scanning processor (Supports Scanner Gun & manual entry)
+    function processBarcode(rawCode) {
+        const code = (rawCode || '').trim();
+        if (!code) return;
+
+        const barcodeInput = document.getElementById('barcodeScannerInput');
+
+        // 1. Check local select options first (instant response)
+        let foundOpt = null;
+        let isLoose = false;
+
+        const prodSelect = document.getElementById('productAutoPicker');
+        if (prodSelect) {
+            for (let i = 0; i < prodSelect.options.length; i++) {
+                const opt = prodSelect.options[i];
+                if (opt.value && (
+                    (opt.dataset.sku && opt.dataset.sku.toLowerCase() === code.toLowerCase()) ||
+                    opt.value === code
+                )) {
+                    foundOpt = opt;
+                    isLoose = false;
+                    break;
+                }
+            }
+        }
+
+        if (!foundOpt) {
+            const looseSelect = document.getElementById('looseProductPicker');
+            if (looseSelect) {
+                for (let i = 0; i < looseSelect.options.length; i++) {
+                    const opt = looseSelect.options[i];
+                    if (opt.value && (
+                        (opt.dataset.sku && opt.dataset.sku.toLowerCase() === code.toLowerCase()) ||
+                        opt.value === code
+                    )) {
+                        foundOpt = opt;
+                        isLoose = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (foundOpt) {
+            const itemId = parseInt(foundOpt.value);
+            const name = foundOpt.dataset.name;
+            const price = parseFloat(foundOpt.dataset.price) || 0;
+            const unit = foundOpt.dataset.unit || (isLoose ? 'LITER' : 'PCS');
+            const defaultQty = (unit === 'LITER' && !isLoose) ? 4.00 : 1.00;
+
+            addOrIncrementItem(itemId, name, defaultQty, price, false);
+            renderCart();
+            showBarcodeFeedback(`Added "${name}" (+${defaultQty} ${unit})`);
+
+            if (barcodeInput) {
+                barcodeInput.value = '';
+                barcodeInput.focus();
+            }
+            return;
+        }
+
+        // 2. Query backend if not in local dropdown
+        fetch(`{{ route('lube.pos.barcode') }}?code=${encodeURIComponent(code)}`, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.found && data.item) {
+                const it = data.item;
+                const defaultQty = (it.unit === 'LITER' && !it.is_loose) ? 4.00 : 1.00;
+                addOrIncrementItem(it.id, it.name, defaultQty, it.selling_price, false);
+                renderCart();
+                showBarcodeFeedback(`Added "${it.name}" (+${defaultQty} ${it.unit})`);
+                if (barcodeInput) {
+                    barcodeInput.value = '';
+                    barcodeInput.focus();
+                }
+            } else {
+                showBarcodeFeedback(data.message || `No product found for barcode "${code}".`, false);
+                if (barcodeInput) {
+                    barcodeInput.select();
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Barcode lookup error:', err);
+            showBarcodeFeedback('Network error while looking up barcode.', false);
+        });
+    }
+
+    // Barcode scanner input listeners
+    const barcodeScannerInput = document.getElementById('barcodeScannerInput');
+    const btnScanBarcode = document.getElementById('btnScanBarcode');
+
+    if (barcodeScannerInput) {
+        barcodeScannerInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                processBarcode(this.value);
+            }
+        });
+    }
+
+    if (btnScanBarcode) {
+        btnScanBarcode.addEventListener('click', function() {
+            if (barcodeScannerInput) {
+                processBarcode(barcodeScannerInput.value);
+            }
+        });
+    }
+
+    // Focus barcode box if user pulls scanner gun while browsing page
+    document.addEventListener('keydown', function(e) {
+        const active = document.activeElement;
+        const isInputField = active && (
+            active.tagName === 'INPUT' || 
+            active.tagName === 'TEXTAREA' || 
+            active.tagName === 'SELECT'
+        );
+
+        if (!isInputField && barcodeScannerInput && e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+            barcodeScannerInput.focus();
+        }
+    });
+
     // 3. Auto-Add Loose Product on Selection
     const looseProductPicker = document.getElementById('looseProductPicker');
     if (looseProductPicker) {
@@ -679,17 +1063,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const name = opt.dataset.name;
             const price = parseFloat(opt.dataset.price) || 0;
             const defaultQty = 1.00;
-            const lineTotal = price * defaultQty;
 
-            cartItems.push({
-                item_id: itemId,
-                name: name,
-                quantity: defaultQty,
-                unit_price: price,
-                discount: 0,
-                line_total: lineTotal,
-                is_labor: false
-            });
+            addOrIncrementItem(itemId, name, defaultQty, price, false);
 
             this.value = '';
             renderCart();
@@ -698,53 +1073,40 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 4. Auto-Add All Items / Packaged Products on Selection
     const productAutoPicker = document.getElementById('productAutoPicker');
-    productAutoPicker.addEventListener('change', function() {
-        const opt = this.options[this.selectedIndex];
-        if (!opt || !opt.value) return;
+    if (productAutoPicker) {
+        productAutoPicker.addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            if (!opt || !opt.value) return;
 
-        const itemId = parseInt(opt.value);
-        const name = opt.dataset.name;
-        const price = parseFloat(opt.dataset.price) || 0;
-        const unit = opt.dataset.unit || 'PCS';
-        const defaultQty = unit === 'LITER' ? 4.00 : 1.00;
-        const lineTotal = price * defaultQty;
+            const itemId = parseInt(opt.value);
+            const name = opt.dataset.name;
+            const price = parseFloat(opt.dataset.price) || 0;
+            const unit = opt.dataset.unit || 'PCS';
+            const defaultQty = unit === 'LITER' ? 4.00 : 1.00;
 
-        cartItems.push({
-            item_id: itemId,
-            name: name,
-            quantity: defaultQty,
-            unit_price: price,
-            discount: 0,
-            line_total: lineTotal,
-            is_labor: false
+            addOrIncrementItem(itemId, name, defaultQty, price, false);
+
+            this.value = '';
+            renderCart();
         });
-
-        this.value = '';
-        renderCart();
-    });
+    }
 
     // 4. Auto-Add Service / Labor Fee on Selection
     const serviceAutoPicker = document.getElementById('serviceAutoPicker');
-    serviceAutoPicker.addEventListener('change', function() {
-        const opt = this.options[this.selectedIndex];
-        if (!opt || !opt.value) return;
+    if (serviceAutoPicker) {
+        serviceAutoPicker.addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            if (!opt || !opt.value) return;
 
-        const name = opt.dataset.name;
-        const price = parseFloat(opt.dataset.price) || 0;
+            const name = opt.dataset.name;
+            const price = parseFloat(opt.dataset.price) || 0;
 
-        cartItems.push({
-            item_id: null,
-            name: name,
-            quantity: 1,
-            unit_price: price,
-            discount: 0,
-            line_total: price,
-            is_labor: true
+            addOrIncrementItem(null, name, 1, price, true);
+
+            this.value = '';
+            renderCart();
         });
-
-        this.value = '';
-        renderCart();
-    });
+    }
 
     // Quick Labor Chips
     document.querySelectorAll('.chip-labor').forEach(chip => {
@@ -752,60 +1114,38 @@ document.addEventListener('DOMContentLoaded', function() {
             const name = this.dataset.name;
             const price = parseFloat(this.dataset.price) || 0;
             
-            cartItems.push({
-                item_id: null,
-                name: name,
-                quantity: 1,
-                unit_price: price,
-                discount: 0,
-                line_total: price,
-                is_labor: true
-            });
+            addOrIncrementItem(null, name, 1, price, true);
             renderCart();
         });
     });
 
     // 5. Apply Service Package Dropdown
     const packageSelectPicker = document.getElementById('packageSelectPicker');
-    packageSelectPicker.addEventListener('change', function() {
-        const opt = this.options[this.selectedIndex];
-        if (!opt || !opt.value) return;
+    if (packageSelectPicker) {
+        packageSelectPicker.addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            if (!opt || !opt.value) return;
 
-        const pkgName = opt.dataset.name;
-        const pkgLabor = parseFloat(opt.dataset.labor) || 0;
-        const items = JSON.parse(opt.dataset.items || '[]');
+            const pkgName = opt.dataset.name;
+            const pkgLabor = parseFloat(opt.dataset.labor) || 0;
+            const items = JSON.parse(opt.dataset.items || '[]');
 
-        items.forEach(it => {
-            if (it.inventory_item) {
-                const price = parseFloat(it.inventory_item.selling_price) || 0;
-                const qty = parseFloat(it.quantity) || 1;
-                cartItems.push({
-                    item_id: it.inventory_item.id,
-                    name: it.inventory_item.item_name,
-                    quantity: qty,
-                    unit_price: price,
-                    discount: 0,
-                    line_total: price * qty,
-                    is_labor: false
-                });
-            }
-        });
-
-        if (pkgLabor > 0) {
-            cartItems.push({
-                item_id: null,
-                name: `${pkgName} Service Labor`,
-                quantity: 1,
-                unit_price: pkgLabor,
-                discount: 0,
-                line_total: pkgLabor,
-                is_labor: true
+            items.forEach(it => {
+                if (it.inventory_item) {
+                    const price = parseFloat(it.inventory_item.selling_price) || 0;
+                    const qty = parseFloat(it.quantity) || 1;
+                    addOrIncrementItem(it.inventory_item.id, it.inventory_item.item_name, qty, price, false);
+                }
             });
-        }
 
-        this.value = '';
-        renderCart();
-    });
+            if (pkgLabor > 0) {
+                addOrIncrementItem(null, `${pkgName} Service Labor`, 1, pkgLabor, true);
+            }
+
+            this.value = '';
+            renderCart();
+        });
+    }
 
     // 6. Render Cart Table with Editable Qty & Per-Item Discounts
     function renderCart() {
@@ -937,8 +1277,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 5. Submit Service Order
-    const btnSubmit = document.getElementById('btnSubmitService');
-    btnSubmit.addEventListener('click', function() {
+    let latestStickerUrl = null;
+    let latestReceiptUrl = null;
+
+    function submitService(options = { printInvoice: true, printSticker: false }) {
         // Basic Validations
         const plate = document.getElementById('plateNumber').value.trim();
         const make = document.getElementById('vehicleMake').value.trim();
@@ -986,8 +1328,16 @@ document.addEventListener('DOMContentLoaded', function() {
             notes: document.getElementById('serviceNotes').value,
         };
 
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Processing Service...`;
+        const btnSubmit = document.getElementById('btnSubmitService');
+        const btnSticker = document.getElementById('btnPrintStickerOnly');
+
+        if (btnSubmit) {
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Processing...`;
+        }
+        if (btnSticker) {
+            btnSticker.disabled = true;
+        }
 
         fetch(`{{ route('lube.pos.store') }}`, {
             method: 'POST',
@@ -1000,10 +1350,18 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(res => res.json())
         .then(data => {
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = `<i class="bi bi-printer me-1"></i> Complete &amp; Print Invoice`;
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = `<i class="bi bi-printer me-1"></i> Complete &amp; Print Invoice`;
+            }
+            if (btnSticker) {
+                btnSticker.disabled = false;
+            }
 
             if (data.success) {
+                latestStickerUrl = data.sticker_url;
+                latestReceiptUrl = data.receipt_url;
+
                 document.getElementById('modalInvoiceNo').textContent = data.invoice_no;
                 document.getElementById('modalPlate').textContent = data.plate_number;
                 document.getElementById('modalNextDue').textContent = data.next_due_odometer;
@@ -1011,8 +1369,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('modalBtnReceipt').href = data.receipt_url;
                 document.getElementById('modalBtnSticker').href = data.sticker_url;
 
-                // Open Sticker in small popup window
-                window.open(data.sticker_url, 'stickerPopup', 'width=450,height=550');
+                // When Complete & Print Invoice is clicked, open invoice receipt popup (sticker is NOT opened automatically)
+                if (options.printInvoice && data.receipt_url) {
+                    window.open(data.receipt_url, 'receiptPopup', 'width=480,height=650');
+                }
+
+                // If user explicitly chose to print sticker only, open sticker popup
+                if (options.printSticker && data.sticker_url) {
+                    window.open(data.sticker_url, 'stickerPopup', 'width=450,height=550');
+                }
 
                 const successModal = new bootstrap.Modal(document.getElementById('serviceSuccessModal'));
                 successModal.show();
@@ -1021,12 +1386,57 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(err => {
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = `<i class="bi bi-printer me-1"></i> Complete &amp; Print Invoice`;
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = `<i class="bi bi-printer me-1"></i> Complete &amp; Print Invoice`;
+            }
+            if (btnSticker) {
+                btnSticker.disabled = false;
+            }
             alert('Service processing failed. Please check your network and fields.');
             console.error(err);
         });
-    });
+    }
+
+    const btnSubmit = document.getElementById('btnSubmitService');
+    if (btnSubmit) {
+        btnSubmit.addEventListener('click', function() {
+            submitService({ printInvoice: true, printSticker: false });
+        });
+    }
+
+    const btnPrintStickerOnly = document.getElementById('btnPrintStickerOnly');
+    if (btnPrintStickerOnly) {
+        btnPrintStickerOnly.addEventListener('click', function() {
+            if (latestStickerUrl) {
+                window.open(latestStickerUrl, 'stickerPopup', 'width=450,height=550');
+            } else {
+                submitService({ printInvoice: false, printSticker: true });
+            }
+        });
+    }
+
+    const modalBtnSticker = document.getElementById('modalBtnSticker');
+    if (modalBtnSticker) {
+        modalBtnSticker.addEventListener('click', function(e) {
+            const url = latestStickerUrl || this.href;
+            if (url && url !== '#') {
+                e.preventDefault();
+                window.open(url, 'stickerPopup', 'width=450,height=550');
+            }
+        });
+    }
+
+    const modalBtnReceipt = document.getElementById('modalBtnReceipt');
+    if (modalBtnReceipt) {
+        modalBtnReceipt.addEventListener('click', function(e) {
+            const url = latestReceiptUrl || this.href;
+            if (url && url !== '#') {
+                e.preventDefault();
+                window.open(url, 'receiptPopup', 'width=480,height=650');
+            }
+        });
+    }
 
 });
 </script>

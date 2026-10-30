@@ -32,7 +32,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     require __DIR__ . '/lube.php';
 
     // Reports Module Hub (Launchpad)
-    Route::get('/reports', \App\Http\Controllers\ReportsHubController::class)->name('reports.index')->middleware('module:reports');
+    Route::get('/reports', \App\Http\Controllers\ReportsHubController::class)->name('reports.index')->middleware(['module:reports', 'permission:reports.sales,reports.stock_movement,reports.expiry,accounts.reports']);
 
     // Reports - Separate Screens & Excel Exports
     Route::middleware('permission:reports.sales')->group(function () {

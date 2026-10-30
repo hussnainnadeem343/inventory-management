@@ -77,7 +77,12 @@ class InventoryItem extends Model
         if ($value !== null && $value !== '') {
             return (float) $value;
         }
-        return $this->pack_size ? (float) $this->pack_size : null;
+
+        if ($this->isLoose() || $this->isDrum() || in_array(strtoupper($this->unit ?? ''), ['LTR', 'LITER', 'ML', 'DRUM'])) {
+            return $this->pack_size ? (float) $this->pack_size : null;
+        }
+
+        return null;
     }
 
     public function getTotalStockAttribute(): float

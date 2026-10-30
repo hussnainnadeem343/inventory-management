@@ -93,13 +93,9 @@ class ModuleHubsTest extends TestCase
             'status' => 'active',
         ]);
 
-        // Staff without any permissions
+        // Staff without any permissions -> direct access to /purchases is Forbidden
         $resPurchase = $this->actingAs($restrictedUser)->get('/purchases');
-        $resPurchase->assertOk();
-        $resPurchase->assertDontSee('Suppliers');
-        $resPurchase->assertDontSee('Requisitions (PR)');
-        $resPurchase->assertDontSee('Purchase Orders (PO)');
-        $resPurchase->assertDontSee('Purchase Invoices (PI)');
+        $resPurchase->assertForbidden();
 
         // Give permission only for PR
         $permPr = Permission::firstOrCreate(['slug' => 'purchases.requisitions'], ['name' => 'Requisitions', 'module' => 'purchases']);

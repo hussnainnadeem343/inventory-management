@@ -19,10 +19,6 @@ class EnsureModuleEnabled
             abort(401);
         }
 
-        if ($user->isSuperAdmin()) {
-            return $next($request);
-        }
-
         if (! $user->canAccessModule($module)) {
             abort(403, "The '{$module}' module is not available for your business type or account.");
         }

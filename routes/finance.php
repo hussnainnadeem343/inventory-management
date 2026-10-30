@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Route;
 // Finance & Accounts Module Routes
 Route::prefix('finance')->name('finance.')->group(function () {
     // 0. Finance Module Hub (Launchpad)
-    Route::get('/', FinanceHubController::class)->name('index')->middleware('module:finance');
+    Route::get('/', FinanceHubController::class)->name('index')->middleware(['module:finance', 'permission:accounts.view,accounts.manage,accounts.vouchers,accounts.reports']);
     // Chart of Accounts & Ledgers
     Route::middleware('permission:accounts.view')->group(function () {
         Route::get('/accounts', [AccountController::class, 'index'])->name('accounts.index');

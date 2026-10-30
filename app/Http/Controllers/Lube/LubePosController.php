@@ -107,24 +107,31 @@ class LubePosController extends Controller
         $term = trim($request->query('query', ''));
 
         if (empty($term)) {
-            return response()->json(['found' => false]);
+            return response()->json(['found' => false, 'count' => 0, 'vehicles' => []]);
         }
 
-        $vehicle = Vehicle::forShop($shopId)
-            ->where(function ($q) use ($term) {
+        $termDigits = preg_replace('/[^0-9]/', '', $term);
+
+        $vehicles = Vehicle::forShop($shopId)
+            ->where(function ($q) use ($term, $termDigits) {
                 $q->where('plate_number', 'like', "%{$term}%")
                   ->orWhere('customer_phone', 'like', "%{$term}%");
+
+                if (strlen($termDigits) >= 7) {
+                    $q->orWhere('customer_phone', 'like', "%{$termDigits}%");
+                }
             })
             ->with(['latestService.technician'])
-            ->first();
+            ->orderByDesc('last_service_date')
+            ->orderByDesc('id')
+            ->get();
 
-        if (!$vehicle) {
-            return response()->json(['found' => false]);
+        if ($vehicles->isEmpty()) {
+            return response()->json(['found' => false, 'count' => 0, 'vehicles' => []]);
         }
 
-        return response()->json([
-            'found' => true,
-            'vehicle' => [
+        $vehicleList = $vehicles->map(function ($vehicle) {
+            return [
                 'id' => $vehicle->id,
                 'plate_number' => $vehicle->plate_number,
                 'vehicle_type' => $vehicle->vehicle_type,
@@ -137,7 +144,72 @@ class LubePosController extends Controller
                 'last_service_date' => $vehicle->last_service_date ? $vehicle->last_service_date->format('d-M-Y') : null,
                 'last_oil_grade' => $vehicle->latestService?->oil_grade,
                 'notes' => $vehicle->notes,
-            ]
+            ];
+        })->values();
+
+        $primary = $vehicleList->first();
+
+        return response()->json([
+            'found' => true,
+            'count' => $vehicleList->count(),
+            'vehicle' => $primary,
+            'vehicles' => $vehicleList,
+        ]);
+    }
+
+    public function barcode(Request $request): JsonResponse
+    {
+        $shopId = $this->getActiveShopId();
+        $code = trim($request->query('code', ''));
+
+        if ($code === '') {
+            return response()->json([
+                'found' => false,
+                'message' => 'Please provide a barcode or SKU.',
+            ], 422);
+        }
+
+        // Query active inventory items for this shop matching sku or id
+        $item = InventoryItem::forShop($shopId)
+            ->where('status', 'active')
+            ->whereNotNull('selling_price')
+            ->where('selling_price', '>', 0)
+            ->where(function ($q) use ($code) {
+                $q->where('sku', $code)
+                  ->orWhere('id', is_numeric($code) ? (int) $code : 0);
+            })
+            ->with(['brand', 'category'])
+            ->first();
+
+        if (!$item) {
+            $item = InventoryItem::forShop($shopId)
+                ->where('status', 'active')
+                ->whereNotNull('selling_price')
+                ->where('selling_price', '>', 0)
+                ->where('sku', 'LIKE', $code)
+                ->first();
+        }
+
+        if (!$item) {
+            return response()->json([
+                'found' => false,
+                'message' => "No active product found for barcode / SKU '{$code}'.",
+            ]);
+        }
+
+        return response()->json([
+            'found' => true,
+            'item' => [
+                'id' => $item->id,
+                'name' => $item->item_name,
+                'sku' => $item->sku,
+                'selling_price' => (float) $item->selling_price,
+                'unit' => $item->unit ?? 'PCS',
+                'quantity' => (float) $item->quantity,
+                'is_loose' => (bool) $item->is_loose,
+                'brand' => $item->brand?->name,
+                'category' => $item->category?->name,
+            ],
         ]);
     }
 

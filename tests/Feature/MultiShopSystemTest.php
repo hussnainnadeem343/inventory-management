@@ -390,23 +390,19 @@ class MultiShopSystemTest extends TestCase
         ]);
         $duplicateInShop1->assertSessionHasErrors('name');
 
-        // Super Admin creating for Shop 2 via explicit shop_id also blocked if duplicate in Shop 2
+        // Super Admin cannot access or manage shop categories (Forbidden 403)
         $superAdmin = $this->superAdmin();
-        $superDupShop2 = $this->actingAs($superAdmin)->post('/categories', [
+        $this->actingAs($superAdmin)->post('/categories', [
             'shop_id' => $shop2->id,
             'name' => 'Oil',
             'status' => 'active',
-        ]);
-        $superDupShop2->assertSessionHasErrors('name');
+        ])->assertForbidden();
 
-        // But Super Admin creating for a new Shop 3 succeeds with 'Oil'
-        $shop3 = Shop::create(['name' => 'Shop 3 Auto Spares', 'code' => 'SH3', 'status' => 'active']);
-        $superShop3 = $this->actingAs($superAdmin)->post('/categories', [
-            'shop_id' => $shop3->id,
+        // Shop 2 Admin creating duplicate category 'Oil' in Shop 2 is blocked by validation
+        $duplicateInShop2 = $this->actingAs($admin2)->post('/categories', [
             'name' => 'Oil',
             'status' => 'active',
         ]);
-        $superShop3->assertRedirect();
-        $this->assertDatabaseHas('categories', ['shop_id' => $shop3->id, 'name' => 'Oil']);
+        $duplicateInShop2->assertSessionHasErrors('name');
     }
 }

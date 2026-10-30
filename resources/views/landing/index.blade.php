@@ -1030,12 +1030,7 @@
                         <a class="nav-link" href="#core-modules">Core Modules</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-warning fw-bold" href="#lube-station">
-                            <i class="bi bi-droplet-half text-warning me-1"></i> Auto Lube OS
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#industries">Industries</a>
+                        <a class="nav-link" href="#industries">Business Types</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#live-tour">Live Preview</a>
@@ -1074,29 +1069,26 @@
         <div class="container">
             <div class="hero-badge">
                 <span class="ping-dot"></span>
-                <span>The All-in-One Cloud ERP for Modern Businesses &amp; Service Centers</span>
+                <span>Smart &amp; Simple Cloud ERP for Growing Businesses</span>
             </div>
 
             <h1 class="hero-title">
-                One Intelligent Platform to Run Your Entire Business<br>
+                The Easy Software to Run Your Entire Business<br>
                 <span class="highlight">Purchase • Sales • POS • Inventory • HR</span>
             </h1>
 
             <p class="hero-subtitle">
-                Stop juggling disconnected spreadsheets and separate billing tools. DenFin ERP seamlessly unites your <strong>procurement pipeline</strong>, <strong>sales invoicing</strong>, <strong>high-speed POS counters</strong>, <strong>multi-shop inventory</strong>, and <strong>employee payroll</strong> — plus built-in powerhouse modules like our dedicated <strong>Auto Lube Station OS</strong>.
+                Fast billing, real-time inventory, supplier tracking, and staff payroll in one easy-to-use platform.
             </p>
 
             <div class="hero-btn-group">
                 <a href="#demo-section" class="btn-hero-primary">
-                    <i class="bi bi-calendar2-check"></i> Schedule Free Live Demo
+                    <i class="bi bi-calendar2-check"></i> Book Free Demo
                 </a>
                 <a href="#core-modules" class="btn-hero-secondary">
-                    <i class="bi bi-grid-3x3-gap"></i> Explore Core Modules
+                    <i class="bi bi-grid-3x3-gap"></i> Explore Modules
                 </a>
-                <a href="#lube-station" class="btn-hero-secondary" style="border-color: #f59e0b; color: #b45309;">
-                    <i class="bi bi-droplet-half text-warning"></i> Auto Lube System
-                </a>
-                <a href="https://wa.me/923001234567?text={{ urlencode('Hello DenFin team! I am interested in DenFin ERP for my business.') }}" target="_blank" class="btn-hero-whatsapp">
+                <a href="https://wa.me/923114670195?text={{ urlencode('Hello DenFin team! I am interested in DenFin ERP for my business.') }}" target="_blank" class="btn-hero-whatsapp">
                     <i class="bi bi-whatsapp"></i> Chat on WhatsApp
                 </a>
             </div>
@@ -1111,10 +1103,10 @@
                             <span class="window-dot dot-green"></span>
                         </div>
                         <div class="window-title">
-                            <i class="bi bi-speedometer2 text-primary me-1"></i> denfin-erp.cloud / executive-dashboard
+                            <i class="bi bi-speedometer2 text-primary me-1"></i> denfin-erp.cloud / dashboard
                         </div>
                         <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-primary text-white font-mono" style="font-size: 11px;">🏢 Multi-Shop: Shop A &amp; Central Hub</span>
+                            <span class="badge bg-primary text-white font-mono" style="font-size: 11px;">🏢 Multi-Shop: Main Store &amp; Warehouse</span>
                         </div>
                     </div>
 
@@ -1122,20 +1114,20 @@
                         <!-- KPI Strip (Core Business Overview) -->
                         <div class="preview-kpi-bar">
                             <div class="preview-kpi-card">
-                                <div class="preview-kpi-label">Sales &amp; POS Revenue</div>
-                                <div class="preview-kpi-val text-primary">Rs. 4,850,200 <small class="text-success fs-6"><i class="bi bi-arrow-up-right"></i> +14%</small></div>
+                                <div class="preview-kpi-label">Today's Sales</div>
+                                <div class="preview-kpi-val text-primary">Rs. 48,500 <small class="text-success fs-6"><i class="bi bi-arrow-up-right"></i> +14%</small></div>
                             </div>
                             <div class="preview-kpi-card">
-                                <div class="preview-kpi-label">Purchases &amp; Supplier Dues</div>
-                                <div class="preview-kpi-val text-dark font-mono">Rs. 1,420,000</div>
+                                <div class="preview-kpi-label">Supplier Bills to Pay</div>
+                                <div class="preview-kpi-val text-dark font-mono">Rs. 14,200</div>
                             </div>
                             <div class="preview-kpi-card">
-                                <div class="preview-kpi-label">Inventory Balance</div>
-                                <div class="preview-kpi-val text-success">3,850 SKUs In Stock</div>
+                                <div class="preview-kpi-label">Stock on Hand</div>
+                                <div class="preview-kpi-val text-success">3,850 Items in Stock</div>
                             </div>
                             <div class="preview-kpi-card">
-                                <div class="preview-kpi-label">Active Staff &amp; Payroll</div>
-                                <div class="preview-kpi-val text-info">24 Employees (98% Pres.)</div>
+                                <div class="preview-kpi-label">Staff Present Today</div>
+                                <div class="preview-kpi-val text-info">8 Staff on Duty</div>
                             </div>
                         </div>
 
@@ -1146,9 +1138,9 @@
                                 <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                                     <div class="d-flex align-items-center gap-2">
                                         <span class="badge bg-primary-subtle text-primary p-1 px-2 rounded font-mono fw-bold">POS BILL # INV-2026-9041</span>
-                                        <span class="small text-muted">Customer: Retail Counter</span>
+                                        <span class="small text-muted">Customer: Walk-in Cash</span>
                                     </div>
-                                    <span class="badge bg-success-subtle text-success"><i class="bi bi-upc-scan me-1"></i> Barcode Active</span>
+                                    <span class="badge bg-success-subtle text-success"><i class="bi bi-upc-scan me-1"></i> Barcode Ready</span>
                                 </div>
 
                                 <div class="table-responsive mb-3">
@@ -1173,7 +1165,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                                    <strong>Heavy Duty Air Filter</strong>
+                                                    <strong>Air Filter (Standard)</strong>
                                                     <div class="small text-muted">SKU: FLT-AF-882</div>
                                                 </td>
                                                 <td class="text-center font-mono">1 Pc</td>
@@ -1182,7 +1174,7 @@
                                             </tr>
                                             <tr>
                                                 <td>
-                                                    <strong>Standard Replacement Wiper Set</strong>
+                                                    <strong>Car Wiper Blade Set</strong>
                                                     <div class="small text-muted">SKU: ACC-WP-22</div>
                                                 </td>
                                                 <td class="text-center font-mono">1 Set</td>
@@ -1195,7 +1187,7 @@
 
                                 <div class="p-2 rounded bg-light border d-flex justify-content-between align-items-center">
                                     <div class="small text-muted">
-                                        <i class="bi bi-printer text-primary"></i> Thermal Receipt (80mm) Ready
+                                        <i class="bi bi-printer text-primary"></i> Thermal Receipt (80mm) Printed
                                     </div>
                                     <div class="font-mono fs-5 fw-bold text-primary">Total: Rs. 15,950</div>
                                 </div>
@@ -1204,37 +1196,37 @@
                             <!-- Right: Purchase Pipeline & Multi-Shop Inventory -->
                             <div class="preview-card bg-white">
                                 <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-                                    <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-cart-check text-primary me-1"></i> Procurement &amp; Stock GRN</h6>
-                                    <span class="badge bg-success-subtle text-success">GRN Verified</span>
+                                    <h6 class="mb-0 fw-bold text-dark"><i class="bi bi-cart-check text-primary me-1"></i> Stock Received from Supplier</h6>
+                                    <span class="badge bg-success-subtle text-success">Added to Stock</span>
                                 </div>
 
                                 <div class="p-3 rounded mb-3" style="background: #f8fafc; border: 1px dashed #cbd5e1;">
                                     <div class="d-flex justify-content-between text-muted small mb-1">
                                         <span>Supplier Name:</span>
-                                        <strong class="text-dark">Atlas Global Logistics Ltd.</strong>
+                                        <strong class="text-dark">Atlas Traders Ltd.</strong>
                                     </div>
                                     <div class="d-flex justify-content-between text-muted small mb-1">
                                         <span>Purchase Order:</span>
                                         <span class="badge bg-secondary font-mono">PO-2026-0819</span>
                                     </div>
                                     <div class="d-flex justify-content-between small text-success fw-bold mb-1">
-                                        <span>GRN Status:</span>
-                                        <span>Items Received &amp; Stock Updated</span>
+                                        <span>Delivery Status:</span>
+                                        <span>Items Verified &amp; Added</span>
                                     </div>
                                     <div class="d-flex justify-content-between small text-primary fw-bold">
-                                        <span>Branch Allocated:</span>
-                                        <span>Shop A Main + Central Warehouse</span>
+                                        <span>Branch Stocked:</span>
+                                        <span>Main Shop + Warehouse</span>
                                     </div>
                                 </div>
 
                                 <div class="d-flex align-items-center justify-content-between p-2 rounded bg-primary-subtle text-primary small fw-semibold">
-                                    <span>Vendor Due Ledger Balance:</span>
-                                    <span class="font-mono fs-6 fw-bold">Rs. 420,000</span>
+                                    <span>Vendor Balance to Pay:</span>
+                                    <span class="font-mono fs-6 fw-bold">Rs. 42,000</span>
                                 </div>
 
                                 <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center small text-muted">
-                                    <span><i class="bi bi-people text-primary me-1"></i> Shift Cashier On Duty</span>
-                                    <span class="badge bg-info-subtle text-info font-mono">Zubair Khan (ID: #EMP-104)</span>
+                                    <span><i class="bi bi-people text-primary me-1"></i> Cashier on Duty</span>
+                                    <span class="badge bg-info-subtle text-info font-mono">Zubair Khan (Cashier 1)</span>
                                 </div>
                             </div>
                         </div>
@@ -1255,7 +1247,7 @@
                         </div>
                         <div>
                             <div class="text-dark fw-bold">Purchase</div>
-                            <div class="small text-muted">PO &rarr; GRN &rarr; Dues</div>
+                            <div class="small text-muted">Buy from Suppliers</div>
                         </div>
                     </div>
                 </div>
@@ -1265,8 +1257,8 @@
                             <i class="bi bi-receipt"></i>
                         </div>
                         <div>
-                            <div class="text-dark fw-bold">Sale &amp; Invoicing</div>
-                            <div class="small text-muted">B2B &amp; Retail Bills</div>
+                            <div class="text-dark fw-bold">Sales</div>
+                            <div class="small text-muted">Bills &amp; Invoices</div>
                         </div>
                     </div>
                 </div>
@@ -1276,8 +1268,8 @@
                             <i class="bi bi-upc-scan"></i>
                         </div>
                         <div>
-                            <div class="text-dark fw-bold">High-Speed POS</div>
-                            <div class="small text-muted">Thermal Print Ready</div>
+                            <div class="text-dark fw-bold">POS</div>
+                            <div class="small text-muted">Fast Barcode Billing</div>
                         </div>
                     </div>
                 </div>
@@ -1288,7 +1280,7 @@
                         </div>
                         <div>
                             <div class="text-dark fw-bold">Inventory</div>
-                            <div class="small text-muted">Multi-Shop Isolation</div>
+                            <div class="small text-muted">Real-Time Stock</div>
                         </div>
                     </div>
                 </div>
@@ -1298,8 +1290,8 @@
                             <i class="bi bi-people"></i>
                         </div>
                         <div>
-                            <div class="text-dark fw-bold">HR &amp; Payroll</div>
-                            <div class="small text-muted">Attendance &amp; Salaries</div>
+                            <div class="text-dark fw-bold">HR</div>
+                            <div class="small text-muted">Staff &amp; Salaries</div>
                         </div>
                     </div>
                 </div>
@@ -1310,7 +1302,7 @@
                         </div>
                         <div>
                             <div class="text-dark fw-bold">Accounting</div>
-                            <div class="small text-muted">General Ledger P&amp;L</div>
+                            <div class="small text-muted">Daily Cash &amp; Profit</div>
                         </div>
                     </div>
                 </div>
@@ -1323,9 +1315,9 @@
         <div class="container">
             <div class="section-header">
                 <span class="section-tag">Core Modules</span>
-                <h2 class="section-heading">Everything Your Business Needs in One Platform</h2>
+                <h2 class="section-heading">Everything You Need to Run Your Shop</h2>
                 <p class="section-description">
-                    DenFin ERP replaces fragmented software with a unified, robust operating system designed to manage every facet of your commerce, stock, employees, and finances.
+                    Simple tools designed for everyday shopkeeping. No complicated menus or technical training required.
                 </p>
             </div>
 
@@ -1336,13 +1328,12 @@
                         <div class="module-icon-wrap icon-blue">
                             <i class="bi bi-cart-check-fill"></i>
                         </div>
-                        <h4>1. Purchase &amp; Procurement</h4>
-                        <p>Complete procurement lifecycle from purchase requisitions to supplier bills and payment aging.</p>
+                        <h4>1. Purchases &amp; Suppliers</h4>
+                        <p>Order from suppliers, record delivered stock, and track vendor payments.</p>
                         <ul class="module-checklist">
-                            <li><i class="bi bi-check-circle-fill text-primary"></i> Purchase Orders (PO) &amp; Requisitions</li>
-                            <li><i class="bi bi-check-circle-fill text-primary"></i> Goods Receipt Notes (GRN) &amp; Gate Passes</li>
-                            <li><i class="bi bi-check-circle-fill text-primary"></i> Vendor Ledger &amp; Due Tracking</li>
-                            <li><i class="bi bi-check-circle-fill text-primary"></i> Purchase Returns &amp; Debit Notes</li>
+                            <li><i class="bi bi-check-circle-fill text-primary"></i> Create Purchase Orders &amp; GRN receipts</li>
+                            <li><i class="bi bi-check-circle-fill text-primary"></i> Automatic stock increase on delivery</li>
+                            <li><i class="bi bi-check-circle-fill text-primary"></i> Supplier dues ledger &amp; payment tracking</li>
                         </ul>
                     </div>
                 </div>
@@ -1353,13 +1344,12 @@
                         <div class="module-icon-wrap icon-green">
                             <i class="bi bi-receipt-cutoff"></i>
                         </div>
-                        <h4>2. Sales &amp; Invoicing</h4>
-                        <p>Generate professional tax invoices, manage wholesale client credit, and track customer balances.</p>
+                        <h4>2. Sales &amp; Customer Bills</h4>
+                        <p>Create customer bills, manage credit (khata) accounts, and print invoices.</p>
                         <ul class="module-checklist">
-                            <li><i class="bi bi-check-circle-fill text-success"></i> Quotations, Proforma &amp; Tax Invoices</li>
-                            <li><i class="bi bi-check-circle-fill text-success"></i> Customer Credit Ledger &amp; Due Limits</li>
-                            <li><i class="bi bi-check-circle-fill text-success"></i> Delivery Challans &amp; Dispatch Tracking</li>
-                            <li><i class="bi bi-check-circle-fill text-success"></i> Sales Return Credits &amp; Adjustments</li>
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Fast retail and wholesale customer billing</li>
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Customer credit (khata) ledger &amp; limits</li>
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Sales returns and payment adjustments</li>
                         </ul>
                     </div>
                 </div>
@@ -1370,13 +1360,12 @@
                         <div class="module-icon-wrap icon-amber">
                             <i class="bi bi-upc-scan"></i>
                         </div>
-                        <h4>3. High-Speed Retail POS</h4>
-                        <p>Lightning-fast cashier checkout engineered for high-turnover retail and customer service counters.</p>
+                        <h4>3. High-Speed POS Counter</h4>
+                        <p>Fast counter checkout with barcode scanning, cash drawer, and thermal receipts.</p>
                         <ul class="module-checklist">
-                            <li><i class="bi bi-check-circle-fill text-warning"></i> Instant Barcode Scanner Integration</li>
-                            <li><i class="bi bi-check-circle-fill text-warning"></i> Split Tender (Cash, Card, Credit, Bank)</li>
-                            <li><i class="bi bi-check-circle-fill text-warning"></i> Daily Cash Register Shift Reconciliation</li>
-                            <li><i class="bi bi-check-circle-fill text-warning"></i> Thermal Invoicing (80mm &amp; 58mm)</li>
+                            <li><i class="bi bi-check-circle-fill text-warning"></i> Barcode scanner support (USB / Wireless)</li>
+                            <li><i class="bi bi-check-circle-fill text-warning"></i> Accept Cash, Card, or Customer Credit</li>
+                            <li><i class="bi bi-check-circle-fill text-warning"></i> Instant 80mm &amp; 58mm thermal receipt printing</li>
                         </ul>
                     </div>
                 </div>
@@ -1387,13 +1376,12 @@
                         <div class="module-icon-wrap icon-purple">
                             <i class="bi bi-boxes"></i>
                         </div>
-                        <h4>4. Inventory &amp; Multi-Shop</h4>
-                        <p>Eliminate stockouts and leakages. Keep Shop A and Shop B isolated or transfer goods between warehouses.</p>
+                        <h4>4. Inventory &amp; Stock Control</h4>
+                        <p>Always know your exact stock count, avoid stockouts, and transfer goods.</p>
                         <ul class="module-checklist">
-                            <li><i class="bi bi-check-circle-fill text-purple" style="color: #8b5cf6;"></i> Shop-Scoped Categories &amp; Pricing Tiers</li>
-                            <li><i class="bi bi-check-circle-fill text-purple" style="color: #8b5cf6;"></i> Inter-Branch &amp; Warehouse Stock Transfers</li>
-                            <li><i class="bi bi-check-circle-fill text-purple" style="color: #8b5cf6;"></i> Low Stock Alerts &amp; Reorder Triggers</li>
-                            <li><i class="bi bi-check-circle-fill text-purple" style="color: #8b5cf6;"></i> Real-time Stock Valuation &amp; Audits</li>
+                            <li><i class="bi bi-check-circle-fill text-purple" style="color: #8b5cf6;"></i> Real-time stock counts across all shops</li>
+                            <li><i class="bi bi-check-circle-fill text-purple" style="color: #8b5cf6;"></i> Stock transfers between shops &amp; branches</li>
+                            <li><i class="bi bi-check-circle-fill text-purple" style="color: #8b5cf6;"></i> Low stock alerts before items run out</li>
                         </ul>
                     </div>
                 </div>
@@ -1404,13 +1392,12 @@
                         <div class="module-icon-wrap icon-rose">
                             <i class="bi bi-people-fill"></i>
                         </div>
-                        <h4>5. HR &amp; Employee Payroll</h4>
-                        <p>Effortlessly track daily staff attendance, disburse monthly salaries, and manage employee advances.</p>
+                        <h4>5. Staff &amp; HR Payroll</h4>
+                        <p>Record daily staff attendance, advances, and generate monthly salary slips.</p>
                         <ul class="module-checklist">
-                            <li><i class="bi bi-check-circle-fill text-danger"></i> Centralized Staff Directory &amp; Roles</li>
-                            <li><i class="bi bi-check-circle-fill text-danger"></i> Daily Attendance &amp; Shift Logs</li>
-                            <li><i class="bi bi-check-circle-fill text-danger"></i> 1-Click Monthly Salary Slips Generation</li>
-                            <li><i class="bi bi-check-circle-fill text-danger"></i> Employee Advance Loans &amp; Deductions</li>
+                            <li><i class="bi bi-check-circle-fill text-danger"></i> Quick daily attendance (Present / Absent)</li>
+                            <li><i class="bi bi-check-circle-fill text-danger"></i> 1-Click monthly salary calculation</li>
+                            <li><i class="bi bi-check-circle-fill text-danger"></i> Employee advance loans &amp; auto deductions</li>
                         </ul>
                     </div>
                 </div>
@@ -1421,173 +1408,13 @@
                         <div class="module-icon-wrap icon-cyan">
                             <i class="bi bi-cash-stack"></i>
                         </div>
-                        <h4>6. Finance &amp; General Ledger</h4>
-                        <p>Full double-entry accounting built right in — no need for separate QuickBooks or external accounting software.</p>
+                        <h4>6. Daily Cash &amp; Profit</h4>
+                        <p>Track daily shop expenses, cash in hand, and clear profit &amp; loss reports.</p>
                         <ul class="module-checklist">
-                            <li><i class="bi bi-check-circle-fill text-info"></i> Standard Chart of Accounts (COA)</li>
-                            <li><i class="bi bi-check-circle-fill text-info"></i> Automated Sales &amp; Purchase Journal Entries</li>
-                            <li><i class="bi bi-check-circle-fill text-info"></i> Cash &amp; Bank Books Reconciliation</li>
-                            <li><i class="bi bi-check-circle-fill text-info"></i> Real-time Profit &amp; Loss and Balance Sheet</li>
+                            <li><i class="bi bi-check-circle-fill text-info"></i> Daily cash register opening &amp; closing</li>
+                            <li><i class="bi bi-check-circle-fill text-info"></i> Track daily shop expenses (rent, bills, tea)</li>
+                            <li><i class="bi bi-check-circle-fill text-info"></i> Clear real-time Profit &amp; Loss report</li>
                         </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================================== -->
-    <!-- DEDICATED SECTION: AUTO LUBE STATION OPERATING SYSTEM          -->
-    <!-- Vibrant Dark Midnight Navy with Gold/Amber & Emerald Accents   -->
-    <!-- ============================================================== -->
-    <section id="lube-station" class="section-padding lube-station-section">
-        <div class="container">
-            <div class="text-center mb-5">
-                <span class="lube-badge">
-                    <i class="bi bi-droplet-half"></i> Specialized Industry Powerhouse
-                </span>
-                <h2 class="display-5 fw-bold mb-3">Auto Lube Station &amp; Oil Service Operating System</h2>
-                <p class="fs-6 mx-auto" style="max-width: 760px; color: #cbd5e1;">
-                    Most generic ERPs cannot handle drum decanting shrinkage, vehicle pit inspection checks, or thermal reminder stickers. DenFin ERP comes with a complete, purpose-built Auto Lube Station operating system ready out of the box.
-                </p>
-            </div>
-
-            <!-- 4 Core Pillars of Lube Station -->
-            <div class="row g-4 mb-5">
-                <!-- 1. Drum Decanting with Shrinkage -->
-                <div class="col-lg-3 col-md-6">
-                    <div class="lube-feature-card">
-                        <div class="lube-icon-box lube-icon-amber">
-                            <i class="bi bi-funnel-fill"></i>
-                        </div>
-                        <h4 class="fs-5 fw-bold mb-2">Drum Decanting &amp; Shrinkage</h4>
-                        <p class="small" style="color: #cbd5e1;">
-                            Convert 280L bulk drums into 250L usable loose liters. Automatically accounts for 30L pipe sludge &amp; residue with dynamic selling price calculation.
-                        </p>
-                        <span class="badge bg-warning text-dark font-mono" style="font-size: 11px;">Zero Unexplained Loss</span>
-                    </div>
-                </div>
-
-                <!-- 2. 12-Point Pit Inspection -->
-                <div class="col-lg-3 col-md-6">
-                    <div class="lube-feature-card">
-                        <div class="lube-icon-box lube-icon-green">
-                            <i class="bi bi-clipboard2-pulse-fill"></i>
-                        </div>
-                        <h4 class="fs-5 fw-bold mb-2">12-Point Pit Inspection</h4>
-                        <p class="small" style="color: #cbd5e1;">
-                            Technicians grade engine oil, brake fluid, air &amp; AC filters, coolant, battery, and tires with 1-click Pass, Attention, or Fail checkmarks.
-                        </p>
-                        <span class="badge bg-success font-mono" style="font-size: 11px;">Customer Trust +35%</span>
-                    </div>
-                </div>
-
-                <!-- 3. Thermal Reminder Stickers -->
-                <div class="col-lg-3 col-md-6">
-                    <div class="lube-feature-card">
-                        <div class="lube-icon-box lube-icon-blue">
-                            <i class="bi bi-tag-fill"></i>
-                        </div>
-                        <h4 class="fs-5 fw-bold mb-2">Oil Reminder Stickers</h4>
-                        <p class="small" style="color: #cbd5e1;">
-                            Instantly print 50&times;30mm thermal reminder stickers with car plate, current km, next oil change mileage (+5,000 km), and recommended date.
-                        </p>
-                        <span class="badge bg-primary font-mono" style="font-size: 11px;">50&times;30mm Thermal ESC/POS</span>
-                    </div>
-                </div>
-
-                <!-- 4. Vehicle History CRM -->
-                <div class="col-lg-3 col-md-6">
-                    <div class="lube-feature-card">
-                        <div class="lube-icon-box lube-icon-purple">
-                            <i class="bi bi-car-front-fill"></i>
-                        </div>
-                        <h4 class="fs-5 fw-bold mb-2">Vehicle Service CRM</h4>
-                        <p class="small" style="color: #cbd5e1;">
-                            Enter any registration plate to instantly view full oil visit history, past viscosities used, filter part numbers, and upcoming service schedules.
-                        </p>
-                        <span class="badge font-mono" style="background: #8b5cf6; color: #fff; font-size: 11px;">Lifetime Plate Records</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Deep Dive Visual Showcase inside Lube Section -->
-            <div class="lube-showcase-box">
-                <div class="row align-items-center g-4">
-                    <!-- Left: Interactive Decanting Calculation Box -->
-                    <div class="col-lg-7">
-                        <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-secondary">
-                            <div>
-                                <span class="badge bg-warning text-dark me-2 font-mono">LIVE ENGINE</span>
-                                <strong class="text-white fs-6">Automated Drum Decanting Shrinkage Formula</strong>
-                            </div>
-                            <span class="badge bg-success text-white">Verified Accounting Entry</span>
-                        </div>
-
-                        <p class="small" style="color: #cbd5e1;">
-                            When you purchase a <strong>280L oil drum</strong> for Rs. 240,000 and dispense it through lube bay pumps, pipe sludge and residue mean you dispense <strong>250 Liters</strong>. DenFin handles this 2-way math seamlessly:
-                        </p>
-
-                        <div class="p-3 rounded-3 mb-3" style="background: rgba(0, 0, 0, 0.35); border: 1px dashed rgba(245, 158, 11, 0.4);">
-                            <div class="row text-center g-2 font-mono">
-                                <div class="col-4 border-end border-secondary">
-                                    <div class="text-secondary" style="font-size: 11px;">DRUM PURCHASED</div>
-                                    <div class="fw-bold text-white fs-6">1 Drum (280L)</div>
-                                    <small class="text-muted">Cost: Rs. 240,000</small>
-                                </div>
-                                <div class="col-4 border-end border-secondary">
-                                    <div class="text-success" style="font-size: 11px;">USABLE YIELD</div>
-                                    <div class="fw-bold text-success fs-6">250 Liters</div>
-                                    <small class="text-success">Available Stock</small>
-                                </div>
-                                <div class="col-4">
-                                    <div class="text-danger" style="font-size: 11px;">SHRINKAGE / SLUDGE</div>
-                                    <div class="fw-bold text-danger fs-6">30 Liters (10.7%)</div>
-                                    <small class="text-danger">Documented Loss</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center p-3 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25 small fw-bold">
-                            <span class="text-warning">Auto-Calculated Selling Price:</span>
-                            <span class="font-mono text-white fs-6">Rs. 1,450 / Liter &rarr; Profit Margin: 34%</span>
-                        </div>
-                    </div>
-
-                    <!-- Right: Thermal Windscreen Reminder Sticker Preview -->
-                    <div class="col-lg-5">
-                        <div class="text-center mb-2">
-                            <small class="text-secondary font-mono"><i class="bi bi-printer me-1"></i> Thermal ESC/POS Sticker Preview (50&times;30mm)</small>
-                        </div>
-                        <div class="mx-auto border border-2 border-dark rounded-2 p-3 bg-white text-dark shadow-lg" style="max-width: 340px; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
-                            <div class="text-center pb-2 mb-2 border-bottom border-dark">
-                                <div class="fw-bold fs-6">DENFIN AUTO LUBE</div>
-                                <div style="font-size: 10px;" class="text-muted">NEXT SERVICE REMINDER TAG</div>
-                            </div>
-                            <div class="d-flex justify-content-between mb-1">
-                                <span>VEHICLE:</span>
-                                <strong class="fw-bold text-primary">LEA-22-9481</strong>
-                            </div>
-                            <div class="d-flex justify-content-between mb-1">
-                                <span>CURRENT KM:</span>
-                                <span>82,400 KM</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-1 text-danger fw-bold" style="font-size: 13px;">
-                                <span>NEXT SERVICE KM:</span>
-                                <span>87,400 KM</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>DUE DATE:</span>
-                                <span>23-JAN-2027</span>
-                            </div>
-                            <div class="text-center pt-1 border-top border-dark" style="font-size: 9px; color: #475569;">
-                                OIL: 5W-30 FULL SYNTHETIC • HELPLINE: 0300-1234567
-                            </div>
-                        </div>
-                        <div class="text-center mt-3">
-                            <a href="#demo-section" class="btn btn-warning text-dark fw-bold btn-sm px-4 rounded-pill">
-                                <i class="bi bi-play-circle me-1"></i> See Lube POS Demo &rarr;
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1599,9 +1426,9 @@
         <div class="container">
             <div class="section-header">
                 <span class="section-tag">Universal Flexibility</span>
-                <h2 class="section-heading">A Product That Fits Your Business Model</h2>
+                <h2 class="section-heading">Built For Your Business Type</h2>
                 <p class="section-description">
-                    Whether you manage a single retail counter, a multi-warehouse distributor, an auto lube service center, or a chain of branches, DenFin adapts to your operations.
+                    Whether you run retail stores, wholesale trading, auto lube stations, or spare parts shops, DenFin adapts to your operations.
                 </p>
             </div>
 
@@ -1609,17 +1436,17 @@
                 <!-- Retail Stores & Supermarkets -->
                 <div class="col-lg-3 col-md-6">
                     <div class="industry-card">
-                        <span class="industry-tag tag-blue">Retail &amp; Supermarkets</span>
+                        <span class="industry-tag tag-blue">Retail Stores</span>
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <i class="bi bi-shop fs-4 text-primary"></i>
-                            <h5 class="mb-0 fw-bold">Retail Stores</h5>
+                            <h5 class="mb-0 fw-bold">Retail &amp; Marts</h5>
                         </div>
                         <p class="small text-muted mb-3">
-                            Fast barcode scanning, customer credit books, multi-tender payments, shelf pricing, and end-of-day register reconciliation.
+                            Fast barcode checkout, customer credit khata, thermal bill printing, and daily cash closing.
                         </p>
                         <ul class="list-unstyled small text-muted mb-0">
-                            <li><i class="bi bi-check2 text-primary me-1"></i> Barcode scanner gun</li>
-                            <li><i class="bi bi-check2 text-primary me-1"></i> Thermal bill prints</li>
+                            <li><i class="bi bi-check2 text-primary me-1"></i> Barcode scanner support</li>
+                            <li><i class="bi bi-check2 text-primary me-1"></i> Thermal bill printing</li>
                             <li><i class="bi bi-check2 text-primary me-1"></i> Fast item search</li>
                         </ul>
                     </div>
@@ -1631,29 +1458,29 @@
                         <span class="industry-tag tag-green">Wholesale &amp; Distribution</span>
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <i class="bi bi-truck fs-4 text-success"></i>
-                            <h5 class="mb-0 fw-bold">Wholesalers</h5>
+                            <h5 class="mb-0 fw-bold">Wholesale Traders</h5>
                         </div>
                         <p class="small text-muted mb-3">
-                            Bulk tier pricing, customer credit balance limits, goods receipt verification (GRN), and multi-warehouse dispatch.
+                            Bulk wholesale pricing, customer balance limits, supplier receipts, and delivery challans.
                         </p>
                         <ul class="list-unstyled small text-muted mb-0">
-                            <li><i class="bi bi-check2 text-success me-1"></i> Supplier aging reports</li>
-                            <li><i class="bi bi-check2 text-success me-1"></i> Bulk discount rules</li>
-                            <li><i class="bi bi-check2 text-success me-1"></i> Delivery challans</li>
+                            <li><i class="bi bi-check2 text-success me-1"></i> Customer credit limits</li>
+                            <li><i class="bi bi-check2 text-success me-1"></i> Bulk carton pricing</li>
+                            <li><i class="bi bi-check2 text-success me-1"></i> Delivery challan prints</li>
                         </ul>
                     </div>
                 </div>
 
-                <!-- Auto Lube Stations & Service Bays -->
-                <div class="col-lg-3 col-md-6">
-                    <div class="industry-card" style="border: 2px solid #f59e0b; background: #fffdf8;">
-                        <span class="industry-tag tag-amber">Auto Service &amp; Lube</span>
+                <!-- Auto Lube Station & Service Bays -->
+                <div class="col-lg-3 col-md-6" id="lube-station">
+                    <div class="industry-card">
+                        <span class="industry-tag tag-amber">Auto Services</span>
                         <div class="d-flex align-items-center gap-2 mb-2">
                             <i class="bi bi-droplet-half fs-4 text-warning"></i>
-                            <h5 class="mb-0 fw-bold">Auto Lube Stations</h5>
+                            <h5 class="mb-0 fw-bold">Auto Lube Station</h5>
                         </div>
                         <p class="small text-muted mb-3">
-                            Smart Drum Decanting (280L drum &rarr; 250L loose liters with shrinkage accounting), 12-point pit inspection, and thermal reminder stickers.
+                            Drum Decanting math (track 280L drum to loose liters with shrinkage), 12-point Pit Inspection checklist, and reminder stickers.
                         </p>
                         <ul class="list-unstyled small text-muted mb-0">
                             <li><i class="bi bi-check2 text-warning me-1"></i> Drum Decanting math</li>
@@ -1672,12 +1499,12 @@
                             <h5 class="mb-0 fw-bold">Hardware &amp; Parts</h5>
                         </div>
                         <p class="small text-muted mb-3">
-                            OEM part numbers, unit conversions, supplier purchasing pipeline, serial tracking, and inventory movement audit logs.
+                            Part numbers search, piece and box packing units, low-stock warnings, and simple stock tracking.
                         </p>
                         <ul class="list-unstyled small text-muted mb-0">
-                            <li><i class="bi bi-check2 text-purple me-1" style="color: #8b5cf6;"></i> Part number indexing</li>
-                            <li><i class="bi bi-check2 text-purple me-1" style="color: #8b5cf6;"></i> Units of measure</li>
-                            <li><i class="bi bi-check2 text-purple me-1" style="color: #8b5cf6;"></i> Stock ledger audits</li>
+                            <li><i class="bi bi-check2 text-purple me-1" style="color: #8b5cf6;"></i> Part number search</li>
+                            <li><i class="bi bi-check2 text-purple me-1" style="color: #8b5cf6;"></i> Multiple units (pcs/box)</li>
+                            <li><i class="bi bi-check2 text-purple me-1" style="color: #8b5cf6;"></i> Low stock reorder alert</li>
                         </ul>
                     </div>
                 </div>
@@ -1700,32 +1527,32 @@
             <ul class="nav nav-tour justify-content-center" id="tourTab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="pos-tour-tab" data-bs-toggle="tab" data-bs-target="#pos-tour-pane" type="button" role="tab" aria-controls="pos-tour-pane" aria-selected="true">
-                        <i class="bi bi-upc-scan me-1"></i> POS &amp; Sales Invoicing
+                        <i class="bi bi-upc-scan me-1"></i> POS Counter
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="purchase-tour-tab" data-bs-toggle="tab" data-bs-target="#purchase-tour-pane" type="button" role="tab" aria-controls="purchase-tour-pane" aria-selected="false">
+                        <i class="bi bi-cart-check me-1"></i> Purchases &amp; Suppliers
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="inventory-tour-tab" data-bs-toggle="tab" data-bs-target="#inventory-tour-pane" type="button" role="tab" aria-controls="inventory-tour-pane" aria-selected="false">
+                        <i class="bi bi-boxes me-1"></i> Stock &amp; Inventory
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="hr-tour-tab" data-bs-toggle="tab" data-bs-target="#hr-tour-pane" type="button" role="tab" aria-controls="hr-tour-pane" aria-selected="false">
+                        <i class="bi bi-people me-1"></i> Staff &amp; Payroll
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="finance-tour-tab" data-bs-toggle="tab" data-bs-target="#finance-tour-pane" type="button" role="tab" aria-controls="finance-tour-pane" aria-selected="false">
+                        <i class="bi bi-journal-text me-1"></i> Daily Cash &amp; Profit
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="lube-tour-tab" data-bs-toggle="tab" data-bs-target="#lube-tour-pane" type="button" role="tab" aria-controls="lube-tour-pane" aria-selected="false">
                         <i class="bi bi-droplet-half me-1"></i> Auto Lube Counter
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="purchase-tour-tab" data-bs-toggle="tab" data-bs-target="#purchase-tour-pane" type="button" role="tab" aria-controls="purchase-tour-pane" aria-selected="false">
-                        <i class="bi bi-cart-check me-1"></i> Purchase &amp; Procurement
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="inventory-tour-tab" data-bs-toggle="tab" data-bs-target="#inventory-tour-pane" type="button" role="tab" aria-controls="inventory-tour-pane" aria-selected="false">
-                        <i class="bi bi-boxes me-1"></i> Multi-Shop Inventory
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="hr-tour-tab" data-bs-toggle="tab" data-bs-target="#hr-tour-pane" type="button" role="tab" aria-controls="hr-tour-pane" aria-selected="false">
-                        <i class="bi bi-people me-1"></i> HR &amp; Payroll
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="finance-tour-tab" data-bs-toggle="tab" data-bs-target="#finance-tour-pane" type="button" role="tab" aria-controls="finance-tour-pane" aria-selected="false">
-                        <i class="bi bi-journal-text me-1"></i> Financial Accounting
                     </button>
                 </li>
             </ul>
@@ -1737,16 +1564,16 @@
                     <div class="tab-showcase-card">
                         <div class="row align-items-center g-4">
                             <div class="col-lg-5">
-                                <span class="badge bg-primary-subtle text-primary mb-2">High Efficiency</span>
-                                <h3 class="text-white fw-bold mb-3">High-Speed POS &amp; Sales Billing</h3>
+                                <span class="badge bg-primary-subtle text-primary mb-2">High Speed</span>
+                                <h3 class="text-white fw-bold mb-3">Fast POS Counter &amp; Bills</h3>
                                 <p style="color: #cbd5e1;">
-                                    Designed for fast customer checkout. Scan barcodes, select items with quick keys, split payments between cash, card, and customer credit, and print 80mm thermal receipts in seconds.
+                                    Fast checkout for walk-in customers. Scan barcodes, pick items, split payments, and print 80mm/58mm thermal receipts.
                                 </p>
                                 <ul class="list-unstyled mb-4" style="color: #94a3b8; font-size: 14px;">
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Instant barcode lookup &amp; auto stock reduction</li>
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Customer credit ledger balance and history</li>
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Daily cash register opening &amp; closing reconciliations</li>
-                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i> ESC/POS thermal printing for standard 80mm &amp; 58mm printers</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Barcode scan &amp; automatic stock reduction</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Customer credit balance &amp; payment history</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Daily cash drawer opening &amp; closing balance</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i> Thermal ESC/POS receipt printing</li>
                                 </ul>
                                 <a href="#demo-section" class="btn btn-primary fw-bold">Request a Live Walkthrough &rarr;</a>
                             </div>
@@ -1780,7 +1607,7 @@
                                             <strong>Rs. 1,650</strong>
                                         </div>
                                         <div class="d-flex justify-content-between text-muted">
-                                            <span>Labor / Installation Service &times; 1</span>
+                                            <span>Labor / Service &times; 1</span>
                                             <strong>Rs. 500</strong>
                                         </div>
                                         <hr class="my-1">
@@ -1799,88 +1626,21 @@
                     </div>
                 </div>
 
-                <!-- Tab 2: Auto Lube Counter -->
-                <div class="tab-pane fade" id="lube-tour-pane" role="tabpanel" aria-labelledby="lube-tour-tab" tabindex="0">
-                    <div class="tab-showcase-card">
-                        <div class="row align-items-center g-4">
-                            <div class="col-lg-5">
-                                <span class="badge bg-warning text-dark mb-2">Automotive Specialized</span>
-                                <h3 class="text-white fw-bold mb-3">Lube POS Bay &amp; Pit Inspection</h3>
-                                <p style="color: #cbd5e1;">
-                                    Cashiers enter the customer's license plate, pick the required liters of loose oil from decanted drums, add filters, and record the 12-point pit inspection in a single cohesive screen.
-                                </p>
-                                <ul class="list-unstyled mb-4" style="color: #94a3b8; font-size: 14px;">
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Separated dropdowns for Packaged vs Loose Liters</li>
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 1-Click Pit Checklist (Pass/Attention/Fail)</li>
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Automatic calculation of next oil mileage (+5,000 km)</li>
-                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i> Instant thermal bill and 50&times;30mm sticker printing</li>
-                                </ul>
-                                <a href="#demo-section" class="btn btn-warning text-dark fw-bold">Request Lube Station Demo &rarr;</a>
-                            </div>
-                            <div class="col-lg-7">
-                                <div class="bg-white rounded-3 p-3 text-dark shadow">
-                                    <div class="d-flex justify-content-between align-items-center pb-2 mb-2 border-bottom">
-                                        <strong class="text-dark"><i class="bi bi-droplet-half text-warning me-1"></i> Lube POS Terminal</strong>
-                                        <span class="badge bg-success">Pit Bay 1 Active</span>
-                                    </div>
-                                    <div class="row g-2 mb-2 small">
-                                        <div class="col-6">
-                                            <div class="p-2 border rounded bg-light">
-                                                <span class="text-muted d-block">Vehicle Plate</span>
-                                                <strong class="font-mono text-dark">LEA-22-9481 (Altis 1.6)</strong>
-                                            </div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="p-2 border rounded bg-light">
-                                                <span class="text-muted d-block">Current Odometer</span>
-                                                <strong class="font-mono text-primary">82,400 KM</strong>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="p-2 border rounded bg-light mb-2 font-mono small">
-                                        <div class="d-flex justify-content-between">
-                                            <span>Total Quartz 9000 5W-30 (Loose) &times; 3.8L</span>
-                                            <strong>Rs. 5,510</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between text-muted">
-                                            <span>Genuine Oil Filter &times; 1</span>
-                                            <strong>Rs. 1,450</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between text-muted">
-                                            <span>Pit Inspection &amp; Labor Svc &times; 1</span>
-                                            <strong>Rs. 500</strong>
-                                        </div>
-                                        <hr class="my-1">
-                                        <div class="d-flex justify-content-between text-primary fw-bold fs-6">
-                                            <span>Net Total Payable:</span>
-                                            <span>Rs. 7,460</span>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-2">
-                                        <button class="btn btn-sm btn-dark flex-grow-1"><i class="bi bi-printer me-1"></i> Thermal Bill</button>
-                                        <button class="btn btn-sm btn-warning text-dark fw-bold"><i class="bi bi-tag me-1"></i> Thermal Sticker</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Tab 3: Purchase & Procurement -->
                 <div class="tab-pane fade" id="purchase-tour-pane" role="tabpanel" aria-labelledby="purchase-tour-tab" tabindex="0">
                     <div class="tab-showcase-card">
                         <div class="row align-items-center g-4">
                             <div class="col-lg-5">
-                                <span class="badge bg-warning-subtle text-warning mb-2">Zero Loss</span>
-                                <h3 class="text-white fw-bold mb-3">Purchases &amp; Procurement Pipeline</h3>
+                                <span class="badge bg-warning-subtle text-warning mb-2">Zero Stock Loss</span>
+                                <h3 class="text-white fw-bold mb-3">Purchases &amp; Supplier Dues</h3>
                                 <p style="color: #cbd5e1;">
-                                    Track purchasing from initial requisitions to verified goods receipt (GRN) and vendor payment vouchers. Always know what goods arrived and what dues are payable.
+                                    Keep clean records of everything you buy. Confirm received stock (GRN) and always know how much money you owe your vendors.
                                 </p>
                                 <ul class="list-unstyled mb-4" style="color: #94a3b8; font-size: 14px;">
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Purchase Requisitions (PR) and PO approvals</li>
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Inward Gate Pass (IGP) &amp; GRN stock verification</li>
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Supplier Dues Ledger &amp; 30/60/90 days aging</li>
-                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i> Automated inventory cost valuation</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Quick purchase orders &amp; received goods check (GRN)</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Stock increases automatically upon delivery</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Supplier dues ledger with pending bill alerts</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i> Accurate average cost of your inventory</li>
                                 </ul>
                                 <a href="#demo-section" class="btn btn-warning text-dark fw-bold">See Procurement Flow &rarr;</a>
                             </div>
@@ -1932,16 +1692,16 @@
                     <div class="tab-showcase-card">
                         <div class="row align-items-center g-4">
                             <div class="col-lg-5">
-                                <span class="badge bg-info-subtle text-info mb-2">Multi-Branch Architecture</span>
-                                <h3 class="text-white fw-bold mb-3">Shop A &amp; Shop B Inventory Isolation</h3>
+                                <span class="badge bg-info-subtle text-info mb-2">Multi-Shop Setup</span>
+                                <h3 class="text-white fw-bold mb-3">Multi-Shop Stock Control</h3>
                                 <p style="color: #cbd5e1;">
-                                    Manage multiple independent branches or retail shops with complete data isolation. Shop A and Shop B can each have their own product definitions, prices, and categories without duplicate name errors.
+                                    Run Shop A, Shop B, or multiple locations without mix-ups. Each shop keeps its own inventory, prices, and staff.
                                 </p>
                                 <ul class="list-unstyled mb-4" style="color: #94a3b8; font-size: 14px;">
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Shop A &amp; Shop B maintain independent categories &amp; pricing</li>
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Stock transfers between shops with dispatch and receipt sign-off</li>
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Low stock reorder alerts and auto warnings</li>
-                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i> Centralized consolidated reports for business owners</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Shop A &amp; Shop B have separate products &amp; prices</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Easy stock transfers between branches</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Low stock alerts before you run out</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i> Combined owner dashboard showing total stock &amp; profit</li>
                                 </ul>
                                 <a href="#demo-section" class="btn btn-info text-white fw-bold">Explore Multi-Shop ERP &rarr;</a>
                             </div>
@@ -1983,16 +1743,16 @@
                     <div class="tab-showcase-card">
                         <div class="row align-items-center g-4">
                             <div class="col-lg-5">
-                                <span class="badge bg-danger-subtle text-danger mb-2">Human Resources</span>
-                                <h3 class="text-white fw-bold mb-3">Staff Attendance &amp; Payroll Engine</h3>
+                                <span class="badge bg-danger-subtle text-danger mb-2">Staff &amp; Payroll</span>
+                                <h3 class="text-white fw-bold mb-3">Staff Attendance &amp; Monthly Salaries</h3>
                                 <p style="color: #cbd5e1;">
-                                    Stop using separate spreadsheets for staff payroll. Record daily attendance, track salary advances and overtime, and generate monthly payslips in one click.
+                                    Stop using paper diaries or messy spreadsheets. Record daily attendance, track salary advance loans, and generate payslips in one click.
                                 </p>
                                 <ul class="list-unstyled mb-4" style="color: #94a3b8; font-size: 14px;">
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Employee master profiles &amp; emergency contacts</li>
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Daily attendance logs (Present, Absent, Leave, Late)</li>
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Automated monthly salary calculation with allowances</li>
-                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i> Advance salary tracking with automatic deduction</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Employee profiles &amp; emergency phone contacts</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 1-click attendance (Present, Absent, Leave)</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Automatic monthly salary calculation</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i> Advance salary loans deducted automatically</li>
                                 </ul>
                                 <a href="#demo-section" class="btn btn-danger fw-bold">Explore HR &amp; Payroll &rarr;</a>
                             </div>
@@ -2036,16 +1796,16 @@
                     <div class="tab-showcase-card">
                         <div class="row align-items-center g-4">
                             <div class="col-lg-5">
-                                <span class="badge bg-success-subtle text-success mb-2">General Ledger</span>
-                                <h3 class="text-white fw-bold mb-3">Double-Entry Financial Accounting</h3>
+                                <span class="badge bg-success-subtle text-success mb-2">Accounting</span>
+                                <h3 class="text-white fw-bold mb-3">Daily Cash, Expenses &amp; Profit</h3>
                                 <p style="color: #cbd5e1;">
-                                    Every POS sale, purchase order, supplier payment, and payroll disbursement creates verified debit &amp; credit journal entries automatically. Real-time Profit &amp; Loss at your fingertips.
+                                    Every sale, purchase, expense, and salary automatically updates your accounts. Know your true profit at the end of every day without hiring an accountant.
                                 </p>
                                 <ul class="list-unstyled mb-4" style="color: #94a3b8; font-size: 14px;">
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Comprehensive Chart of Accounts (COA)</li>
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Real-time Profit &amp; Loss statement &amp; Balance Sheet</li>
-                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Cash Book &amp; Multi-Bank Account reconciliation</li>
-                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i> Tax compliance &amp; audited financial reporting</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Real-time Profit &amp; Loss (P&amp;L) statement</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Cash in hand and bank balance tracking</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Daily shop expenses (bills, tea, fuel, rent)</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i> Clean, simple reports for business owners</li>
                                 </ul>
                                 <a href="#demo-section" class="btn btn-success fw-bold">View Financial Reports &rarr;</a>
                             </div>
@@ -2080,6 +1840,73 @@
                                     </div>
                                     <div class="text-end">
                                         <span class="badge bg-primary-subtle text-primary p-2"><i class="bi bi-check2-all me-1"></i> Fully Audited Double-Entry Balance</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 6: Auto Lube Counter -->
+                <div class="tab-pane fade" id="lube-tour-pane" role="tabpanel" aria-labelledby="lube-tour-tab" tabindex="0">
+                    <div class="tab-showcase-card">
+                        <div class="row align-items-center g-4">
+                            <div class="col-lg-5">
+                                <span class="badge bg-warning text-dark mb-2">Automotive Lube Bay</span>
+                                <h3 class="text-white fw-bold mb-3">Auto Lube Bay &amp; Pit Inspection</h3>
+                                <p style="color: #cbd5e1;">
+                                    Enter car plate, choose loose liters or packaged oil, add filters, and print windscreen reminder stickers in one easy screen.
+                                </p>
+                                <ul class="list-unstyled mb-4" style="color: #94a3b8; font-size: 14px;">
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Simple choice for Packaged vs Loose Liters</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 1-Click Pit Checklist (Pass / Warning / Fail)</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Auto-calculates next oil service (+5,000 km)</li>
+                                    <li><i class="bi bi-check-circle-fill text-success me-2"></i> Prints customer bill and windscreen reminder sticker</li>
+                                </ul>
+                                <a href="#demo-section" class="btn btn-warning text-dark fw-bold">Request Lube Station Demo &rarr;</a>
+                            </div>
+                            <div class="col-lg-7">
+                                <div class="bg-white rounded-3 p-3 text-dark shadow">
+                                    <div class="d-flex justify-content-between align-items-center pb-2 mb-2 border-bottom">
+                                        <strong class="text-dark"><i class="bi bi-droplet-half text-warning me-1"></i> Lube POS Terminal</strong>
+                                        <span class="badge bg-success">Pit Bay 1 Active</span>
+                                    </div>
+                                    <div class="row g-2 mb-2 small">
+                                        <div class="col-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <span class="text-muted d-block">Vehicle Plate</span>
+                                                <strong class="font-mono text-dark">LEA-22-9481 (Altis 1.6)</strong>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="p-2 border rounded bg-light">
+                                                <span class="text-muted d-block">Current Odometer</span>
+                                                <strong class="font-mono text-primary">82,400 KM</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="p-2 border rounded bg-light mb-2 font-mono small">
+                                        <div class="d-flex justify-content-between">
+                                            <span>Total Quartz 9000 5W-30 (Loose) &times; 3.8L</span>
+                                            <strong>Rs. 5,510</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-muted">
+                                            <span>Genuine Oil Filter &times; 1</span>
+                                            <strong>Rs. 1,450</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between text-muted">
+                                            <span>Pit Inspection &amp; Labor Svc &times; 1</span>
+                                            <strong>Rs. 500</strong>
+                                        </div>
+                                        <hr class="my-1">
+                                        <div class="d-flex justify-content-between text-primary fw-bold fs-6">
+                                            <span>Net Total Payable:</span>
+                                            <span>Rs. 7,460</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-dark flex-grow-1"><i class="bi bi-printer me-1"></i> Thermal Bill</button>
+                                        <button class="btn btn-sm btn-warning text-dark fw-bold"><i class="bi bi-tag me-1"></i> Thermal Sticker</button>
                                     </div>
                                 </div>
                             </div>
@@ -2184,10 +2011,10 @@
     <section id="demo-section" class="section-padding demo-section">
         <div class="container">
             <div class="section-header">
-                <span class="section-tag">Get Started Today</span>
-                <h2 class="section-heading">Schedule Your Free 1-on-1 Live Demo</h2>
+                <span class="section-tag">Free Live Demo</span>
+                <h2 class="section-heading">Try DenFin ERP Free For Your Business</h2>
                 <p class="section-description">
-                    See how DenFin ERP fits your specific business model — whether retail, wholesale, auto service, or multi-branch commerce.
+                    See how easily DenFin fits your shop — whether retail store, oil station, wholesale, or multi-branch business.
                 </p>
             </div>
 
@@ -2197,11 +2024,11 @@
                     <div class="demo-card-form">
                         <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
                             <div>
-                                <h4 class="mb-1 text-dark fw-bold">Request a Live System Demonstration</h4>
-                                <small class="text-muted">No obligation. Our specialist will set up a personalized sandbox for your industry.</small>
+                                <h4 class="mb-1 text-dark fw-bold">Book a Free 1-on-1 Demo</h4>
+                                <small class="text-muted">Free demo, no commitment. We will show you the exact screens your staff will use.</small>
                             </div>
                             <span class="badge bg-success-subtle text-success p-2 px-3 rounded-pill fw-semibold">
-                                <i class="bi bi-shield-check me-1"></i> Instant Response
+                                <i class="bi bi-shield-check me-1"></i> Quick Response
                             </span>
                         </div>
 
@@ -2292,11 +2119,11 @@
                     <div class="direct-whatsapp-card">
                         <div>
                             <span class="badge bg-success text-white mb-3 px-3 py-1 rounded-pill">
-                                <i class="bi bi-lightning-charge-fill me-1"></i> Immediate Response
+                                <i class="bi bi-lightning-charge-fill me-1"></i> Quick WhatsApp
                             </span>
-                            <h4 class="text-white fw-bold mb-3">Need Instant Answers?</h4>
+                            <h4 class="text-white fw-bold mb-3">Want Direct Answers?</h4>
                             <p class="text-slate-200" style="color: #cbd5e1; font-size: 14.5px;">
-                                Speak directly with our technical ERP deployment specialist on WhatsApp. We can discuss your branch structure, printer setup, and hardware compatibility right away.
+                                Chat directly with our team on WhatsApp. We can answer questions about barcode scanners, thermal printers, and how DenFin works for your shop.
                             </p>
 
                             <div class="p-3 rounded-3 bg-white bg-opacity-10 mb-4 border border-white border-opacity-10">
@@ -2306,8 +2133,8 @@
                         </div>
 
                         <div>
-                            <a href="https://wa.me/923001234567?text={{ urlencode('Hello DenFin team! I want to consult regarding the ERP system for my business.') }}" target="_blank" class="btn btn-success w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow">
-                                <i class="bi bi-whatsapp fs-5"></i> Chat With Specialist on WhatsApp
+                            <a href="https://wa.me/923114670195?text={{ urlencode('Hello DenFin team! I want to consult regarding the ERP system for my business.') }}" target="_blank" class="btn btn-success w-100 py-3 fw-bold d-flex align-items-center justify-content-center gap-2 shadow">
+                                <i class="bi bi-whatsapp fs-5"></i> Chat With Us on WhatsApp
                             </a>
 
                             <!-- Portal Login reminder link for existing clients -->
@@ -2328,10 +2155,10 @@
     <section id="faq" class="section-padding bg-light">
         <div class="container">
             <div class="section-header">
-                <span class="section-tag">Got Questions?</span>
+                <span class="section-tag">Common Questions</span>
                 <h2 class="section-heading">Frequently Asked Questions</h2>
                 <p class="section-description">
-                    Everything you need to know about setting up DenFin ERP across your retail, wholesale, and branch operations.
+                    Simple answers to everyday questions about running your business on DenFin ERP.
                 </p>
             </div>
 
@@ -2346,7 +2173,7 @@
                             </h2>
                             <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
                                 <div class="accordion-body">
-                                    Yes! DenFin ERP is designed as a unified business operating system. You can issue purchase orders, receive inventory via GRN, sell over the barcode POS counter, track supplier/customer credit ledgers, compute staff payroll, and review real-time profit &amp; loss statements without switching software.
+                                    Yes! Everything connects together in one place. When you buy goods, stock increases; when you sell at the POS counter, stock reduces and cash increases. Staff attendance, supplier dues, and daily profit are all handled together.
                                 </div>
                             </div>
                         </div>
@@ -2354,12 +2181,12 @@
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
-                                    How does the dedicated Auto Lube Station system handle drum shrinkage?
+                                    Does DenFin also support specialized businesses like Auto Lube Stations?
                                 </button>
                             </h2>
                             <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                 <div class="accordion-body">
-                                    When you decant a 280L bulk drum into loose liters, dispenser sludge and pipe residue mean you might only dispense 250L. DenFin accounts for the 30L shrinkage as an official inventory adjustment, automatically computes your true cost per liter, and recalculates your recommended selling price per liter.
+                                    Yes! For oil and service centers, DenFin includes built-in Auto Lube Station features: bulk Drum Decanting (tracking oil shrinkage when opening a 280L drum), 12-point Pit Inspection checklists, and thermal reminder sticker printing.
                                 </div>
                             </div>
                         </div>
@@ -2372,7 +2199,7 @@
                             </h2>
                             <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                 <div class="accordion-body">
-                                    Each branch has its own isolated catalogue. Shop A and Shop B can each have categories like "Oil" or "Filters" without database conflicts. Staff users are restricted to their assigned shop, while business owners and Super Admins have a consolidated bird's-eye view.
+                                    Each branch has its own isolated stock and prices. Shop A and Shop B can each have categories like "Oil" or "Filters" without database conflicts. Staff users are restricted to their assigned shop, while business owners have a full bird's-eye view.
                                 </div>
                             </div>
                         </div>
@@ -2385,7 +2212,7 @@
                             </h2>
                             <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                 <div class="accordion-body">
-                                    DenFin ERP works with any standard USB or wireless barcode scanner gun, standard 80mm and 58mm thermal receipt printers (via USB, network, or Bluetooth), sticker printers (50&times;30mm) for windscreen oil change tags, and standard A4 office laser printers.
+                                    DenFin ERP works with any standard USB or wireless barcode scanner gun, standard 80mm and 58mm thermal receipt printers, 50&times;30mm sticker printers for Pit Inspection windscreen tags, and standard office laser printers.
                                 </div>
                             </div>
                         </div>
@@ -2398,7 +2225,7 @@
                             </h2>
                             <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                                 <div class="accordion-body">
-                                    You can set base employee salaries, track daily attendance, record staff advance loans, and apply deductions or bonuses. At the end of the month, DenFin computes net salaries in one click and generates printable payslips and disbursement sheets.
+                                    You can set employee salaries, mark daily attendance, and record cash advances given during the month. At month-end, click one button to generate payslips with advance loans deducted automatically.
                                 </div>
                             </div>
                         </div>
@@ -2418,7 +2245,7 @@
                         <span class="fs-5 fw-bold text-white">DenFin <span class="text-primary">ERP</span></span>
                     </div>
                     <p class="small text-slate-400" style="color: #94a3b8; max-width: 320px;">
-                        The All-in-One Cloud ERP for Retail, Wholesale, Auto Services, and Growing Multi-Branch Enterprises.
+                        The All-in-One Cloud ERP for Retail, Wholesale, Auto Services, and Growing Businesses.
                     </p>
                     <div class="d-flex align-items-center gap-2 mt-3">
                         <span class="badge bg-success-subtle text-success border border-success-subtle font-mono">
@@ -2439,13 +2266,13 @@
                 </div>
 
                 <div class="col-lg-2 col-md-6 col-6">
-                    <h5>Specialized</h5>
+                    <h5>Business Types</h5>
                     <ul class="footer-links">
-                        <li><a href="#lube-station" class="text-warning fw-semibold">Auto Lube System</a></li>
-                        <li><a href="#lube-station">Drum Decanting</a></li>
-                        <li><a href="#lube-station">Pit Inspection</a></li>
-                        <li><a href="#lube-station">Oil Stickers</a></li>
-                        <li><a href="#demo-section">Book a Demo</a></li>
+                        <li><a href="#industries">Retail &amp; Marts</a></li>
+                        <li><a href="#industries">Wholesale Traders</a></li>
+                        <li><a href="#lube-station">Auto Lube Station</a></li>
+                        <li><a href="#industries">Hardware &amp; Parts</a></li>
+                        <li><a href="#demo-section">Book Free Demo</a></li>
                     </ul>
                 </div>
 
@@ -2464,7 +2291,7 @@
                                 <i class="bi bi-box-arrow-in-right text-primary me-2"></i> Login to DenFin Portal &rarr;
                             </a>
                         @endif
-                        <a href="https://wa.me/923001234567" target="_blank" class="btn btn-outline-success btn-sm text-start py-2 px-3 fw-bold">
+                        <a href="https://wa.me/923114670195" target="_blank" class="btn btn-outline-success btn-sm text-start py-2 px-3 fw-bold">
                             <i class="bi bi-whatsapp me-2"></i> Technical Support Hotline
                         </a>
                     </div>
@@ -2487,7 +2314,7 @@
     </footer>
 
     <!-- Floating WhatsApp Action Widget -->
-    <a href="https://wa.me/923001234567?text={{ urlencode('Hello DenFin team! I am interested in getting a demo of DenFin ERP for my business.') }}" target="_blank" class="floating-wa-btn" id="floatingWhatsAppBtn" title="Chat with us on WhatsApp">
+    <a href="https://wa.me/923114670195?text={{ urlencode('Hello DenFin team! I am interested in getting a demo of DenFin ERP for my business.') }}" target="_blank" class="floating-wa-btn" id="floatingWhatsAppBtn" title="Chat with us on WhatsApp">
         <i class="bi bi-whatsapp floating-wa-icon"></i>
         <span>Chat on WhatsApp</span>
     </a>
